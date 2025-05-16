@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labelle & Co</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body onload="loadPage('main.html'); ready()">
+    <nav>
+        <div class="logo" id="logo">Labelle & Co</div>
+        <ul>
+            <li><a href="#logo">Home</a></li>
+            <li><a href="#Products">Products</a></li>
+            <div class="navbar">
+                <div class="searchbar">
+                    <input type="text" id="searchbox" placeholder = "Search">
+                    <button id="searchenter" onclick="search()">Go!</button>
+                    <button id="searchback" onclick="searchback()">back</button>
+                </div>
+                <button id="button">Shop
+                    <div class="relative">
+                        <div class="dropdownstuff">
+                            <a href="#" onclick="loadPage('main.html')">Main</a>
+                        </div>
+                    </div>
+                </button>
+            </div>
+            <li><button class="cart-button" onclick="toggleCart()">Cart</button></li>
+        </ul>
+    </nav>
+
+    <div class="container" id="pagestuff">
+        <!-- the pages will go here -->
+    </div>
+
+    <div id="cart-panel" class="cart-panel">
+        <div class="cart-content">
+            <h2>Your Cart</h2>
+            <ul id="cartItems">
+            
+            </ul>
+            <p id="totalAmount">Total: $0.00</p>
+            <button class="close-cart-button" onclick="toggleCart()">Close</button>
+            <button class="pay" onclick="toggleCart()">Pay</button>
+        </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>
