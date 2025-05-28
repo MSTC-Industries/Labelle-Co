@@ -2,7 +2,16 @@ var allitems = {
   //"" : {"img": "", "price": 1.00 },
   "main.html" : {
     "Furniture" : {
-      "Temp" : {"img": "Images/temp.jpg", "price": 1.00 },
+      "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
+      //8 chairs refninished top, 2 leaves
+      "Cabinet" : {"img": "Images/salecabinet.jpg", "price": 499 },
+      "Night Stands(both!)" : {"img": "Images/nightstands.jpg", "price": 399 },
+      "Rustic Bed(Full Size!)" : {"img": "Images/rusticbed.jpg", "price": 399 },
+      "Chester Drawer" : {"img": "Images/chesterdrawer.jpg", "price": 399 },
+      "Night Stands" : {"img": "Images/nightstands2.jpg", "price": 299 },
+      "Dresser" : {"img": "Images/dresser.jpg", "price": 449 },
+      "Big Drawer" : {"img": "Images/maxstoragedrawer.jpg", "price": 399 },
+      "Small Drawer" : {"img": "Images/small cabinet.jpg", "price": 99 },
     },
   },
 }
