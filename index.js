@@ -232,6 +232,7 @@ function addcards(self, items) {
       self.appendChild(container);
 
       for (itemkey in items[category]) {
+        if (itemkey === "id") continue; // Skip the ID property in item list
           var item = document.createElement("div");
           item.className = "card";
 
