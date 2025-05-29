@@ -217,11 +217,12 @@ function searchback() {
   document.getElementById("searchbox").value = "";
 }
 
-/*function addcards(self, items) {
+function addcards(self, items) {
   for (category in items) {
       var title = document.createElement("h1");
       title.innerHTML = category;
       title.className = 'categorytitle'
+      title.id = items[category].id; // Assign the stored ID
       var container = document.createElement("div");
       container.className = "category";
 
@@ -249,8 +250,8 @@ function searchback() {
       }
   }
 }
-*/
-function addcards(self, items) {
+
+/*function addcards(self, items) {
     for (category in items) {
         if (!items[category].id) continue; // Ensures each category has an ID
 
@@ -287,7 +288,7 @@ function addcards(self, items) {
         }
     }
 }
-
+*/
 function addcards(self, items) {
   for (category in items) {
       var title = document.createElement("h1");
