@@ -13,6 +13,16 @@ body {
     background-repeat: repeat; /* Allow looping pattern */
     opacity: 0.8; /* Make it slightly transparent */
 }
+.checkmarks {
+    text-align: center;
+    padding: 10px;
+}
+
+.checkmarks p {
+    font-size: 14px;
+    color: green;
+    font-weight: bold;
+}
 
 
 .categorytitle {
