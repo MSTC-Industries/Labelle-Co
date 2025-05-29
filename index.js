@@ -4,10 +4,7 @@ var allitems = {
     "Tables and desks" : {
       "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
       //8 chairs refninished top, 2 leaves
-      "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
-      
-      
-      "Dining Table" : {"img": "Images/diningtable2.jpg", "price": 1699 },
+
       //table pads in leather case 8 chair 2 leaves
       "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449 },
       "Side table" : {"img": "Images/sidetable.jpg", "price": 199 },
@@ -58,7 +55,7 @@ var allitems = {
       "Dresser" : {"img": "Images/dresser.jpg", "price": 449 },
       "Big Drawer" : {"img": "Images/maxstoragedrawer.jpg", "price": 399 },
       "Small Drawer" : {"img": "Images/small cabinet.jpg", "price": 99 },
-      "3 drawer night stand" : {"img": "Images/3drawer.jpg", "price": 399 },
+      //"3 drawer night stand" : {"img": "Images/3drawer.jpg", "price": 399 },
       "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449 },
       "Grated Night Stand(2x)" : {"img": "Images/gratenightstand.jpg", "price": 399 },
       "Dresser" : {"img": "Images/large dresser.jpg", "price": 489 },
