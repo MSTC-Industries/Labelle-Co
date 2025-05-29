@@ -15,7 +15,9 @@ body {
 }
 .checkmarks {
     text-align: center;
-    padding: 10px;
+    padding: 0.2rem;
+    margin: 0;
+    display: flex;
 }
 
 .checkmarks p {
@@ -326,6 +328,13 @@ nav ul li .cart-button:hover {
     bottom: 10px; /* Moves it to the bottom */
     width: 100%;
 }
+
+.checkmarks {
+    position: absolute;
+    top: 200px;
+    width: 100%;
+}
+
 #searchbox {
     width: 10rem;
     padding: 0.12px;

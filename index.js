@@ -3,7 +3,8 @@ var allitems = {
   "main.html" : {
     "Tables and desks" : {
       "id": "tables-and-desks",
-      "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
+      "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699, 
+      "specials" : []},
       //table pads in leather case 8 chair 2 leaves
       "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449 },
       "Side table" : {"img": "Images/sidetable.jpg", "price": 199 },
@@ -219,79 +220,6 @@ function addcards(self, items) {
   for (category in items) {
       var title = document.createElement("h1");
       title.innerHTML = category;
-      title.className = 'categorytitle'
-      title.id = items[category].id; // Assign the stored ID
-      var container = document.createElement("div");
-      container.className = "category";
-
-      console.log(self);
-
-      self.appendChild(title);
-      self.appendChild(container);
-
-      for (itemkey in items[category]) {
-        if (itemkey === "id") continue; // Skip the ID property in item list
-          var item = document.createElement("div");
-          item.className = "card";
-
-          item.innerHTML = "\
-              <img src='" + items[category][itemkey].img + "' alt='Food Image'>\
-              <div class='info'>\
-                <h2 id='name'>" + itemkey + "</h2>\
-                <p value = '" + items[category][itemkey].price + "' id='v'>$" + items[category][itemkey].price + " per item</p>\
-                <div class='quantity-selector'>\
-                    <label for='quantity'>Quantity: </label>\
-                    <input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>\
-                </div>\
-                <button onclick='addToCart(this)' id='add'>Add to Cart</button>\
-              </div>";
-          container.appendChild(item);
-      }
-  }
-}
-
-/*function addcards(self, items) {
-    for (category in items) {
-        if (!items[category].id) continue; // Ensures each category has an ID
-
-        var title = document.createElement("h1");
-        title.innerHTML = category;
-        title.className = "categorytitle";
-        title.id = items[category].id; // Assign the stored ID
-
-        var container = document.createElement("div");
-        container.className = "category";
-
-        self.appendChild(title);
-        self.appendChild(container);
-
-        for (itemkey in items[category]) {
-            if (itemkey === "id") continue; // Skip the ID property in item list
-
-            var item = document.createElement("div");
-            item.className = "card";
-
-            item.innerHTML =
-                "<img src='" + items[category][itemkey].img + "' alt='Food Image'>" +
-                "<div class='info'>" +
-                "<h2 id='name'>" + itemkey + "</h2>" +
-                "<p value = '" + items[category][itemkey].price + "' id='v'>$" + items[category][itemkey].price + " per item</p>" +
-                "<div class='quantity-selector'>" +
-                "<label for='quantity'>Quantity: </label>" +
-                "<input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>" +
-                "</div>" +
-                "<button onclick='addToCart(this)' id='add'>Add to Cart</button>" +
-                "</div>";
-
-            container.appendChild(item);
-        }
-    }
-}
-
-function addcards(self, items) {
-  for (category in items) {
-      var title = document.createElement("h1");
-      title.innerHTML = category;
       title.className = 'categorytitle';
       var container = document.createElement("div");
       container.className = "category";
@@ -300,11 +228,12 @@ function addcards(self, items) {
       self.appendChild(container);
 
       for (itemkey in items[category]) {
+        if (itemkey === "id") continue;
           var item = document.createElement("div");
           item.className = "card";
 
           // Define an array of positive qualities
-          var qualities = ["Fresh Ingredients", "Chef’s Recommendation", "Gluten-Free", "Best Seller", "Locally Sourced"];
+          var qualities = ["Hand Crafted", "80% OFF"];
 
           // Create a section for checkmarks
           var checkmarkSection = "<div class='checkmarks'>";
@@ -329,4 +258,3 @@ function addcards(self, items) {
       }
   }
 }
-*/
