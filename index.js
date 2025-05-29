@@ -244,3 +244,44 @@ function addcards(self, items) {
       }
   }
 }
+function addcards(self, items) {
+  for (category in items) {
+      var title = document.createElement("h1");
+      title.innerHTML = category;
+      title.className = 'categorytitle';
+      var container = document.createElement("div");
+      container.className = "category";
+
+      self.appendChild(title);
+      self.appendChild(container);
+
+      for (itemkey in items[category]) {
+          var item = document.createElement("div");
+          item.className = "card";
+
+          // Define an array of positive qualities
+          var qualities = ["Fresh Ingredients", "Chef’s Recommendation", "Gluten-Free", "Best Seller", "Locally Sourced"];
+
+          // Create a section for checkmarks
+          var checkmarkSection = "<div class='checkmarks'>";
+          qualities.forEach(quality => {
+              checkmarkSection += "<p>✅ " + quality + "</p>";
+          });
+          checkmarkSection += "</div>";
+
+          item.innerHTML = "\
+              <img src='" + items[category][itemkey].img + "' alt='Food Image'>\
+              " + checkmarkSection + " \
+              <div class='info'>\
+                <h2 id='name'>" + itemkey + "</h2>\
+                <p value = '" + items[category][itemkey].price + "' id='v'>$" + items[category][itemkey].price + " per item</p>\
+                <div class='quantity-selector'>\
+                    <label for='quantity'>Quantity: </label>\
+                    <input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>\
+                </div>\
+                <button onclick='addToCart(this)' id='add'>Add to Cart</button>\
+              </div>";
+          container.appendChild(item);
+      }
+  }
+}
