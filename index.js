@@ -2,6 +2,7 @@ var allitems = {
   //"" : {"img": "", "price": 1.00 },
   "main.html" : {
     "Tables and desks" : {
+      "id": "tables-and-desks",
       "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
       //8 chairs refninished top, 2 leaves
 
@@ -12,7 +13,7 @@ var allitems = {
       //welded no squeec no screws
       
       "French Blue Desk" : {"img": "Images/antiquebluetable.jpg", "price": 389 },
-      "Queen Bed" : {"img": "Images/queenbed.jpg", "price": 599 },
+
       
       
       
@@ -34,6 +35,7 @@ var allitems = {
       
     },
     "Cabinets" : {
+      "id": "cabinets",
         "Cabinet" : {"img": "Images/salecabinet.jpg", "price": 499 },
       "Skinny Cabinets" : {"img": "Images/smallcabs.jpg", "price": 299 },
       "Night Stands(both!)" : {"img": "Images/nightstands.jpg", "price": 399 },
@@ -66,12 +68,15 @@ var allitems = {
       "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449 },
     },
     "Beds" : {
+      "id": "beds",
         "Rustic Bed(Full Size!)" : {"img": "Images/rusticbed.jpg", "price": 399 },
         "King Bed" : {"img": "Images/Kingbed.jpg", "price": 599 },
         "Queen Bed" : {"img": "Images/queenbed2.jpg", "price": 695 },
         "Iron king bed" : {"img": "Images/ironking.jpg", "price": 795 },
+        "Queen Bed" : {"img": "Images/queenbed.jpg", "price": 599 },
     },
     "Other Items" : {
+      "id": "other-items",
         "Squash Memory Books" : {"img": "Images/squashmemorybooks.jpg", "price": 22 },
       "Geometry Towels" : {"img": "Images/geotowels.jpg", "price": 22 },
       "Lamp" : {"img": "Images/lamp.jpg", "price": 75.95 },
@@ -212,7 +217,7 @@ function searchback() {
   document.getElementById("searchbox").value = "";
 }
 
-function addcards(self, items) {
+/*function addcards(self, items) {
   for (category in items) {
       var title = document.createElement("h1");
       title.innerHTML = category;
@@ -244,6 +249,53 @@ function addcards(self, items) {
       }
   }
 }
+*/
+function addcards(self, items) {
+  for (category in items) {
+    if (category === "id") continue; // Skip the id field
+
+    var title = document.createElement("h1");
+    title.innerHTML = category;
+    title.className = "categorytitle";
+    title.id = items[category].id; // Assigning the stored id
+
+    var container = document.createElement("div");
+    container.className = "category";
+
+    self.appendChild(title);
+    self.appendChild(container);
+
+    for (itemkey in items[category]) {
+      if (itemkey === "id") continue; // Skip id property
+
+      var item = document.createElement("div");
+      item.className = "card";
+
+      item.innerHTML =
+        "<img src='" +
+        items[category][itemkey].img +
+        "' alt='Food Image'>" +
+        "<div class='info'>" +
+        "<h2 id='name'>" +
+        itemkey +
+        "</h2>" +
+        "<p value = '" +
+        items[category][itemkey].price +
+        "' id='v'>$" +
+        items[category][itemkey].price +
+        " per item</p>" +
+        "<div class='quantity-selector'>" +
+        "<label for='quantity'>Quantity: </label>" +
+        "<input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>" +
+        "</div>" +
+        "<button onclick='addToCart(this)' id='add'>Add to Cart</button>" +
+        "</div>";
+
+      container.appendChild(item);
+    }
+  }
+}
+
 function addcards(self, items) {
   for (category in items) {
       var title = document.createElement("h1");
