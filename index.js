@@ -4,8 +4,6 @@ var allitems = {
     "Tables and desks" : {
       "id": "tables-and-desks",
       "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
-      //8 chairs refninished top, 2 leaves
-
       //table pads in leather case 8 chair 2 leaves
       "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449 },
       "Side table" : {"img": "Images/sidetable.jpg", "price": 199 },
