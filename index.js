@@ -251,49 +251,41 @@ function searchback() {
 }
 */
 function addcards(self, items) {
-  for (category in items) {
-    if (category === "id") continue; // Skip the id field
+    for (category in items) {
+        if (!items[category].id) continue; // Ensures each category has an ID
 
-    var title = document.createElement("h1");
-    title.innerHTML = category;
-    title.className = "categorytitle";
-    title.id = items[category].id; // Assigning the stored id
+        var title = document.createElement("h1");
+        title.innerHTML = category;
+        title.className = "categorytitle";
+        title.id = items[category].id; // Assign the stored ID
 
-    var container = document.createElement("div");
-    container.className = "category";
+        var container = document.createElement("div");
+        container.className = "category";
 
-    self.appendChild(title);
-    self.appendChild(container);
+        self.appendChild(title);
+        self.appendChild(container);
 
-    for (itemkey in items[category]) {
-      if (itemkey === "id") continue; // Skip id property
+        for (itemkey in items[category]) {
+            if (itemkey === "id") continue; // Skip the ID property in item list
 
-      var item = document.createElement("div");
-      item.className = "card";
+            var item = document.createElement("div");
+            item.className = "card";
 
-      item.innerHTML =
-        "<img src='" +
-        items[category][itemkey].img +
-        "' alt='Food Image'>" +
-        "<div class='info'>" +
-        "<h2 id='name'>" +
-        itemkey +
-        "</h2>" +
-        "<p value = '" +
-        items[category][itemkey].price +
-        "' id='v'>$" +
-        items[category][itemkey].price +
-        " per item</p>" +
-        "<div class='quantity-selector'>" +
-        "<label for='quantity'>Quantity: </label>" +
-        "<input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>" +
-        "</div>" +
-        "<button onclick='addToCart(this)' id='add'>Add to Cart</button>" +
-        "</div>";
+            item.innerHTML =
+                "<img src='" + items[category][itemkey].img + "' alt='Food Image'>" +
+                "<div class='info'>" +
+                "<h2 id='name'>" + itemkey + "</h2>" +
+                "<p value = '" + items[category][itemkey].price + "' id='v'>$" + items[category][itemkey].price + " per item</p>" +
+                "<div class='quantity-selector'>" +
+                "<label for='quantity'>Quantity: </label>" +
+                "<input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>" +
+                "</div>" +
+                "<button onclick='addToCart(this)' id='add'>Add to Cart</button>" +
+                "</div>";
 
-      container.appendChild(item);
+            container.appendChild(item);
+        }
     }
-  }
 }
 
 function addcards(self, items) {
