@@ -7,7 +7,7 @@ body {
     
     margin: 0;
     padding: 0;
-    background: url('bg.svg'); /* Set the SVG as the background */
+    background: url('Images/bg.svg'); /* Set the SVG as the background */
     background-size: cover; /* Ensure it covers the full screen */
     background-position: center; /* Center the image */
     background-repeat: repeat; /* Allow looping pattern */
