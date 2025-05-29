@@ -4,17 +4,16 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: white;
+    
     margin: 0;
     padding: 0;
-}
-body {
     background: url('bg.svg'); /* Set the SVG as the background */
     background-size: cover; /* Ensure it covers the full screen */
     background-position: center; /* Center the image */
     background-repeat: repeat; /* Allow looping pattern */
     opacity: 0.8; /* Make it slightly transparent */
 }
+
 
 .categorytitle {
     padding-top: 60px;
