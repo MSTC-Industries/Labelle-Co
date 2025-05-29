@@ -4,7 +4,7 @@ var allitems = {
     "Tables and desks" : {
       "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
       //8 chairs refninished top, 2 leaves
-      
+      "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699 },
       
       
       "Dining Table" : {"img": "Images/diningtable2.jpg", "price": 1699 },
