@@ -288,7 +288,7 @@ function addcards(self, items) {
         }
     }
 }
-*/
+
 function addcards(self, items) {
   for (category in items) {
       var title = document.createElement("h1");
@@ -330,3 +330,4 @@ function addcards(self, items) {
       }
   }
 }
+*/
