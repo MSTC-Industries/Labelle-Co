@@ -89,7 +89,7 @@ a {
 }
 
 .navbar a:hover {
-    background-color: skyblue;
+    background-color: rgb(92, 193, 193);
     text-decoration: none;
 }
 
@@ -98,7 +98,7 @@ a {
     display: inline-block;
     font-size: 2rem;
     border: none;
-    background-color: skyblue;
+    background-color: rgb(92, 193, 193);
     padding: 2.34rem;
     color: white;
     cursor: pointer;
@@ -106,7 +106,7 @@ a {
 }
 
 #button:hover {
-    background-color: gray;
+    background-color: rgb(255, 199, 95);
 }
 
 /* Dropdown */
@@ -116,7 +116,7 @@ a {
     position: absolute;
     top: 7.6rem;
     right: 5.58rem;
-    background-color: lightgray;
+    background-color: rgb(235, 212, 105);
     z-index: 9999; /* Ensures it's above other elements */
     width: 200px;
 }
@@ -358,33 +358,33 @@ input[type="number"]::-webkit-inner-spin-button,
         }
 button {
     margin-top: 0.3rem;
-    background-color: burlywood;
+    background-color: rgba(0, 128, 0, 0.7);
     cursor: pointer;
     border: none;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 .info button:hover {
-    background-color: burlywood;
+    background-color: rgba(0, 128, 0, 0.7);;
     box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2);
 }
 .info button:active {
-    background-color: burlywood;
+    background-color: rgba(0, 128, 0, 0.7);;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 .searchbar button {
     margin-top: 0.2em;
-    background-color: burlywood;
+    background-color: rgba(0, 128, 0, 0.7);;
     cursor: pointer;
     border-radius: 10px;
     padding: 1rem;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 .searchbar button:hover {
-    background-color: burlywood;
+    background-color: rgba(0, 128, 0, 0.7);;
     box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2);
 }
 .searchbar button:active {
-    background-color: burlywood;
+    background-color: rgba(0, 128, 0, 0.7);;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
