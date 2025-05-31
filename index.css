@@ -1,418 +1,121 @@
-* {
-    box-sizing: border-box;
-}
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+* { box-sizing: border-box; }
 body {
-    font-family: Arial, sans-serif;
-    
-    margin: 0;
-    padding: 0;
-    background: url('Images/bg.svg'); /* Set the SVG as the background */
-    /*background-size: cover; Ensure it covers the full screen */
-    background-position: center; /* Center the image */
-    background-repeat: repeat; /* Allow looping pattern */
-    opacity: 0.8; /* Make it slightly transparent */
+    font-family: 'Poppins', sans-serif;
+    margin: 0; padding: 0;
+    background: url('Images/bg.svg') center repeat;
+    opacity: 0.8;
 }
-.checkmarks {
-    text-align: center;
-    padding: 0.2rem;
-    margin: 0;
-    display: flex;
+.checkmarks { text-align: center; padding: 0.2rem; margin: 0; display: flex; }
+.checkmarks p { font-size: 14px; color: green; font-weight: bold; }
+.categorytitle { padding-top: 60px; font-size: 40px; }
+.sale-tile, .contactinfo {
+    background: #fff; padding: 2rem; border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); text-align: center;
+    max-width: 900px; margin: 2rem auto;
 }
-
-.checkmarks p {
-    font-size: 14px;
-    color: green;
-    font-weight: bold;
-}
-
-
-.categorytitle {
-    padding-top: 60px;
-    font-size: 40px;
-}
-.sale-tile {
-    background-color: #fff;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    max-width: 900px;
-    margin: 2rem auto;
-}
-
-.sale-tile h1 {
-    font-size: 2rem;
-    color: #333;
-    margin-bottom: 1.5rem;
-}
-
+.sale-tile h1, .contactinfo h1 { font-size: 2rem; color: #333; margin-bottom: 1.5rem; }
 .sale-item {
-    display: flex;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.8); /* Slight transparency */
-    padding: 1rem;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 1rem 0;
+    display: flex; align-items: center; background: rgba(255, 255, 255, 0.8);
+    padding: 1rem; border: 2px solid #ddd; border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 1rem 0;
     transition: transform 0.3s ease;
 }
-
-.sale-item:hover {
-    transform: scale(1.05); /* Slight zoom effect on hover */
-}
-
-.sale-item img {
-    max-width: 150px;
-    border-radius: 5px;
-    margin-right: 1rem;
-}
-
-.sale-details {
-    text-align: left;
-}
-
-.sale-details p {
-    font-size: 1.2rem;
-    color: #333;
-}
-
-.sale-details strong {
-    color: green;
-    font-size: 1.5rem;
-}
-
-.sale-details del {
-    color: red;
-}
-/* Navbar */
-.navbar {
-    font-size: 2rem;
-    display: flex;
-    align-items: center;
-    background: transparent;
-}
-
-a {
-    padding: 1.1rem;
-    text-decoration: none;
-}
-
-.navbar a:hover {
-    background-color: rgb(92, 193, 193);
-    text-decoration: none;
-}
-
-/* Button */
+.sale-item:hover { transform: scale(1.05); }
+.sale-item img { max-width: 150px; border-radius: 5px; margin-right: 1rem; }
+.sale-details { text-align: left; }
+.sale-details p { font-size: 1.2rem; color: #333; }
+.sale-details strong { color: green; font-size: 1.5rem; }
+.sale-details del { color: red; }
+.navbar { font-size: 2rem; display: flex; align-items: center; background: transparent; }
+a { padding: 1.1rem; text-decoration: none; }
+.navbar a:hover { background: rgb(92, 193, 193); }
 #button {
-    display: inline-block;
-    font-size: 2rem;
-    border: none;
-    background-color: rgb(92, 193, 193);
-    padding: 2.34rem;
-    color: white;
-    cursor: pointer;
-    width: 200px;
+    display: inline-block; font-size: 2rem; border: none;
+    background: rgb(92, 193, 193); padding: 2.34rem;
+    color: white; cursor: pointer; width: 200px;
 }
-
-#button:hover {
-    background-color: rgb(255, 199, 95);
-}
-
-/* Dropdown */
+#button:hover { background: rgb(255, 199, 95); }
 .dropdownstuff {
-    font-size: 1.08rem;
-    display: none;
-    position: absolute;
-    top: 7.6rem;
-    right: 5.58rem;
-    background-color: rgb(235, 212, 105);
-    z-index: 9999; /* Ensures it's above other elements */
-    width: 200px;
+    font-size: 1.08rem; display: none; position: absolute; top: 7.6rem; right: 5.58rem;
+    background: rgb(235, 212, 105); z-index: 9999; width: 200px;
 }
-
-.dropdownstuff a {
-    display: block;
-    color: white;
-    text-align: left;
-}
-
-#button:hover .dropdownstuff {
-    display: block;
-}
-
-/* Navigation */
+.dropdownstuff a { display: block; color: white; text-align: left; }
+#button:hover .dropdownstuff { display: block; }
 nav {
-    background: lightblue; /* Green gradient */
-    padding: 10px 0;
+    background: lightblue; 
+    padding: 15px 20px; 
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-nav .logo {
-    font-size: 40px;
-    font-weight: bold;
-    color: white;
-    margin-left: 20px;
-}
-
-nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: center;
-}
-
-nav ul li {
-    margin: 0 15px;
-}
-
-nav ul li a,
-nav ul li .cart-button {
-    color: white;
-    text-decoration: none;
-    font-size: 25px;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-nav ul li a:hover,
-nav ul li .cart-button:hover {
-    text-decoration: underline;
-}
-
-/* Content */
-.container {
-    width: 90%;
-    margin: auto;
-    text-align: center;
-}
-
-/* Food Cards */
-.food-card {
-    justify-content: center;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.food-card .card {
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 15px;
-    margin: 10px;
-    width: 200px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-    height: 400px;
-    align-items: center;
-
-    position: relative; /* Allows absolute positioning inside */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Pushes elements apart */
-}
-
-.food-card img {
-    width: 100%; /* Ensures it doesn’t exceed the card’s width */
-    max-width: 180px; /* Restricts the max width */
-    height: 45%; /* Limits height to 45% of card */
-    object-fit: contain; /* Ensures the image fits inside without stretching */
-    border-radius: 5px;
-}
-
-.food-card h2 {
-    font-size: 1.2em;
-    margin: 10px 0;
-}
-
-/* Quantity Selector */
-.quantity-selector {
-    margin-top: 10px;
-}
-
-.quantity-selector input {
-    width: 50px;
-    padding: 5px;
-    margin-left: 5px;
-}
-
-/* Improved Cart Panel */
-.cart-panel {
-    position: fixed;
-    right: 0;
+    justify-content: space-between; 
+    align-items: center; 
+    width: 100%;
+    position: sticky;
     top: 0;
-    width: 0;
-    height: 100%;
-    background-color: #f8f9fa;
-    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2);
-    overflow-x: hidden;
-    transition: width 0.3s ease-in-out;
     z-index: 1000;
-    border-left: 3px solid #28a745;
 }
-
-/* Cart Content */
-.cart-panel .cart-content {
-    width: 350px;
-    padding: 25px;
-    display: none;
-    text-align: center;
+nav .logo { font-size: 24px; font-weight: bold; color: white; margin-left: 20px; }
+nav ul {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; align-items: center; gap: 20px;
 }
-
-.cart-content div {
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 20px;
+nav ul li { margin: 0 15px; list-style: none; }
+nav ul li a, nav ul li .cart-button {
+    color: white; text-decoration: none; font-size: 25px;
+    background: none; border: none; cursor: pointer;
 }
-
-.cart-content button {
-    height: 30px;
-    width: 60px;
-}
-
-.cart-panel.open {
-    width: 350px;
-}
-
-.cart-panel.open .cart-content {
-    display: block;
-}
-
-/* Buttons */
-.close-cart-button,
-.pay {
-    height: 40px;
-    width: 80px;
-}
-
-/* Cart Items */
-#cartItems {
-    list-style-type: none;
-    padding: 0;
-}
-
-#cartItems li {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    font-size: 16px;
-}
-
-/* Total Amount */
-#totalAmount {
-    font-size: 20px;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
-/* Misc */
-.category {
-    display: flex;
-    flex-wrap: wrap;
+nav ul li a:hover, nav ul li .cart-button:hover { text-decoration: underline; }
+.container { width: 90%; margin: auto; text-align: center; }
+.food-card { justify-content: center; flex-wrap: wrap; align-items: center; padding: 0px; margin: 0px}
+.food-card .card {
+    background: white; border: 1px solid #ddd; border-radius: 5px;
+    padding: 10px; margin: 10px; width: 220px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); height: 450px;
+    position: relative; display: flex; flex-direction: column; justify-content: space-between; 
     align-items: center;
-    justify-content: center; /* Centers items horizontally */
-    text-align: center; /* Ensures text inside elements is centered */
 }
-
-.searchbar {
-    padding: 1rem;
-    display: flex;
+.food-card img {
+    width: 100%; max-width: 180px; height: 45%;
+    object-fit: contain; border-radius: 5px;
 }
-
-.info {
-    position: absolute;
-    bottom: 10px; /* Moves it to the bottom */
-    width: 100%;
+.food-card h2 { font-size: 1.2em; margin: 10px 0; }
+.cart-panel {
+    position: fixed; right: 0; top: 0; width: 0; height: 100%;
+    background: #f8f9fa; box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2);
+    overflow-x: hidden; transition: width 0.3s ease-in-out;
+    z-index: 1000; border-left: 3px solid #28a745;
 }
-
-.checkmarks {
-    position: absolute;
-    top: 200px;
-    width: 100%;
-}
-
+.cart-panel.open { width: 350px; }
+.cart-panel.open .cart-content { display: block; }
+.category { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; text-align: center; }
+.searchbar { padding: 1rem; display: flex; }
+.info { position: absolute; bottom: 10px; width: 100%; }
+.checkmarks { position: absolute; bottom: 180px; width: 100%; }
 #searchbox {
-    width: 10rem;
-    padding: 0.12px;
-    padding-left: 10px;
-    border: 2px solid #ddd;
-    border-radius: 20px;
-    outline: none;
-    font-size: 1rem;
-    transition: 0.3s ease;
+    width: 10rem; padding: 0.12px 10px;
+    border: 2px solid #ddd; border-radius: 20px;
+    outline: none; font-size: 1rem; transition: 0.3s ease;
 }
 input[type="number"] {
-    width: 3rem;
-    height: 1.8rem;
-    padding: 0.1rem;
-    padding-left: 0.4rem;
-    font-size: 16px;
-    border: 0px;
-    border-radius: 7px;
-    outline: none;
-    background-color: burlywood;
+    width: 3rem; height: 1.8rem; padding: 0.1rem 0.4rem;
+    font-size: 16px; border: 0; border-radius: 7px;
+    outline: none; background: burlywood;
 }
-
 input[type="number"]:focus {
-    border-color: #008CBA;
-    box-shadow: 0 0 5px #008CBA;
+    border-color: #008CBA; box-shadow: 0 0 5px #008CBA;
 }
-
-
-input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            opacity: 1; /* Ensure they are visible */
-            cursor: pointer;
-            width: 1rem;
-            height: 1.1rem;
-            border-radius: 50%;
-            margin-top: 1px;
-            transform: scale(1.5);
-            vertical-align: middle;
-        }
 button {
-    margin-top: 0.3rem;
-    background-color: rgba(0, 128, 0, 0.7);
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 0.3rem; background: rgba(0, 128, 0, 0.7);
+    cursor: pointer; border: none; padding: 12px 20px;
+    transition: all 0.3s ease;
+    border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-.info button:hover {
-    background-color: rgba(0, 128, 0, 0.7);;
-    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2);
+button:hover { background: rgba(0, 128, 0, 0.7); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); }
+button:active { background: rgba(0, 128, 0, 0.7); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+footer {
+    background: lightblue;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    font-size: 14px;
+    margin-top: 20px;
 }
-.info button:active {
-    background-color: rgba(0, 128, 0, 0.7);;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-}
-.searchbar button {
-    margin-top: 0.2em;
-    background-color: rgba(0, 128, 0, 0.7);;
-    cursor: pointer;
-    border-radius: 10px;
-    padding: 1rem;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-.searchbar button:hover {
-    background-color: rgba(0, 128, 0, 0.7);;
-    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2);
-}
-.searchbar button:active {
-    background-color: rgba(0, 128, 0, 0.7);;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-#text {
-    margin: 5px;
-    font-size: 20px;
-}
-
-#Products {
-    font-size: 50px;
-}
-
-
