@@ -1,71 +1,74 @@
 var allitems = {
-  //"" : {"img": "", "price": 1.00 },
-  "main.html" : {
-    "Tables and desks" : {
-      "id": "tables-and-desks",
-      "Dining Table" : {"img": "Images/diningtablefirst.jpg", "price": 1699, "single" : true, "specials" : []},
+  /*'main.html' : {
+    'Tables and desks' : {
+      'id': 'tables-and-desks',
+      'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : []},
       //table pads in leather case 8 chair 2 leaves
-      "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449, "single" : true, "specials" : []},
-      "Side table" : {"img": "Images/sidetable.jpg", "price": 199, "single" : true, "specials" : []},
+      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
+      'Side table' : {'img': 'Images/sidetable.jpg', 'price': 199, 'single' : true, 'specials' : []},
       //welded no squeec no screws
-      "French Blue Desk" : {"img": "Images/antiquebluetable.jpg", "price": 389, "single" : true, "specials" : []},
-      "Writing Desk" : {"img": "Images/writingdesk.jpg", "price": 299, "single" : true, "specials" : []},
+      'French Blue Desk' : {'img': 'Images/antiquebluetable.jpg', 'price': 389, 'single' : true, 'specials' : []},
+      'Writing Desk' : {'img': 'Images/writingdesk.jpg', 'price': 299, 'single' : true, 'specials' : []},
       //bamboo chair
-      "Coffee Table" : {"img": "Images/coffeetable.jpg", "price": 399, "single" : true, "specials" : []},
-      "White Coffee Table" : {"img": "Images/coffeetblwhite.jpg", "price": 299, "single" : true, "specials" : []},
-      "Wooden Dinner Table" : {"img": "Images/woodentable.jpg", "price": 1299, "single" : true, "specials" : []},
+      'Coffee Table' : {'img': 'Images/coffeetable.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'White Coffee Table' : {'img': 'Images/coffeetblwhite.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Wooden Dinner Table' : {'img': 'Images/woodentable.jpg', 'price': 1299, 'single' : true, 'specials' : []},
       //leaves
-      "Small Table" : {"img": "Images/smalltable.jpg", "price": 1895, "single" : true, "specials" : []},
+      'Small Table' : {'img': 'Images/smalltable.jpg', 'price': 1895, 'single' : true, 'specials' : []},
   },
-    "Cabinets" : {
-      "id": "cabinets",
-        "Cabinet" : {"img": "Images/salecabinet.jpg", "price": 499, "single" : true, "specials" : []},
-      "Skinny Cabinets" : {"img": "Images/smallcabs.jpg", "price": 299, "single" : true, "specials" : []},
-      "Night Stands(both!)" : {"img": "Images/nightstands.jpg", "price": 399, "single" : true, "specials" : []},
-      "Two Drawer Cabinet" : {"img": "Images/2layercab.jpg", "price": 299, "single" : true, "specials" : []},
-      "Regency Style Dresser" : {"img": "Images/regencystyledresser.jpg", "price": 549, "single" : true, "specials" : []},
-      "Five layer Cabinet" : {"img": "Images/5layercab.jpg", "price": 299, "single" : true, "specials" : []},
-      "Big Blue Cabinet" : {"img": "Images/bigbluecab.jpg", "price": 399, "single" : true, "specials" : []},
-      "Blue Bookshelf" : {"img": "Images/smallbluecab.jpg", "price": 499, "single" : true, "specials" : []},
-      "Beutifal Cabinet" : {"img": "Images/bigbeutifalcabinet.jpg", "price": 529, "single" : true, "specials" : []},
-      "Green Chest" : {"img": "Images/bigbeutifalchest.jpg", "price": 499, "single" : true, "specials" : []},
-      "Hand made bookshelf" : {"img": "Images/handmadebookshelf.jpg", "price": 399, "single" : true, "specials" : []},
-      "Red China Hutch" : {"img": "Images/redcabinet.jpg", "price": 249, "single" : true, "specials" : []},
-      "Tall Blue Cabinet" : {"img": "Images/TallblueCabinet.jpg", "price": 549, "single" : true, "specials" : []},
+    'Cabinets' : {
+      'id': 'cabinets',
+        'Cabinet' : {'img': 'Images/salecabinet.jpg', 'price': 499, 'single' : true, 'specials' : []},
+      'Skinny Cabinets' : {'img': 'Images/smallcabs.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Night Stands(both!)' : {'img': 'Images/nightstands.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Two Drawer Cabinet' : {'img': 'Images/2layercab.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Regency Style Dresser' : {'img': 'Images/regencystyledresser.jpg', 'price': 549, 'single' : true, 'specials' : []},
+      'Five layer Cabinet' : {'img': 'Images/5layercab.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Big Blue Cabinet' : {'img': 'Images/bigbluecab.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Blue Bookshelf' : {'img': 'Images/smallbluecab.jpg', 'price': 499, 'single' : true, 'specials' : []},
+      'Beutifal Cabinet' : {'img': 'Images/bigbeutifalcabinet.jpg', 'price': 529, 'single' : true, 'specials' : []},
+      'Green Chest' : {'img': 'Images/bigbeutifalchest.jpg', 'price': 499, 'single' : true, 'specials' : []},
+      'Hand made bookshelf' : {'img': 'Images/handmadebookshelf.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Red China Hutch' : {'img': 'Images/redcabinet.jpg', 'price': 249, 'single' : true, 'specials' : []},
+      'Tall Blue Cabinet' : {'img': 'Images/TallblueCabinet.jpg', 'price': 549, 'single' : true, 'specials' : []},
       //Original Bamboo
-      "Ballerina cabinet" : {"img": "Images/ballerinacab.jpg", "price": 349, "single" : true, "specials" : []},
-      "Wardrobe" : {"img": "Images/Wardrobe.jpg", "price": 399, "single" : true, "specials" : []},
-      "Chester Drawer" : {"img": "Images/chesterdrawer.jpg", "price": 399, "single" : true, "specials" : []},
-      "Night Stands" : {"img": "Images/nightstands2.jpg", "price": 299, "single" : true, "specials" : []},
-      "Dresser" : {"img": "Images/dresser.jpg", "price": 449, "single" : true, "specials" : []},
-      "Big Drawer" : {"img": "Images/maxstoragedrawer.jpg", "price": 399, "single" : true, "specials" : []},
-      "Small Drawer" : {"img": "Images/small cabinet.jpg", "price": 99, "single" : true, "specials" : []},
-      //"3 drawer night stand" : {"img": "Images/3drawer.jpg", "price": 399, "single" : true, "specials" : []},
-      "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449, "single" : true, "specials" : []},
-      "Grated Night Stand(2x)" : {"img": "Images/gratenightstand.jpg", "price": 399, "single" : true, "specials" : []},
-      "Dresser" : {"img": "Images/large dresser.jpg", "price": 489, "single" : true, "specials" : []},
-      "White Chester Drawers" : {"img": "Images/chesterdrawer2.jpg", "price": 399, "single" : true, "specials" : []},
-      "Lingerie chest" : {"img": "Images/Tallcabinet2.jpg", "price": 299, "single" : true, "specials" : []},
-      "Large Belgian Cabinet" : {"img": "Images/bigwoodenboy.jpg", "price": 1395, "single" : true, "specials" : []},
-      "Tall Cabinet" : {"img": "Images/tallcabinet.jpg", "price": 299, "single" : true, "specials" : []},
-      "Wine&Cabinet" : {"img": "Images/wineandcabindet.jpg", "price": 449, "single" : true, "specials" : []},
+      'Ballerina cabinet' : {'img': 'Images/ballerinacab.jpg', 'price': 349, 'single' : true, 'specials' : []},
+      'Wardrobe' : {'img': 'Images/Wardrobe.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Chester Drawer' : {'img': 'Images/chesterdrawer.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Night Stands' : {'img': 'Images/nightstands2.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Dresser' : {'img': 'Images/dresser.jpg', 'price': 449, 'single' : true, 'specials' : []},
+      'Big Drawer' : {'img': 'Images/maxstoragedrawer.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Small Drawer' : {'img': 'Images/small cabinet.jpg', 'price': 99, 'single' : true, 'specials' : []},
+      //'3 drawer night stand' : {'img': 'Images/3drawer.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
+      'Grated Night Stand(2x)' : {'img': 'Images/gratenightstand.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Dresser' : {'img': 'Images/large dresser.jpg', 'price': 489, 'single' : true, 'specials' : []},
+      'White Chester Drawers' : {'img': 'Images/chesterdrawer2.jpg', 'price': 399, 'single' : true, 'specials' : []},
+      'Lingerie chest' : {'img': 'Images/Tallcabinet2.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Large Belgian Cabinet' : {'img': 'Images/bigwoodenboy.jpg', 'price': 1395, 'single' : true, 'specials' : []},
+      'Tall Cabinet' : {'img': 'Images/tallcabinet.jpg', 'price': 299, 'single' : true, 'specials' : []},
+      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
   },
-    "Beds" : {
-      "id": "beds",
-        "Rustic Bed(Full Size!)" : {"img": "Images/rusticbed.jpg", "price": 399, "single" : true, "specials" : []},
-        "King Bed" : {"img": "Images/Kingbed.jpg", "price": 599, "single" : true, "specials" : []},
-        "Queen Bed" : {"img": "Images/queenbed2.jpg", "price": 695, "single" : true, "specials" : []},
-        "Iron king bed" : {"img": "Images/ironking.jpg", "price": 795, "single" : true, "specials" : []},
-        "Queen Bed" : {"img": "Images/queenbed.jpg", "price": 599, "single" : true, "specials" : []},
+    'Beds' : {
+      'id': 'beds',
+        'Rustic Bed(Full Size!)' : {'img': 'Images/rusticbed.jpg', 'price': 399, 'single' : true, 'specials' : []},
+        'King Bed' : {'img': 'Images/Kingbed.jpg', 'price': 599, 'single' : true, 'specials' : []},
+        'Queen Bed' : {'img': 'Images/queenbed2.jpg', 'price': 695, 'single' : true, 'specials' : []},
+        'Iron king bed' : {'img': 'Images/ironking.jpg', 'price': 795, 'single' : true, 'specials' : []},
+        'Queen Bed' : {'img': 'Images/queenbed.jpg', 'price': 599, 'single' : true, 'specials' : []},
   },
-    "Other Items" : {
-      "id": "other-items",
-        "Squash Memory Books" : {"img": "Images/squashmemorybooks.jpg", "price": 22, "single" : false, "specials" : []},
-      "Geometry Towels" : {"img": "Images/geotowels.jpg", "price": 22, "single" : false, "specials" : []},
-      "Lamp" : {"img": "Images/lamp.jpg", "price": 75.95, "single" : false, "specials" : []},
+    'Other Items' : {
+      'id': 'other-items',
+        'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'specials' : []},
+      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'specials' : []},
+      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'specials' : []},
     },
-  },
+  },*/
 }
+
+//var stripe = Stripe("pk_test_TYooMQauvdEDq54NiTphI7jx"); //for payment, deal w/ this later
+
+fetchData();
 
 let totalprice = 0;
 let toggle = 0;
@@ -226,4 +229,21 @@ function addcards(self, items) {
       container.appendChild(item);
     });
   });
+}
+function fetchData() {
+  fetch('http://localhost:3000/get-data')
+    .then(response => response.json())
+    .then(data => {console.log(data); allitems = data})
+    .catch(error => console.error('Error:', error));
+}
+
+function updateData() {
+  fetch('http://localhost:3000/update-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(allitems)
+  })
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
 }
