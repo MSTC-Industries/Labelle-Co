@@ -1,5 +1,5 @@
 var allitems = {
-  'main.html' : {
+  /*'main.html' : {
     'Tables and Desks' : {
       'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : ['pads in leather case', '8 chairs', '2 leaves']},
       'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
@@ -54,12 +54,13 @@ var allitems = {
       'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'specials' : []},
       'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'specials' : []},
     },
-  },
+  },*/
 }
 
+var orders = {}
+
 //var stripe = Stripe("pk_test_TYooMQauvdEDq54NiTphI7jx"); //for payment, deal w/ this later
-//updateData();
-//fetchData();
+fetchData();
 
 let totalprice = 0;
 
@@ -231,4 +232,38 @@ function updateData() {
   .then(response => response.json())
   .then(data => console.log(data))
   .catch(error => console.error('Error:', error));
+}
+
+function updateOrderData() {
+  fetch('http://localhost:3000/update-order-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders)
+  })
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));
+}
+
+function pay() {
+  if (totalprice === 0) { return; }
+  const cart = document.getElementById("cartItems");
+  cart.querySelectorAll("*").forEach(node => {
+    const text = getChildById(node, "text");
+    if (text) { 
+      orders[text.value] = text.dataset.price / getItemObject(text.value).price;
+    }
+  });
+  console.log(orders)
+}
+
+function getItemObject(itemName) {
+  for (const page in allitems) {
+    for (const category in allitems[page]) {
+      if (allitems[page][category][itemName]) {
+        return allitems[page][category][itemName];
+      }
+    }
+  }
+  return null; // Not found
 }
