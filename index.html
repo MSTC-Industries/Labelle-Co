@@ -7,79 +7,79 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body onload="loadPage('main.html'); ready()">
+    <!-- Navigation Bar -->
     <nav>
         <div class="logo" id="logo">Labelle & Co</div>
-        <ul>
-            <li><a href="#logo">Home</a></li>
-            <li><a href="#Products">Products</a></li>
-            <div class="navbar">
-                <div class="searchbar">
-                    <input type="text" id="searchbox" placeholder = "Search">
-                    <button id="searchenter" onclick="search()">Go!</button>
-                    <button id="searchback" onclick="searchback()">back</button>
-                </div>
-                <button id="button">Shop
-                    <div class="relative">
-                        <div class="dropdownstuff">
-                           <a href="#tables-and-desks">Go to Tables and Desks</a>
-                           <a href="#cabinets">Go to Cabinets</a>
-                           <a href="#beds">Go to Beds</a>
-                           <a href="#other-items">Go to Other Items</a>
-
-                        </div>
-                    </div>
-                </button>
+        <a href="#contactinfo">Home</a></li>
+        <a href="#Products">Products</a></li>
+        <div class="searchbar">
+            <input type="text" id="searchbox" placeholder="Search">
+            <button id="searchenter" onclick="search()">Go!</button>
+            <button id="searchback" onclick="searchback()">Back</button>
+        </div>
+        <button id="button">Shop
+            <div class="dropdownstuff">
+                <a href="#Tables and Desks">Tables and Desks</a>
+                <a href="#Cabinets">Cabinets</a>
+                <a href="#Beds">Beds</a>
+                <a href="#Other Items">Other Items</a>
             </div>
-            <li><button class="cart-button" onclick="toggleCart()">Cart</button></li>
-        </ul>
+        </button>
+        <button class="cart-button" onclick="toggleCart()">Cart</button>
     </nav>
 
-    <div class="contactinfo">
+    <!-- Contact Info -->
+    <div class="contactinfo" id="contactinfo">
         <h1>Contact us at</h1>
         <p>Email: shoplabelleandco@yahoo.com</p>
         <p>Phone: (804)-655-2131</p>
         <p>Address: 8906 W Broad St Suite J, Henrico, VA 23294</p>
+        <br>
+        <a href="https://qr.koalafi.com/a4ff0cb6-00d5-4f53-80fd-1c5700c398d7">Koalafi</a>
+        <a href="https://www.instagram.com/labelleandcompany?igsh=MWN4M2l2dndzejJxdA%3D%3D&utm_source=qr">Instagram</a>
+        <a href="https://www.facebook.com/LabelleandCo?mibextid=ViGcVu">Facebook</a>
     </div>
 
+    <!-- Sale Section -->
     <div class="sale-tile">
         <h1>Catch these end-of-the-month sales before they are gone!</h1>
-        
         <div class="sale-item">
-            <img src="Images/petitebuffetsale.jpg" alt="Petite Buffet Sale">
+            <img src="Images/petitebuffetsale.jpg" alt="Petite Buffet Sale" />
             <div class="sale-details">
                 <p>Petite buffet <strong>$299</strong> <del>$329</del></p>
             </div>
         </div>
-
         <div class="sale-item">
-            <img src="Images/rusticbookshelfsale.jpg" alt="Rustic Bookshelf Sale">
+            <img src="Images/rusticbookshelfsale.jpg" alt="Rustic Bookshelf Sale" />
             <div class="sale-details">
                 <p>Rustic bookshelf <strong>$99</strong> <del>$120</del></p>
             </div>
         </div>
     </div>
 
+    <!-- Dynamic Page Content -->
     <div class="container" id="pagestuff">
         <!-- the pages will go here -->
     </div>
 
+    <!-- Cart Panel -->
     <div id="cart-panel" class="cart-panel">
         <div class="cart-content">
             <h2>Your Cart</h2>
-            <ul id="cartItems">
-            
-            </ul>
+            <ul id="cartItems"></ul>
             <p id="totalAmount">Total: $0.00</p>
             <button class="close-cart-button" onclick="toggleCart()">Close</button>
             <button class="pay" onclick="toggleCart()">Pay</button>
         </div>
     </div>
     
+    <!-- Footer -->
     <footer>
         <p>&copy; 2025 Labelle & Co. All Rights Reserved.</p>
     </footer>
 
-    <!--<script src="https://js.stripe.com/basil/stripe.js"></script>-->
+    <!-- Scripts -->
+    <!-- <script src="https://js.stripe.com/basil/stripe.js"></script> -->
     <script src="index.js"></script>
 </body>
 </html>

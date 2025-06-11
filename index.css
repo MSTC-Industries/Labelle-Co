@@ -1,116 +1,302 @@
+/* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+/* Reset and base styles */
 * { box-sizing: border-box; }
 body {
     font-family: 'Poppins', sans-serif;
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 0;
     background: url('Images/bg.svg') center repeat;
     opacity: 0.8;
 }
-.checkmarks { text-align: center; padding: 0.2rem; margin: 0; display: flex; }
-.checkmarks p { font-size: 14px; color: green; font-weight: bold; }
-.categorytitle { padding-top: 60px; font-size: 40px; }
-.sale-tile, .contactinfo {
-    background: #fff; padding: 2rem; border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); text-align: center;
-    max-width: 900px; margin: 2rem auto;
-}
-.sale-tile h1, .contactinfo h1 { font-size: 2rem; color: #333; margin-bottom: 1.5rem; }
-.sale-item {
-    display: flex; align-items: center; background: rgba(255, 255, 255, 0.8);
-    padding: 1rem; border: 2px solid #ddd; border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 1rem 0;
-    transition: transform 0.3s ease;
-}
-.sale-item:hover { transform: scale(1.05); }
-.sale-item img { max-width: 150px; border-radius: 5px; margin-right: 1rem; }
-.sale-details { text-align: left; }
-.sale-details p { font-size: 1.2rem; color: #333; }
-.sale-details strong { color: green; font-size: 1.5rem; }
-.sale-details del { color: red; }
-.navbar { font-size: 2rem; display: flex; align-items: center; background: transparent; }
-a { padding: 1.1rem; text-decoration: none; }
-.navbar a:hover { background: rgb(92, 193, 193); }
-#button {
-    display: inline-block; font-size: 2rem; border: none;
-    background: rgb(92, 193, 193); padding: 2.34rem;
-    color: white; cursor: pointer; width: 200px;
-}
-#button:hover { background: rgb(255, 199, 95); }
-.dropdownstuff {
-    font-size: 1.08rem; display: none; position: absolute; top: 7.6rem; right: 5.58rem;
-    background: rgb(235, 212, 105); z-index: 9999; width: 200px;
-}
-.dropdownstuff a { display: block; color: white; text-align: left; }
-#button:hover .dropdownstuff { display: block; }
+
+/* Navbar styles */
 nav {
-    background: lightblue; 
-    padding: 15px 20px; 
+    background: lightblue;
+    padding: 10px 0px;
     display: flex;
-    justify-content: space-between; 
-    align-items: center; 
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
     position: sticky;
     top: 0;
     z-index: 1000;
+    list-style: none;
+    margin: 0;
+    flex-wrap: wrap;
 }
-nav .logo { font-size: 24px; font-weight: bold; color: white; margin-left: 20px; }
-nav ul {
-    list-style: none; margin: 0; padding: 0;
-    display: flex; align-items: center; gap: 20px;
+nav .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-left: 20px;
 }
-nav ul li { margin: 0 15px; list-style: none; }
-nav ul li a, nav ul li .cart-button {
-    color: white; text-decoration: none; font-size: 25px;
-    background: none; border: none; cursor: pointer;
+nav div, nav a, nav button {
+    margin: 0px;
+    z-index: 1001;
 }
-nav ul li a:hover, nav ul li .cart-button:hover { text-decoration: underline; }
-.container { width: 90%; margin: auto; text-align: center; }
-.food-card { justify-content: center; flex-wrap: wrap; align-items: center; padding: 0px; margin: 0px}
+nav a,
+nav .cart-button {
+    color: white;
+    text-decoration: none;
+    font-size: 25px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+nav a:hover,
+a {
+    padding: 5px;
+    text-decoration: none;
+}
+
+/* Dropdown styles */
+#button {
+    display: inline-block;
+    font-size: 2rem;
+    border: none;
+    background: rgb(92, 193, 193);
+    padding: 1rem;
+    color: white;
+    cursor: pointer;
+    width: 150px;
+    position: relative;
+}
+#button:hover {
+    background: rgb(255, 199, 95);
+}
+.dropdownstuff {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background: rgb(235, 212, 105);
+    z-index: 9999;
+    width: 150px;
+}
+.dropdownstuff a {
+    display: block;
+    color: white;
+    text-align: left;
+    font-size: 20px;
+}
+#button:hover .dropdownstuff {
+    display: block;
+}
+
+/* Search bar */
+.searchbar {
+    padding: 1rem;
+    display: flex;
+}
+#searchbox {
+    width: 10rem;
+    padding: 0.12px 10px;
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    font-size: 1rem;
+    transition: 0.3s ease;
+}
+
+/* Sale and contact tiles */
+.sale-tile,
+.contactinfo {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 900px;
+    margin: 2rem auto;
+}
+.sale-tile h1,
+.contactinfo h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+.sale-item {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+    transition: transform 0.3s ease;
+}
+.sale-item:hover {
+    transform: scale(1.05);
+}
+.sale-item img {
+    max-width: 150px;
+    border-radius: 5px;
+    margin-right: 1rem;
+}
+.sale-details {
+    text-align: left;
+}
+.sale-details p {
+    font-size: 1.2rem;
+    color: #333;
+}
+.sale-details strong {
+    color: green;
+    font-size: 1.5rem;
+}
+.sale-details del {
+    color: red;
+}
+
+/* Cart panel */
+.cart-panel {
+    position: fixed;
+    padding-left: 10px;
+    right: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    background: #f8f9fa;
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2);
+    overflow-x: hidden;
+    transition: width 0.3s ease-in-out;
+    z-index: 1000;
+    border-left: 3px solid #28a745;
+}
+.cart-panel.open {
+    width: 350px;
+}
+.cart-panel.open .cart-content {
+    display: block;
+}
+
+#cartItems {
+    padding: 0px;
+    margin: 0px;
+}
+
+#cartItems div {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 0px;
+}
+
+/* General containers */
+.container {
+    width: 90%;
+    margin: auto;
+    text-align: center;
+}
+.category {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Food cards */
+.food-card {
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+}
 .food-card .card {
-    background: white; border: 1px solid #ddd; border-radius: 5px;
-    padding: 10px; margin: 10px; width: 220px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); height: 450px;
-    position: relative; display: flex; flex-direction: column; justify-content: space-between; 
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px;
+    width: 220px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    height: 450px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
 }
 .food-card img {
-    width: 100%; max-width: 180px; height: 45%;
-    object-fit: contain; border-radius: 5px;
+    width: 100%;
+    max-width: 180px;
+    height: 45%;
+    object-fit: contain;
+    border-radius: 5px;
 }
-.food-card h2 { font-size: 1.2em; margin: 10px 0; }
-.cart-panel {
-    position: fixed; right: 0; top: 0; width: 0; height: 100%;
-    background: #f8f9fa; box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2);
-    overflow-x: hidden; transition: width 0.3s ease-in-out;
-    z-index: 1000; border-left: 3px solid #28a745;
+.food-card h2 {
+    font-size: 1.2em;
+    margin: 10px 0;
 }
-.cart-panel.open { width: 350px; }
-.cart-panel.open .cart-content { display: block; }
-.category { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; text-align: center; }
-.searchbar { padding: 1rem; display: flex; }
-.info { position: absolute; bottom: 10px; width: 100%; }
-.checkmarks { position: absolute; bottom: 180px; width: 100%; }
-#searchbox {
-    width: 10rem; padding: 0.12px 10px;
-    border: 2px solid #ddd; border-radius: 20px;
-    outline: none; font-size: 1rem; transition: 0.3s ease;
-}
+
+/* Miscellaneous */
 input[type="number"] {
-    width: 3rem; height: 1.8rem; padding: 0.1rem 0.4rem;
-    font-size: 16px; border: 0; border-radius: 7px;
-    outline: none; background: burlywood;
+    width: 3rem;
+    height: 1.8rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 16px;
+    border: 0;
+    border-radius: 7px;
+    outline: none;
+    background: burlywood;
 }
 input[type="number"]:focus {
-    border-color: #008CBA; box-shadow: 0 0 5px #008CBA;
+    border-color: #008CBA;
+    box-shadow: 0 0 5px #008CBA;
 }
 button {
-    margin-top: 0.3rem; background: rgba(0, 128, 0, 0.7);
-    cursor: pointer; border: none; padding: 12px 20px;
+    margin-top: 0.3rem;
+    background: rgba(0, 128, 0, 0.7);
+    cursor: pointer;
+    border: none;
+    padding: 12px 20px;
     transition: all 0.3s ease;
-    border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-button:hover { background: rgba(0, 128, 0, 0.7); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); }
-button:active { background: rgba(0, 128, 0, 0.7); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+button:hover {
+    background: rgba(0, 128, 0, 0.7);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+button:active {
+    background: rgba(0, 128, 0, 0.7);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Info and checkmarks */
+.info {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+}
+.checkmarks {
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    position: absolute;
+    bottom: 180px;
+    width: 100%;
+}
+.checkmarks p {
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+    color: green;
+    font-weight: bold;
+    padding-left: 10px;
+}
+.categorytitle {
+    padding-top: 60px;
+    font-size: 40px;
+}
+
+/* Footer */
 footer {
     background: lightblue;
     color: white;
