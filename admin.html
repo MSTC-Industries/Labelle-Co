@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Inventory</title>
+  <style>
+    table { border-collapse: collapse; }
+    td, th { border: 1px solid #ccc; padding: 4px; }
+    input[type="text"], input[type="number"] { width: 80px; }
+  </style>
+</head>
+<body>
+  <h2>Orders</h2>
+  <p>Use this page to manage orders. You can view, edit, and delete orders.</p>
+  <p>Cancled orders restore inventory automatially, and accepting orders only removes the order; you have to manually update the inventory.</p>
+  <div id="orders"></div>
+  <button onclick="loadOrders()">Refresh Orders</button>
+
+  <h1>Inventory Admin</h1>
+  <p>Use this page to manage the inventory. You can add, edit, and delete items.</p>
+  <p>Stock is decreased when multiple items are placed on hold</p>
+
+  <label for="pageSelect">Select Page:</label>
+  <select id="pageSelect" onchange="switchPage(this.value)"></select>
+
+  <button onclick="addNewItem()">Add New Item</button>
+  <button onclick="saveAll()">Save All Changes</button>
+  <button onclick="loadInventory()">Reload Inventory</button>
+  <div id="inventory"></div>
+  <script src="admin.js"></script>
+</body>
+</html>

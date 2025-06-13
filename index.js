@@ -1,68 +1,16 @@
-var allitems = {
-  /*'main.html' : {
-    'Tables and Desks' : {
-      'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : ['pads in leather case', '8 chairs', '2 leaves']},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
-      'Side table' : {'img': 'Images/sidetable.jpg', 'price': 199, 'single' : true, 'specials' : ['welded/no screws', 'no sqeak']},
-      'French Blue Desk' : {'img': 'Images/antiquebluetable.jpg', 'price': 389, 'single' : true, 'specials' : []},
-      'Writing Desk' : {'img': 'Images/writingdesk.jpg', 'price': 299, 'single' : true, 'specials' : ['bamboo chair']},
-      'Coffee Table' : {'img': 'Images/coffeetable.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'White Coffee Table' : {'img': 'Images/coffeetblwhite.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Wooden Dinner Table' : {'img': 'Images/woodentable.jpg', 'price': 1299, 'single' : true, 'specials' : ['leaves']},
-      'Small Table' : {'img': 'Images/smalltable.jpg', 'price': 1895, 'single' : true, 'specials' : []},
-  },
-    'Cabinets' : {
-      'Cabinet' : {'img': 'Images/salecabinet.jpg', 'price': 499, 'single' : true, 'specials' : []},
-      'Skinny Cabinets' : {'img': 'Images/smallcabs.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Night Stands(both!)' : {'img': 'Images/nightstands.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Two Drawer Cabinet' : {'img': 'Images/2layercab.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Regency Style Dresser' : {'img': 'Images/regencystyledresser.jpg', 'price': 549, 'single' : true, 'specials' : []},
-      'Five layer Cabinet' : {'img': 'Images/5layercab.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Big Blue Cabinet' : {'img': 'Images/bigbluecab.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Blue Bookshelf' : {'img': 'Images/smallbluecab.jpg', 'price': 499, 'single' : true, 'specials' : []},
-      'Beutifal Cabinet' : {'img': 'Images/bigbeutifalcabinet.jpg', 'price': 529, 'single' : true, 'specials' : []},
-      'Green Chest' : {'img': 'Images/bigbeutifalchest.jpg', 'price': 499, 'single' : true, 'specials' : []},
-      'Hand made bookshelf' : {'img': 'Images/handmadebookshelf.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Red China Hutch' : {'img': 'Images/redcabinet.jpg', 'price': 249, 'single' : true, 'specials' : []},
-      'Tall Blue Cabinet' : {'img': 'Images/TallblueCabinet.jpg', 'price': 549, 'single' : true, 'specials' : ['original bamboo']},
-      'Ballerina cabinet' : {'img': 'Images/ballerinacab.jpg', 'price': 349, 'single' : true, 'specials' : []},
-      'Wardrobe' : {'img': 'Images/Wardrobe.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Chester Drawer' : {'img': 'Images/chesterdrawer.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Night Stands' : {'img': 'Images/nightstands2.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Dresser' : {'img': 'Images/dresser.jpg', 'price': 449, 'single' : true, 'specials' : []},
-      'Big Drawer' : {'img': 'Images/maxstoragedrawer.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Small Drawer' : {'img': 'Images/small cabinet.jpg', 'price': 99, 'single' : true, 'specials' : []},
-      //'3 drawer night stand' : {'img': 'Images/3drawer.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
-      'Grated Night Stand(2x)' : {'img': 'Images/gratenightstand.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Dresser' : {'img': 'Images/large dresser.jpg', 'price': 489, 'single' : true, 'specials' : []},
-      'White Chester Drawers' : {'img': 'Images/chesterdrawer2.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'Lingerie chest' : {'img': 'Images/Tallcabinet2.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Large Belgian Cabinet' : {'img': 'Images/bigwoodenboy.jpg', 'price': 1395, 'single' : true, 'specials' : []},
-      'Tall Cabinet' : {'img': 'Images/tallcabinet.jpg', 'price': 299, 'single' : true, 'specials' : []},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : []},
-  },
-    'Beds' : {
-      'Rustic Bed(Full Size!)' : {'img': 'Images/rusticbed.jpg', 'price': 399, 'single' : true, 'specials' : []},
-      'King Bed' : {'img': 'Images/Kingbed.jpg', 'price': 599, 'single' : true, 'specials' : []},
-      'Queen Bed' : {'img': 'Images/queenbed2.jpg', 'price': 695, 'single' : true, 'specials' : []},
-      'Iron king bed' : {'img': 'Images/ironking.jpg', 'price': 795, 'single' : true, 'specials' : []},
-      'Queen Bed' : {'img': 'Images/queenbed.jpg', 'price': 599, 'single' : true, 'specials' : []},
-  },
-    'Other Items' : {
-      'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'specials' : []},
-      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'specials' : []},
-      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'specials' : []},
-    },
-  },*/
+var allitems = {}
+
+var order = {
+  "name" : "",
+  "phone" : "",
+  "email" : "",
+  "items" : {}
 }
 
-var orders = {}
+let totalprice = 0;
+let currentpage = "";
 
 //var stripe = Stripe("pk_test_TYooMQauvdEDq54NiTphI7jx"); //for payment, deal w/ this later
-fetchData();
-
-let totalprice = 0;
 
 function ready() {
   document.getElementById("searchback").style.display = "none";
@@ -70,6 +18,7 @@ function ready() {
 
 function toggleCart() {
   document.getElementById("cart-panel").classList.toggle("open");
+  document.getElementById("error-message").innerHTML = "";
 }
 
 function getChildById(parent, id) {
@@ -81,7 +30,10 @@ function addToCart(button, single) {
   const cart = document.getElementById("cartItems");
   const title = getChildById(parent, "name");
   const priceElem = getChildById(parent, "v");
-  let quantity = single ? 1 : getChildById(parent, "quantity")?.value || 0;
+  let quantityInput = getChildById(parent, "quantity");
+  let max = quantityInput ? Number(quantityInput.max) : 1;
+  let quantity = single ? 1 : Math.min(Number(quantityInput?.value || 0), max);
+  if (quantityInput && quantityInput.value > max) quantityInput.value = max;
   const pricePer = priceElem?.getAttribute("value") || 1;
 
   let itemTotal = quantity * pricePer;
@@ -117,6 +69,8 @@ function addToCart(button, single) {
       const quantityInput = document.createElement("input");
       quantityInput.type = "number";
       quantityInput.id = "quantity";
+      quantityInput.min = 1;
+      quantityInput.max = max;
       quantityInput.dataset.multiplier = pricePer;
       quantityInput.value = getChildById(parent, "quantity")?.value || 0;
       cartitem.appendChild(quantityInput);
@@ -139,6 +93,8 @@ function addToCart(button, single) {
 
 function updateCartItem(item) {
   const quantity = getChildById(item, "quantity");
+  const max = Number(quantity.max);
+  if (quantity.value > max) quantity.value = max;
   const newPrice = quantity.dataset.multiplier * quantity.value;
   const text = getChildById(item, "text");
   text.innerHTML = `${text.value}: $${newPrice}`;
@@ -155,7 +111,8 @@ async function loadPage(page) {
     if (!response.ok) throw new Error("Page not found");
     const data = await response.text();
     document.getElementById("pagestuff").innerHTML = data;
-    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[page]);
+    currentpage = page;
+    await fetchData()
   } catch (error) {
     console.error(error);
     document.getElementById("pagestuff").innerHTML = "<p>Error loading page</p>";
@@ -177,6 +134,7 @@ function searchback() {
 }
 
 function addcards(self, items) {
+  self.innerHTML = "";
   Object.entries(items).forEach(([category, categoryItems]) => {
     const title = document.createElement("h1");
     title.innerHTML = category;
@@ -193,10 +151,21 @@ function addcards(self, items) {
       const item = document.createElement("div");
       item.className = "card";
 
+      // Add green banner if on hold
+      let holdBanner = "";
+      if (itemDetails.onhold === true) {
+        holdBanner = `<div class="hold-banner">On Hold</div>`;
+      } else if ('stock' in itemDetails && itemDetails.stock === 0) {
+        holdBanner = `<div class="outofstock-banner">All on Hold</div>`;
+      }
+
       const checkmarks = itemDetails.specials.map(quality => `<p>✅ ${quality}</p>`).join("");
       const checkmarkSection = `<div class='checkmarks'>${checkmarks}</div>`;
 
+      const disabled = (itemDetails.onhold === true || ('stock' in itemDetails && itemDetails.stock === 0)) ? "disabled" : "";
+
       const itemHTML = `
+        ${holdBanner}
         <img src='${itemDetails.img}' alt='Product Image'>
         ${checkmarkSection}
         <div class='info'>
@@ -205,65 +174,175 @@ function addcards(self, items) {
           ${!itemDetails.single ? `
             <div class='quantity-selector'>
               <label for='quantity'>Quantity: </label>
-              <input type='number' id='quantity' name='quantity' min='0' max='20' value='0'>
+              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock}' value='0'>
             </div>` : ""}
-          <button onclick='addToCart(this, ${itemDetails.single})' id='add'>Add to Cart</button>
+          <button onclick='addToCart(this, ${itemDetails.single})' id='add' ${disabled}>Add to Cart</button>
         </div>`;
 
       item.innerHTML = itemHTML;
       container.appendChild(item);
     });
   });
+
+  populateCategoryDropdown();
 }
 
-function fetchData() {
-  fetch('http://localhost:3000/get-data')
-    .then(response => response.json())
-    .then(data => {console.log(data); allitems = data})
-    .catch(error => console.error('Error:', error));
-}
-
-function updateData() {
-  fetch('http://localhost:3000/update-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(allitems)
-  })
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error));
-}
-
-function updateOrderData() {
-  fetch('http://localhost:3000/update-order-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orders)
-  })
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error));
-}
-
-function pay() {
+async function pay(event) {
+  if (event) event.preventDefault();
   if (totalprice === 0) { return; }
+  await fetchData();
   const cart = document.getElementById("cartItems");
+
+  order.name = document.getElementById("nameinput").value;
+  order.phone = document.getElementById("phone").value;
+  order.email = document.getElementById("email").value;
+
+  var failed = false;
+  var failedItem = ""; // Track which item failed
   cart.querySelectorAll("*").forEach(node => {
     const text = getChildById(node, "text");
     if (text) { 
-      orders[text.value] = text.dataset.price / getItemObject(text.value).price;
+      var itemData = getItemObject(text.value)
+      var quantity = text.dataset.price / itemData.data.price;
+      if ((('onhold' in itemData.data && itemData.data.onhold == true) || ('stock' in itemData.data && itemData.data.stock < quantity)) && !failed ) { 
+        failed = true;
+        failedItem = text.value;
+      } else {
+        order.items[text.value] = quantity;
+
+        if ('onhold' in itemData.data) { allitems[itemData.page][itemData.category][itemData.item].onhold = true; }
+        else if ('stock' in itemData.data) { allitems[itemData.page][itemData.category][itemData.item].stock -= quantity; }
+      }
     }
   });
-  console.log(orders)
+
+  if (failed) {
+    document.getElementById("error-message").innerText = 
+      `Sorry, the item "${failedItem}" is already on hold or is out of stock and cannot be ordered.`;
+    document.getElementById("error-message").style.color = "red";
+  } else {
+    document.getElementById("error-message").innerText = 
+      `Thank you for your order, ${order.name}! Your order will be processed shortly.`;
+    document.getElementById("error-message").style.color = "green";
+    document.getElementById("cartItems").innerHTML = "";
+    totalprice = 0;
+    document.getElementById("totalAmount").innerHTML = "Total: $0.00";
+    await saveData();
+
+    // Save order to backend
+    await submitOrder({...order, items: {...order.items}});
+
+    await fetch('http://localhost:3000/notify-owner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+
+    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
+  }
+
+  order.items = {};
 }
 
 function getItemObject(itemName) {
   for (const page in allitems) {
     for (const category in allitems[page]) {
       if (allitems[page][category][itemName]) {
-        return allitems[page][category][itemName];
+        return {
+          "page" : page,
+          "category" : category,
+          "item" : itemName,
+          "data" : allitems[page][category][itemName]
+        };
       }
     }
   }
   return null; // Not found
+}
+
+// Load allitems from the cloud
+async function fetchData() {
+  try {
+    const response = await fetch('http://localhost:3000/cloud');
+    const data = await response.json();
+    allitems = data;
+    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
+  } catch (error) {
+    console.error('Error fetching items from cloud:', error);
+  }
+}
+
+// Save allitems to the cloud
+async function saveData() {
+  try {
+    const response = await fetch('http://localhost:3000/cloud', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(allitems)
+    });
+    const data = await response.text();
+    console.log('Saved to cloud:', data);
+  } catch (error) {
+    console.error('Error saving items to cloud:', error);
+  }
+}
+
+async function submitOrder(newOrder) {
+  try {
+    const res = await fetch('http://localhost:3000/orders');
+    let orders = await res.json();
+    if (!Array.isArray(orders)) orders = [];
+    newOrder.id = Date.now();
+    newOrder.status = 'pending';
+    orders.push(newOrder);
+    await fetch('http://localhost:3000/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders)
+    });
+    console.log('Order submitted!');
+  } catch (error) {
+    console.error('Error submitting order:', error);
+  }
+}
+
+function populateCategoryDropdown() {
+  const dropdown = document.getElementById('category-dropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = '';
+  if (!allitems[currentpage]) return;
+  Object.keys(allitems[currentpage]).forEach(category => {
+    const a = document.createElement('a');
+    a.href = `#${category}`;
+    a.textContent = category;
+    dropdown.appendChild(a);
+  });
+}
+
+document.getElementById('cartForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    validateContactAndPay(event);
+});
+ 
+function validateContactAndPay(event) {
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const cart = document.getElementById("cartItems");
+    if (!phone && !email) {
+        document.getElementById('error-message').innerText = "Please provide either a phone number or an email.";
+        document.getElementById('error-message').style.color = "red";
+        event.preventDefault();
+        return false;
+    }
+    // Check if cart is empty
+    if (!cart.hasChildNodes() || cart.innerText.trim() === "") {
+        document.getElementById('error-message').innerText = "Your cart is empty. Please add at least one item.";
+        document.getElementById('error-message').style.color = "red";
+        event.preventDefault();
+        return false;
+    }
+    document.getElementById('error-message').innerText = "";
+    // Call your pay function
+    pay(event);
+    return false; // Prevent default form submission, let pay handle it
 }

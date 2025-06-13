@@ -11,6 +11,10 @@ body {
     opacity: 0.8;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Navbar styles */
 nav {
     background: lightblue;
@@ -183,7 +187,18 @@ a {
     border: 1px solid #ddd;
     border-radius: 5px;
     padding: 10px;
-    margin: 0px;
+    margin: 5px 0px;
+}
+
+.form {
+    width: 15rem;
+    padding: 5px 10px;
+    margin: 5px 0px;
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    font-size: 1rem;
+    transition: 0.3s ease;
 }
 
 /* General containers */
@@ -200,39 +215,71 @@ a {
     text-align: center;
 }
 
-/* Food cards */
-.food-card {
+/* category cards */
+.category-card {
     justify-content: center;
     flex-wrap: wrap;
     align-items: center;
     padding: 0;
     margin: 0;
 }
-.food-card .card {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    margin: 10px;
-    width: 220px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-    height: 450px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px;
+  width: 220px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  height: 450px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 }
-.food-card img {
+.card img {
     width: 100%;
     max-width: 180px;
     height: 45%;
     object-fit: contain;
     border-radius: 5px;
 }
-.food-card h2 {
+.card h2 {
     font-size: 1.2em;
     margin: 10px 0;
+}
+
+.hold-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #28a745;
+  color: #fff;
+  padding: 6px 0;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 6px 6px 0 0;
+  font-size: 1rem;
+  z-index: 2;
+  margin: 0;
+}
+
+.outofstock-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #e74c3c;
+  color: #fff;
+  padding: 6px 0;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 6px 6px 0 0;
+  font-size: 1rem;
+  z-index: 2;
+  margin: 0;
 }
 
 /* Miscellaneous */
@@ -250,7 +297,7 @@ input[type="number"]:focus {
     border-color: #008CBA;
     box-shadow: 0 0 5px #008CBA;
 }
-button {
+button, input[type="submit"] {
     margin-top: 0.3rem;
     background: rgba(0, 128, 0, 0.7);
     cursor: pointer;
@@ -260,11 +307,11 @@ button {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-button:hover {
+button:hover, input[type="submit"]:hover {
     background: rgba(0, 128, 0, 0.7);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
 }
-button:active {
+button:active, input[type="submit"]:active {
     background: rgba(0, 128, 0, 0.7);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

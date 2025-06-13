@@ -18,11 +18,8 @@
             <button id="searchback" onclick="searchback()">Back</button>
         </div>
         <button id="button">Shop
-            <div class="dropdownstuff">
-                <a href="#Tables and Desks">Tables and Desks</a>
-                <a href="#Cabinets">Cabinets</a>
-                <a href="#Beds">Beds</a>
-                <a href="#Other Items">Other Items</a>
+            <div class="dropdownstuff" id="category-dropdown">
+                <!-- Categories will be inserted here -->
             </div>
         </button>
         <button class="cart-button" onclick="toggleCart()">Cart</button>
@@ -68,8 +65,15 @@
             <h2>Your Cart</h2>
             <ul id="cartItems"></ul>
             <p id="totalAmount">Total: $0.00</p>
-            <button class="close-cart-button" onclick="toggleCart()">Close</button>
-            <button class="pay" onclick="toggleCart(); pay()">Pay</button>
+            <form id="cartForm">
+                <input class="form" type="text" id="nameinput" placeholder="Name" required>
+                <input class="form" type="tel" id="phone" placeholder="Phone Number (xxx-xxx-xxxx)" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
+                <input class="form" type="email" id="email" placeholder="Email">
+                <br>
+                <input class="pay" type="submit" value="Place Hold">
+                <button class="close-cart-button" onclick="toggleCart()">Close</button>
+                <div id="error-message" style="margin: 10px 0;"></div>
+            </form>
         </div>
     </div>
     
