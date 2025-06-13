@@ -1,4 +1,4 @@
-const CLOUD_API_URL = 'http://localhost:3000/cloud';
+const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 
 let allitems = {
   /*'main.html' : {
@@ -76,7 +76,7 @@ async function checkAdminPassword() {
         document.body.innerHTML = "<h2>Access denied.</h2><p>No password entered, please reload the page to try again.</p>";
         return false;
     }
-    const res = await fetch('http://localhost:3000/check-admin-password', {
+    const res = await fetch('https://labelle-co-server.vercel.app/check-admin-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
@@ -249,7 +249,7 @@ window.changeCategory = function(oldCategory, item, newCategory) {
 };
 
 function loadOrders() {
-  fetch('http://localhost:3000/orders')
+  fetch('https://labelle-co-server.vercel.app/orders')
     .then(res => res.json())
     .then(orders => {
       const container = document.getElementById('orders');
@@ -282,7 +282,7 @@ function loadOrders() {
 
 window.updateOrderStatus = async function(id, status) {
   // Fetch all orders
-  const res = await fetch('http://localhost:3000/orders');
+  const res = await fetch('https://labelle-co-server.vercel.app/orders');
   let orders = await res.json();
   if (!Array.isArray(orders)) orders = [];
 
@@ -316,7 +316,7 @@ window.updateOrderStatus = async function(id, status) {
     orders.splice(orderIndex, 1);
 
     // Save updated orders and inventory
-    await fetch('http://localhost:3000/orders', {
+    await fetch('https://labelle-co-server.vercel.app/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orders)
@@ -334,7 +334,7 @@ window.updateOrderStatus = async function(id, status) {
   // For accept, just update status
   orders[orderIndex].status = status;
   orders.splice(orderIndex, 1);
-  await fetch('http://localhost:3000/orders', {
+  await fetch('https://labelle-co-server.vercel.app/orders', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(orders)

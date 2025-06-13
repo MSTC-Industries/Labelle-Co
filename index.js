@@ -232,7 +232,7 @@ async function pay(event) {
     // Save order to backend
     await submitOrder({...order, items: {...order.items}});
 
-    await fetch('http://localhost:3000/notify-owner', {
+    await fetch('https://labelle-co-server.vercel.app/notify-owner', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
@@ -263,7 +263,7 @@ function getItemObject(itemName) {
 // Load allitems from the cloud
 async function fetchData() {
   try {
-    const response = await fetch('http://localhost:3000/cloud');
+    const response = await fetch('https://labelle-co-server.vercel.app/cloud');
     const data = await response.json();
     allitems = data;
     addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
@@ -275,7 +275,7 @@ async function fetchData() {
 // Save allitems to the cloud
 async function saveData() {
   try {
-    const response = await fetch('http://localhost:3000/cloud', {
+    const response = await fetch('https://labelle-co-server.vercel.app/cloud', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(allitems)
@@ -289,13 +289,13 @@ async function saveData() {
 
 async function submitOrder(newOrder) {
   try {
-    const res = await fetch('http://localhost:3000/orders');
+    const res = await fetch('https://labelle-co-server.vercel.app/orders');
     let orders = await res.json();
     if (!Array.isArray(orders)) orders = [];
     newOrder.id = Date.now();
     newOrder.status = 'pending';
     orders.push(newOrder);
-    await fetch('http://localhost:3000/orders', {
+    await fetch('https://labelle-co-server.vercel.app/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orders)
