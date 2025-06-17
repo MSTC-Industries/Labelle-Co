@@ -3,59 +3,59 @@ const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 let allitems = {
   /*'main.html' : {
     'Tables and Desks' : {
-      'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : ['pads in leather case', '8 chairs', '2 leaves'], 'onhold' : true},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Side table' : {'img': 'Images/sidetable.jpg', 'price': 199, 'single' : true, 'specials' : ['welded/no screws', 'no sqeak'], 'onhold' : false},
-      'French Blue Desk' : {'img': 'Images/antiquebluetable.jpg', 'price': 389, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Writing Desk' : {'img': 'Images/writingdesk.jpg', 'price': 299, 'single' : true, 'specials' : ['bamboo chair'], 'onhold' : false},
-      'Coffee Table' : {'img': 'Images/coffeetable.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'White Coffee Table' : {'img': 'Images/coffeetblwhite.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Wooden Dinner Table' : {'img': 'Images/woodentable.jpg', 'price': 1299, 'single' : true, 'specials' : ['leaves'], 'onhold' : false},
-      'Small Table' : {'img': 'Images/smalltable.jpg', 'price': 1895, 'single' : true, 'specials' : [], 'onhold' : false},
+      'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : ['pads in leather case', '8 chairs', '2 leaves'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Side table' : {'img': 'Images/sidetable.jpg', 'price': 199, 'single' : true, 'specials' : ['welded/no screws', 'no sqeak'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'French Blue Desk' : {'img': 'Images/antiquebluetable.jpg', 'price': 389, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Writing Desk' : {'img': 'Images/writingdesk.jpg', 'price': 299, 'single' : true, 'specials' : ['bamboo chair'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Coffee Table' : {'img': 'Images/coffeetable.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'White Coffee Table' : {'img': 'Images/coffeetblwhite.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Wooden Dinner Table' : {'img': 'Images/woodentable.jpg', 'price': 1299, 'single' : true, 'specials' : ['leaves'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Small Table' : {'img': 'Images/smalltable.jpg', 'price': 1895, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
   },
     'Cabinets' : {
-      'Cabinet' : {'img': 'Images/salecabinet.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Skinny Cabinets' : {'img': 'Images/smallcabs.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Night Stands(both!)' : {'img': 'Images/nightstands.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Two Drawer Cabinet' : {'img': 'Images/2layercab.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Regency Style Dresser' : {'img': 'Images/regencystyledresser.jpg', 'price': 549, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Five layer Cabinet' : {'img': 'Images/5layercab.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Big Blue Cabinet' : {'img': 'Images/bigbluecab.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Blue Bookshelf' : {'img': 'Images/smallbluecab.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Beutifal Cabinet' : {'img': 'Images/bigbeutifalcabinet.jpg', 'price': 529, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Green Chest' : {'img': 'Images/bigbeutifalchest.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Hand made bookshelf' : {'img': 'Images/handmadebookshelf.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Red China Hutch' : {'img': 'Images/redcabinet.jpg', 'price': 249, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Tall Blue Cabinet' : {'img': 'Images/TallblueCabinet.jpg', 'price': 549, 'single' : true, 'specials' : ['original bamboo'], 'onhold' : false},
-      'Ballerina cabinet' : {'img': 'Images/ballerinacab.jpg', 'price': 349, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Wardrobe' : {'img': 'Images/Wardrobe.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Chester Drawer' : {'img': 'Images/chesterdrawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Night Stands' : {'img': 'Images/nightstands2.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Dresser' : {'img': 'Images/dresser.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Big Drawer' : {'img': 'Images/maxstoragedrawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Small Drawer' : {'img': 'Images/small cabinet.jpg', 'price': 99, 'single' : true, 'specials' : [], 'onhold' : false},
-      //'3 drawer night stand' : {'img': 'Images/3drawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Grated Night Stand(2x)' : {'img': 'Images/gratenightstand.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Dresser' : {'img': 'Images/large dresser.jpg', 'price': 489, 'single' : true, 'specials' : [], 'onhold' : false},
-      'White Chester Drawers' : {'img': 'Images/chesterdrawer2.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Lingerie chest' : {'img': 'Images/Tallcabinet2.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Large Belgian Cabinet' : {'img': 'Images/bigwoodenboy.jpg', 'price': 1395, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Tall Cabinet' : {'img': 'Images/tallcabinet.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false},
+      'Cabinet' : {'img': 'Images/salecabinet.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Skinny Cabinets' : {'img': 'Images/smallcabs.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Night Stands(both!)' : {'img': 'Images/nightstands.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Two Drawer Cabinet' : {'img': 'Images/2layercab.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Regency Style Dresser' : {'img': 'Images/regencystyledresser.jpg', 'price': 549, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Five layer Cabinet' : {'img': 'Images/5layercab.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Big Blue Cabinet' : {'img': 'Images/bigbluecab.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Blue Bookshelf' : {'img': 'Images/smallbluecab.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Beutifal Cabinet' : {'img': 'Images/bigbeutifalcabinet.jpg', 'price': 529, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Green Chest' : {'img': 'Images/bigbeutifalchest.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Hand made bookshelf' : {'img': 'Images/handmadebookshelf.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Red China Hutch' : {'img': 'Images/redcabinet.jpg', 'price': 249, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Tall Blue Cabinet' : {'img': 'Images/TallblueCabinet.jpg', 'price': 549, 'single' : true, 'specials' : ['original bamboo'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Ballerina cabinet' : {'img': 'Images/ballerinacab.jpg', 'price': 349, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Wardrobe' : {'img': 'Images/Wardrobe.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Chester Drawer' : {'img': 'Images/chesterdrawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Night Stands' : {'img': 'Images/nightstands2.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Dresser' : {'img': 'Images/dresser.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Big Drawer' : {'img': 'Images/maxstoragedrawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Small Drawer' : {'img': 'Images/small cabinet.jpg', 'price': 99, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      //'3 drawer night stand' : {'img': 'Images/3drawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Grated Night Stand(2x)' : {'img': 'Images/gratenightstand.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Dresser' : {'img': 'Images/large dresser.jpg', 'price': 489, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'White Chester Drawers' : {'img': 'Images/chesterdrawer2.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Lingerie chest' : {'img': 'Images/Tallcabinet2.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Large Belgian Cabinet' : {'img': 'Images/bigwoodenboy.jpg', 'price': 1395, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Tall Cabinet' : {'img': 'Images/tallcabinet.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
   },
     'Beds' : {
-      'Rustic Bed(Full Size!)' : {'img': 'Images/rusticbed.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false},
-      'King Bed' : {'img': 'Images/Kingbed.jpg', 'price': 599, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Queen Bed' : {'img': 'Images/queenbed2.jpg', 'price': 695, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Iron king bed' : {'img': 'Images/ironking.jpg', 'price': 795, 'single' : true, 'specials' : [], 'onhold' : false},
-      'Queen Bed' : {'img': 'Images/queenbed.jpg', 'price': 599, 'single' : true, 'specials' : [], 'onhold' : false},
+      'Rustic Bed(Full Size!)' : {'img': 'Images/rusticbed.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'King Bed' : {'img': 'Images/Kingbed.jpg', 'price': 599, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Queen Bed' : {'img': 'Images/queenbed2.jpg', 'price': 695, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Iron king bed' : {'img': 'Images/ironking.jpg', 'price': 795, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Queen Bed' : {'img': 'Images/queenbed.jpg', 'price': 599, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
   },
     'Other Items' : {
       //set the # in stock to what's actually in stock
-      'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : []},
-      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : []},
-      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'stock' : 20, 'specials' : []},
+      'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
     },
   },*/
 };
@@ -125,9 +125,9 @@ function renderTable() {
     container.innerHTML = '<p>No data for this page.</p>';
     return;
   }
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Actions</th></tr>';
-  for (const [category, items] of Object.entries(allitems[currentpage])) {
-    for (const [item, details] of Object.entries(items)) {
+  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Profit Split</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Actions</th></tr>';
+for (const [category, items] of Object.entries(allitems[currentpage])) {
+  for (const [item, details] of Object.entries(items)) {
       const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
       const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
       html += `<tr>
@@ -158,6 +158,15 @@ function renderTable() {
             onchange="editItem('${category}','${item}', 'onhold', this.checked)" 
             ${hasStockProp ? 'disabled' : ''}>
         </td>
+        <td>
+          <select onchange="editItem('${category}','${item}','profitSplit', this.value)">
+            ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+              `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>${details.cosignerName || ''}</td>
+        <td>${details.cosignerEmail || ''}</td>
         <td><button onclick="removeItem('${category}','${item}')">Remove</button></td>
       </tr>`;
     }
@@ -203,7 +212,10 @@ window.addNewItem = function() {
     img: img || '',
     price: 0,
     single: false,
-    specials: []
+    specials: [],
+    cosignerName: 'admin', //pls update these
+    cosignerEmail: 'mstc.industries.official@gmail.com',
+    profitSplit: "50/50"
   };
   if (type === 'stock') {
     newItem.stock = 1;
