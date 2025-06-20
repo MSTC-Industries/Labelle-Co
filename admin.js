@@ -1,7 +1,7 @@
 const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 
 let allitems = {
-  /*'main.html' : {
+  'main.html' : {
     'Tables and Desks' : {
       'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : ['pads in leather case', '8 chairs', '2 leaves'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
       'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
@@ -53,11 +53,11 @@ let allitems = {
   },
     'Other Items' : {
       //set the # in stock to what's actually in stock
-      'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
-      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
-      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50'},
+      'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'itemsOnHold' : 0},
+      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'itemsOnHold' : 0},
+      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'itemsOnHold' : 0},
     },
-  },*/
+  },
 };
 
 let currentpage = 'main.html';
@@ -284,7 +284,7 @@ function loadOrders() {
         container.innerHTML = '<p>No orders yet.</p>';
         return;
       }
-      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Admin Profit</th><th>Cosigner Profits</th><th>Status</th></tr>';
+      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Admin Profit</th><th>Cosigner Profits</th><th>Status</th><th>Actions</th></tr>';
       for (const order of orders) {
         // Calculate profits
         let adminProfit = 0;
@@ -341,6 +341,14 @@ function loadOrders() {
           <td>$${adminProfit.toFixed(2)}</td>
           <td>${cosignerProfitsHtml || '-'}</td>
           <td>${order.status}</td>
+          <td>
+          ${order.status === 'pending' && order.orderType === 'hold' ? `
+            <button onclick="acceptOrder(${order.id})">Accept</button>
+            <button onclick="cancelOrder(${order.id})">Cancel</button>
+          ` : order.status === 'pending' && order.orderType === 'buy' ? `
+            <button onclick="acceptOrder(${order.id})">Accept</button>
+          ` : ''}
+        </td>
         </tr>`;
       }
       html += '</table>';
@@ -348,4 +356,109 @@ function loadOrders() {
     });
 
   loadInventory();
+}
+
+async function acceptOrder(orderId) {
+  // Load orders and inventory
+  let orders = await (await fetch('https://labelle-co-server.vercel.app/orders')).json();
+  let orderIndex = orders.findIndex(o => o.id === orderId);
+  if (orderIndex === -1) return;
+  let order = orders[orderIndex];
+
+  // Load inventory
+  let inventory = await (await fetch(CLOUD_API_URL)).json();
+
+  if (order.orderType === 'buy') {
+    // Just delete the order
+    orders.splice(orderIndex, 1);
+  } else if (order.orderType === 'hold') {
+    // For each item, remove hold and reduce inventory
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      let found = false;
+      for (const page in inventory) {
+        for (const category in inventory[page]) {
+          if (inventory[page][category][itemName]) {
+            let item = inventory[page][category][itemName];
+            if ('onhold' in item) {
+              item.onhold = false;
+              // Remove item from inventory (buying it)
+              delete inventory[page][category][itemName];
+            } else if ('itemsOnHold' in item && 'stock' in item) {
+              item.itemsOnHold = Math.max(0, item.itemsOnHold - qty);
+              item.stock = Math.max(0, item.stock - qty);
+              if (item.stock === 0) delete inventory[page][category][itemName];
+            }
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+    // Remove the order
+    orders.splice(orderIndex, 1);
+  }
+
+  // Save updated orders and inventory
+  await fetch('https://labelle-co-server.vercel.app/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orders)
+  });
+  await fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inventory)
+  });
+
+  loadOrders();
+}
+
+async function cancelOrder(orderId) {
+  // Load orders and inventory
+  let orders = await (await fetch('https://labelle-co-server.vercel.app/orders')).json();
+  let orderIndex = orders.findIndex(o => o.id === orderId);
+  if (orderIndex === -1) return;
+  let order = orders[orderIndex];
+
+  // Load inventory
+  let inventory = await (await fetch(CLOUD_API_URL)).json();
+
+  if (order.orderType === 'hold') {
+    // For each item, remove hold and restore itemsOnHold
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      let found = false;
+      for (const page in inventory) {
+        for (const category in inventory[page]) {
+          if (inventory[page][category][itemName]) {
+            let item = inventory[page][category][itemName];
+            if ('onhold' in item) {
+              item.onhold = false;
+            } else if ('itemsOnHold' in item) {
+              item.itemsOnHold = Math.max(0, item.itemsOnHold - qty);
+            }
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+    // Remove the order
+    orders.splice(orderIndex, 1);
+  }
+
+  // Save updated orders and inventory
+  await fetch('https://labelle-co-server.vercel.app/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orders)
+  });
+  await fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inventory)
+  });
+
+  loadOrders();
 }
