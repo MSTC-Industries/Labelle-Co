@@ -125,11 +125,19 @@ function renderTable() {
     container.innerHTML = '<p>No data for this page.</p>';
     return;
   }
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Profit Split</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Actions</th></tr>';
-for (const [category, items] of Object.entries(allitems[currentpage])) {
-  for (const [item, details] of Object.entries(items)) {
+  let totalAdminProfit = 0;
+  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Profit Split</th><th>Admin Profit</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Actions</th></tr>';
+  for (const [category, items] of Object.entries(allitems[currentpage])) {
+    for (const [item, details] of Object.entries(items)) {
       const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
       const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+      
+      const profitSplit = details.profitSplit || "50/50";
+      const price = Number(details.price) || 0;
+      const adminPercent = Number(profitSplit.split('/')[0]) || 50;
+      const adminProfit = ((price * adminPercent) / 100).toFixed(2);
+      totalAdminProfit += adminProfit;
+      
       html += `<tr>
         <td>
         <select onchange="changeCategory('${category}','${item}', this.value)">
@@ -165,6 +173,7 @@ for (const [category, items] of Object.entries(allitems[currentpage])) {
             ).join('')}
           </select>
         </td>
+        <td>${adminProfit}</td>
         <td>${details.cosignerName || ''}</td>
         <td>${details.cosignerEmail || ''}</td>
         <td><button onclick="removeItem('${category}','${item}')">Remove</button></td>
@@ -173,6 +182,11 @@ for (const [category, items] of Object.entries(allitems[currentpage])) {
   }
   html += '</table>';
   container.innerHTML = html;
+
+  const totalDiv = document.createElement('div');
+  totalDiv.style.marginTop = '16px';
+  totalDiv.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>`;
+  container.appendChild(totalDiv);
 }
 
 window.editItem = function(category, item, field, value) {
@@ -269,87 +283,68 @@ function loadOrders() {
         container.innerHTML = '<p>No orders yet.</p>';
         return;
       }
-      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Status</th><th>Actions</th></tr>';
+      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Admin Profit</th><th>Cosigner Profits</th><th>Status</th></tr>';
       for (const order of orders) {
+        // Calculate profits
+        let adminProfit = 0;
+        let cosignerProfits = {}; // { email: { name, profit } }
+        let itemsHtml = '';
+        for (const [itemName, qty] of Object.entries(order.items)) {
+          let found = false;
+          for (const page in allitems) {
+            for (const category in allitems[page]) {
+              if (allitems[page][category][itemName]) {
+                const itemObj = allitems[page][category][itemName];
+                const price = Number(itemObj.price) || 0;
+                const profitSplit = (itemObj.profitSplit || "50/50").split('/');
+                const adminPercent = Number(profitSplit[0]) || 50;
+                const cosignerPercent = Number(profitSplit[1]) || 50;
+                const itemAdminProfit = (price * adminPercent / 100) * qty;
+                const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
+                adminProfit += itemAdminProfit;
+
+                // Cosigner info
+                const cosignerEmail = itemObj.cosignerEmail || 'unknown';
+                const cosignerName = itemObj.cosignerName || 'unknown';
+                if (!cosignerProfits[cosignerEmail]) {
+                  cosignerProfits[cosignerEmail] = { name: cosignerName, profit: 0 };
+                }
+                cosignerProfits[cosignerEmail].profit += itemCosignerProfit;
+
+                itemsHtml += `${itemName} (${qty})<br>
+                  <small>Split: ${profitSplit[0]}/${profitSplit[1]}, Price: $${price}, 
+                  Admin: $${(itemAdminProfit).toFixed(2)}, 
+                  Cosigner: $${(itemCosignerProfit).toFixed(2)}</small><br>`;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          if (!found) {
+            itemsHtml += `${itemName} (${qty}) <small style="color:red;">(not found in inventory)</small><br>`;
+          }
+        }
+
+        // Cosigner profits summary
+        let cosignerProfitsHtml = '';
+        for (const [email, { name, profit }] of Object.entries(cosignerProfits)) {
+          cosignerProfitsHtml += `${name} (${email}): $${profit.toFixed(2)}<br>`;
+        }
+
         html += `<tr>
           <td>${order.name}</td>
           <td>${order.phone}</td>
           <td>${order.email}</td>
-          <td>${Object.entries(order.items).map(([item, qty]) => `${item} (${qty})`).join('<br>')}</td>
+          <td>${itemsHtml}</td>
+          <td>$${adminProfit.toFixed(2)}</td>
+          <td>${cosignerProfitsHtml || '-'}</td>
           <td>${order.status}</td>
-          <td>
-            ${order.status === 'pending' ? `
-              <button onclick="updateOrderStatus(${order.id}, 'accepted')">Accept</button>
-              <button onclick="updateOrderStatus(${order.id}, 'cancelled')">Cancel</button>
-            ` : ''}
-          </td>
         </tr>`;
       }
       html += '</table>';
       container.innerHTML = html;
     });
-  
-    loadInventory();
+
+  loadInventory();
 }
-
-window.updateOrderStatus = async function(id, status) {
-  // Fetch all orders
-  const res = await fetch('https://labelle-co-server.vercel.app/orders');
-  let orders = await res.json();
-  if (!Array.isArray(orders)) orders = [];
-
-  // Find the order to update
-  const orderIndex = orders.findIndex(o => o.id === id);
-  if (orderIndex === -1) return;
-
-  const order = orders[orderIndex];
-
-  if (status === 'cancelled') {
-    // Restore inventory for each item in the order
-    for (const [itemName, qty] of Object.entries(order.items)) {
-      // Find the item in allitems
-      for (const page in allitems) {
-        for (const category in allitems[page]) {
-          if (allitems[page][category][itemName]) {
-            const itemObj = allitems[page][category][itemName];
-            // If item was on hold, remove hold
-            if (itemObj.onhold !== undefined) {
-              itemObj.onhold = false;
-            }
-            // If item has stock, restore stock
-            if (itemObj.stock !== undefined && typeof itemObj.stock === 'number') {
-              itemObj.stock += qty;
-            }
-          }
-        }
-      }
-    }
-    // Remove the order from the array
-    orders.splice(orderIndex, 1);
-
-    // Save updated orders and inventory
-    await fetch('https://labelle-co-server.vercel.app/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orders)
-    });
-    await fetch(CLOUD_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(allitems)
-    });
-    loadOrders();
-    renderTable();
-    return;
-  }
-
-  // For accept, just update status
-  orders[orderIndex].status = status;
-  orders.splice(orderIndex, 1);
-  await fetch('https://labelle-co-server.vercel.app/orders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(orders)
-  });
-  loadOrders();
-};

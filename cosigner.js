@@ -34,7 +34,7 @@ function loadInventory() {
 
 function renderTable() {
   const container = document.getElementById('inventory');
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Profit Split</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Actions</th></tr>';
+  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Profit Split</th><th>Cosigner Profit</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Actions</th></tr>';
   // Gather all categories for dropdown
   let allCategories = new Set();
   for (const categories of Object.values(allitems)) {
@@ -42,12 +42,20 @@ function renderTable() {
       allCategories.add(category);
     }
   }
+  let totalCosignerProfit = 0;
   for (const [page, categories] of Object.entries(allitems)) {
     for (const [category, items] of Object.entries(categories)) {
       for (const [item, details] of Object.entries(items)) {
         if (details.cosignerEmail === cosignerEmail) {
           const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
           const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+          
+          const profitSplit = details.profitSplit || "50/50";
+          const price = Number(details.price) || 0;
+          const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
+          const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
+          totalCosignerProfit += cosignerProfit;
+
           html += `<tr>
             <td>
               <select onchange="changeCategory('${page}','${category}','${item}', this.value)">
@@ -77,6 +85,7 @@ function renderTable() {
                 ${hasStockProp ? 'disabled' : ''}>
             </td>
             <td>${details.profitSplit || "50/50"}</td>
+            <td>${cosignerProfit}</td>
             <td>${details.cosignerName || ''}</td>
             <td>${details.cosignerEmail || ''}</td>
             <td>
@@ -89,6 +98,11 @@ function renderTable() {
   }
   html += '</table>';
   container.innerHTML = html;
+  
+  const totalDiv = document.createElement('div');
+  totalDiv.style.marginTop = '16px';
+  totalDiv.innerHTML = `<strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>`;
+  container.appendChild(totalDiv);
 }
 
 window.addNewItem = function() {
