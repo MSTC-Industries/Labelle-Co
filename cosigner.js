@@ -98,7 +98,7 @@ function renderTable() {
   }
   html += '</table>';
   container.innerHTML = html;
-  
+
   const totalDiv = document.createElement('div');
   totalDiv.style.marginTop = '16px';
   totalDiv.innerHTML = `<strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>`;
@@ -126,6 +126,7 @@ window.addNewItem = function() {
   };
   if (type === 'stock') {
     newItem.stock = 1;
+    newItem.itemsOnHold = 0;
   } else if (type === 'onhold') {
     newItem.onhold = false;
   }

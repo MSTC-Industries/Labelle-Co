@@ -155,14 +155,14 @@ function addcards(self, items) {
       let holdBanner = "";
       if (itemDetails.onhold === true) {
         holdBanner = `<div class="hold-banner">On Hold</div>`;
-      } else if ('stock' in itemDetails && itemDetails.stock === 0) {
+      } else if ('stock' in itemDetails && itemDetails.stock <= itemDetails.itemsOnHold) {
         holdBanner = `<div class="outofstock-banner">All on Hold</div>`;
       }
 
       const checkmarks = itemDetails.specials.map(quality => `<p>✅ ${quality}</p>`).join("");
       const checkmarkSection = `<div class='checkmarks'>${checkmarks}</div>`;
 
-      const disabled = (itemDetails.onhold === true || ('stock' in itemDetails && itemDetails.stock === 0)) ? "disabled" : "";
+      const disabled = (itemDetails.onhold === true || ('stock' in itemDetails && itemDetails && itemDetails.stock <= itemDetails.itemsOnHold)) ? "disabled" : "";
 
       const itemHTML = `
         ${holdBanner}
@@ -174,7 +174,7 @@ function addcards(self, items) {
           ${!itemDetails.single ? `
             <div class='quantity-selector'>
               <label for='quantity'>Quantity: </label>
-              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock}' value='0'>
+              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock - itemDetails.itemsOnHold}' value='0'>
             </div>` : ""}
           <button onclick='addToCart(this, ${itemDetails.single})' id='add' ${disabled}>Add to Cart</button>
         </div>`;
@@ -187,7 +187,7 @@ function addcards(self, items) {
   populateCategoryDropdown();
 }
 
-async function pay(event) {
+async function pay(event, orderType) {
   if (event) event.preventDefault();
   if (totalprice === 0) { return; }
   await fetchData();
@@ -196,22 +196,44 @@ async function pay(event) {
   order.name = document.getElementById("nameinput").value;
   order.phone = document.getElementById("phone").value;
   order.email = document.getElementById("email").value;
+  order.orderType = orderType; // <-- Add orderType to order
 
   var failed = false;
-  var failedItem = ""; // Track which item failed
+  var failedItem = "";
   cart.querySelectorAll("*").forEach(node => {
     const text = getChildById(node, "text");
     if (text) { 
       var itemData = getItemObject(text.value)
       var quantity = text.dataset.price / itemData.data.price;
-      if ((('onhold' in itemData.data && itemData.data.onhold == true) || ('stock' in itemData.data && itemData.data.stock < quantity)) && !failed ) { 
+
+      // Check for stock/hold issues
+      if ((('onhold' in itemData.data && itemData.data.onhold == true) || ('stock' in itemData.data && (itemData.data.stock - (itemData.data.itemsOnHold || 0)) < quantity)) && !failed ) { 
         failed = true;
         failedItem = text.value;
       } else {
         order.items[text.value] = quantity;
 
-        if ('onhold' in itemData.data) { allitems[itemData.page][itemData.category][itemData.item].onhold = true; }
-        else if ('stock' in itemData.data) { allitems[itemData.page][itemData.category][itemData.item].stock -= quantity; }
+        if (orderType === "hold") {
+          // Place Hold logic
+          if ('onhold' in itemData.data) {
+            allitems[itemData.page][itemData.category][itemData.item].onhold = true;
+          } else if ('stock' in itemData.data) {
+            // Add or update itemsOnHold
+            let prevOnHold = allitems[itemData.page][itemData.category][itemData.item].itemsOnHold || 0;
+            allitems[itemData.page][itemData.category][itemData.item].itemsOnHold = prevOnHold + quantity;
+          }
+        } else if (orderType === "buy") {
+          // Buy logic: remove from inventory
+          if ('onhold' in itemData.data) {
+            // Remove the item entirely
+            delete allitems[itemData.page][itemData.category][itemData.item];
+          } else if ('stock' in itemData.data) {
+            allitems[itemData.page][itemData.category][itemData.item].stock -= quantity;
+            if (allitems[itemData.page][itemData.category][itemData.item].stock <= 0) {
+              delete allitems[itemData.page][itemData.category][itemData.item];
+            }
+          }
+        }
       }
     }
   });
@@ -230,7 +252,7 @@ async function pay(event) {
     await saveData();
 
     // Save order to backend
-    await submitOrder({...order, items: {...order.items}});
+    await submitOrder({...order, items: {...order.items}, orderType: orderType});
 
     await fetch('https://labelle-co-server.vercel.app/notify-owner', {
       method: 'POST',

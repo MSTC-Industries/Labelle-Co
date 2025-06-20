@@ -233,6 +233,7 @@ window.addNewItem = function() {
   };
   if (type === 'stock') {
     newItem.stock = 1;
+    newItem.itemsOnHold = 0;
   } else if (type === 'onhold') {
     newItem.onhold = false;
   }

@@ -72,7 +72,8 @@
                 <input class="form" type="tel" id="phone" placeholder="Phone Number (xxx-xxx-xxxx)" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
                 <input class="form" type="email" id="email" placeholder="Email">
                 <br>
-                <input class="pay" type="submit" value="Place Hold">
+                <input class="pay" type="button" value="Place Hold" onclick="pay(event, 'hold')">
+                <input class="pay" type="button" value="Buy Now" onclick="pay(event, 'buy')">
                 <button class="close-cart-button" onclick="toggleCart()">Close</button>
                 <div id="error-message" style="margin: 10px 0;"></div>
             </form>
