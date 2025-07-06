@@ -7,10 +7,50 @@
 <body>
   <h2>Cosigner Inventory</h2>
   <p>Welcome, <span id="cosignerName"></span> (<span id="cosignerEmail"></span>)</p>
-  <button class="btn" onclick="addNewItem()">Add New Item</button>
+  <button class="btn" onclick="logoutToHub()" style="position:absolute;top:16px;right:16px;">Logout</button>
+  <button class="btn" onclick="openAddItemOverlay()">Add New Item</button>
   <button class="btn" onclick="saveAll()">Save All Changes</button>
   <button class="btn" onclick="loadInventory()">Reload Inventory</button>
   <div id="inventory"></div>
   <script src="cosigner.js"></script>
+
+  <div id="add-item-overlay" style="
+    position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:1000;
+    background:rgba(255,255,255,0.98);display:none;align-items:center;justify-content:center;flex-direction:column;
+    transition:transform 0.5s cubic-bezier(.77,0,.18,1);transform:translateY(-100vh);">
+    <div style="background:#fff;padding:32px 24px;border-radius:8px;box-shadow:0 2px 16px #0002;min-width:280px;">
+      <h2>Add New Item</h2>
+      <form id="addItemForm" onsubmit="return submitNewItem(event)">
+        <label>
+          Page:
+          <select id="newItemPageDropdown" onchange="updateCategoryDropdown()" required>
+            <!-- Options will be populated by JS -->
+          </select>
+        </label><br>
+        <label>
+          Category:
+          <select id="newItemCategoryDropdown" onchange="onCategoryDropdownChange()" required>
+            <option value="">-- Select Category --</option>
+            <!-- Options will be populated by JS -->
+            <option value="__new__">-- New Category --</option>
+          </select>
+          <input type="text" id="newItemCategoryInput" placeholder="New category" style="display:none;margin-left:8px;">
+        </label><br>
+        <label>Item Name: <input type="text" id="newItemName" required></label><br>
+        <label>Image URL: <input type="text" id="newItemImg"></label><br>
+        <label>Type:
+          <select id="newItemType" required>
+            <option value="stock">Stock (multiple)</option>
+            <option value="onhold">Single (on hold)</option>
+          </select>
+        </label><br>
+        <label>Price: <input type="number" id="newItemPrice" min="0" step="0.01" required></label><br>
+        <label>Specials: <textarea id="newItemSpecials" rows="2" placeholder="One per line"></textarea></label><br>
+        <button type="submit" class="btn">Add Item</button>
+        <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
+        <div id="addItemMsg" style="color:red;margin-top:8px;"></div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cosigner Login</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <h2>Cosigner Login</h2>
+  <form id="cosignerLoginForm" onsubmit="return cosignerLogin(event)">
+    <label for="loginEmail">Email:</label>
+    <input type="email" id="loginEmail" required>
+    <label for="loginPassword">Password:</label>
+    <input type="password" id="loginPassword" required>
+    <div class="form-actions">
+      <button type="submit" class="btn">Login</button>
+    </div>
+    <div id="loginMsg"></div>
+  </form>
+  <p>
+    Don't have an account? <a href="cosigner-create.html">Create one here</a>.
+  </p>
+  <button class="btn" onclick="window.location.href='adminhub.html'">Back to Admin Hub</button>
+  <script src="adminhub.js"></script>
+</body>
+</html>

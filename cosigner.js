@@ -29,6 +29,7 @@ function loadInventory() {
     .then(data => {
       allitems = data;
       renderTable();
+      updatePageDropdown();
     });
 }
 
@@ -105,47 +106,6 @@ function renderTable() {
   container.appendChild(totalDiv);
 }
 
-window.addNewItem = function() {
-  const page = prompt('Page? (e.g., main.html)');
-  const category = prompt('Category?');
-  const item = prompt('Item name?');
-  if (!page || !category || !item) return;
-  if (!allitems[page]) allitems[page] = {};
-  if (!allitems[page][category]) allitems[page][category] = {};
-
-  let img = prompt('Image URL? (Upload to Imgur, Google Drive, etc.)');
-  let type = prompt('Type "stock" for non single items, or "onhold" for single items:').toLowerCase();
-  let newItem = {
-    img: img || '',
-    price: 0,
-    single: false,
-    specials: [],
-    cosignerName: cosignerName,
-    cosignerEmail: cosignerEmail,
-    profitSplit: "50/50"
-  };
-  if (type === 'stock') {
-    newItem.stock = 1;
-    newItem.itemsOnHold = 0;
-  } else if (type === 'onhold') {
-    newItem.onhold = false;
-  }
-
-  allitems[page][category][item] = newItem;
-
-  // Save to backend
-  fetch(CLOUD_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(allitems)
-  })
-  .then(res => res.text())
-  .then(msg => {
-    alert('Item added!');
-    loadInventory();
-  });
-};
-
 window.removeItem = function(page, category, item) {
   if (allitems[page] && allitems[page][category] && allitems[page][category][item]) {
     delete allitems[page][category][item];
@@ -215,3 +175,130 @@ window.saveAll = function() {
   .then(res => res.text())
   .then(msg => alert('Saved!'));
 };
+
+function logoutToHub() {
+      // Clear cosigner info from localStorage
+      localStorage.removeItem('cosignerEmail');
+      localStorage.removeItem('cosignerName');
+      window.location.href = "adminhub.html";
+}
+
+function openAddItemOverlay() {
+  const overlay = document.getElementById('add-item-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    overlay.style.transform = 'translateY(0)';
+  }, 10);
+  document.body.style.overflow = 'hidden';
+  updatePageDropdown();
+}
+
+function closeAddItemOverlay() {
+  const overlay = document.getElementById('add-item-overlay');
+  overlay.style.transform = 'translateY(-100vh)';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('addItemForm').reset();
+    document.getElementById('addItemMsg').textContent = '';
+  }, 500);
+}
+
+window.openAddItemOverlay = openAddItemOverlay;
+window.closeAddItemOverlay = closeAddItemOverlay;
+
+window.submitNewItem = function(event) {
+  event.preventDefault();
+  const page = document.getElementById('newItemPageDropdown').value;
+  let category = document.getElementById('newItemCategoryDropdown').value;
+  if (category === '__new__') {
+    category = document.getElementById('newItemCategoryInput').value.trim();
+  }
+  const item = document.getElementById('newItemName').value.trim();
+  const img = document.getElementById('newItemImg').value.trim();
+  const type = document.getElementById('newItemType').value;
+  const price = Number(document.getElementById('newItemPrice').value);
+  const specials = document.getElementById('newItemSpecials').value
+    .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+
+  if (!page || !category || !item) {
+    document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
+    return false;
+  }
+
+  if (!allitems[page]) allitems[page] = {};
+  if (!allitems[page][category]) allitems[page][category] = {};
+
+  let newItem = {
+    img: img || '',
+    price: price || 0,
+    single: false,
+    specials: specials,
+    cosignerName: cosignerName,
+    cosignerEmail: cosignerEmail,
+    profitSplit: "50/50"
+  };
+  if (type === 'stock') {
+    newItem.stock = 1;
+    newItem.itemsOnHold = 0;
+  } else if (type === 'onhold') {
+    newItem.onhold = false;
+  }
+
+  allitems[page][category][item] = newItem;
+
+  fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(allitems)
+  })
+  .then(res => res.text())
+  .then(msg => {
+    closeAddItemOverlay();
+    loadInventory();
+    setTimeout(() => alert('Item added!'), 100);
+  });
+
+  return false;
+};
+
+function updatePageDropdown() {
+  const pageDropdown = document.getElementById('newItemPageDropdown');
+  pageDropdown.innerHTML = '';
+  Object.keys(allitems).forEach(page => {
+    pageDropdown.innerHTML += `<option value="${page}">${page}</option>`;
+  });
+  // Optionally, select the first page by default
+  if (Object.keys(allitems).length > 0) {
+    pageDropdown.value = Object.keys(allitems)[0];
+  }
+  updateCategoryDropdown();
+}
+
+function updateCategoryDropdown() {
+  const page = document.getElementById('newItemPageDropdown').value;
+  const dropdown = document.getElementById('newItemCategoryDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Category --</option>';
+  if (allitems[page]) {
+    Object.keys(allitems[page]).forEach(cat => {
+      dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+    });
+  }
+  dropdown.innerHTML += '<option value="__new__">-- New Category --</option>';
+  document.getElementById('newItemCategoryInput').style.display = 'none';
+}
+
+window.updatePageDropdown = updatePageDropdown;
+window.updateCategoryDropdown = updateCategoryDropdown;
+
+function onCategoryDropdownChange() {
+  const dropdown = document.getElementById('newItemCategoryDropdown');
+  const input = document.getElementById('newItemCategoryInput');
+  if (dropdown.value === '__new__') {
+    input.style.display = '';
+    input.required = true;
+  } else {
+    input.style.display = 'none';
+    input.required = false;
+  }
+}

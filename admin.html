@@ -6,6 +6,19 @@
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
+  <div id="admin-password-overlay" style="
+    position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:1000;
+    background:rgba(255,255,255,0.98);display:flex;align-items:center;justify-content:center;flex-direction:column;
+    transition:transform 0.5s cubic-bezier(.77,0,.18,1);transform:translateY(0);">
+    <div style="background:#fff;padding:32px 24px;border-radius:8px;box-shadow:0 2px 16px #0002;min-width:280px;">
+      <h2>Admin Access</h2>
+      <input type="password" id="adminPasswordInput" placeholder="Enter admin password" style="width:100%;padding:8px;margin:12px 0;">
+      <div id="adminPasswordMsg" style="color:red;min-height:20px;"></div>
+      <button class="btn" onclick="submitAdminPassword()">Unlock</button>
+    </div>
+  </div>
+  <button class="btn" onclick="logoutToHub()" style="position:absolute;top:16px;right:16px;">Logout</button>
+
   <h2>Orders</h2>
   <p>Use this page to manage orders. You can view, edit, and delete orders.</p>
   <div id="orders"></div>
@@ -18,10 +31,63 @@
   <label for="pageSelect">Select Page:</label>
   <select id="pageSelect" onchange="switchPage(this.value)"></select>
 
-  <button onclick="addNewItem()">Add New Item</button>
+  <button onclick="openAddItemOverlay()">Add New Item</button>
   <button onclick="saveAll()">Save All Changes</button>
   <button onclick="loadInventory()">Reload Inventory</button>
   <div id="inventory"></div>
   <script src="admin.js"></script>
+
+  <div id="add-item-overlay" style="
+  position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:1000;
+  background:rgba(255,255,255,0.98);display:none;align-items:center;justify-content:center;flex-direction:column;
+  transition:transform 0.5s cubic-bezier(.77,0,.18,1);transform:translateY(-100vh);">
+  <div style="background:#fff;padding:32px 24px;border-radius:8px;box-shadow:0 2px 16px #0002;min-width:280px;">
+    <h2>Add New Item</h2>
+    <form id="addItemForm" onsubmit="return submitNewAdminItem(event)">
+      <label>
+        Page:
+        <select id="newItemPageDropdown" onchange="updateAdminCategoryDropdown()" required>
+          <!-- Options will be populated by JS -->
+        </select>
+      </label><br>
+      <label>
+        Category:
+        <select id="newItemCategoryDropdown" onchange="onAdminCategoryDropdownChange()" required>
+          <option value="">-- Select Category --</option>
+          <option value="__new__">-- New Category --</option>
+        </select>
+        <input type="text" id="newItemCategoryInput" placeholder="New category" style="display:none;margin-left:8px;">
+      </label><br>
+      <label>Item Name: <input type="text" id="newItemName" required></label><br>
+      <label>Image URL: <input type="text" id="newItemImg"></label><br>
+      <label>Type:
+        <select id="newItemType" required>
+          <option value="stock">Stock (multiple)</option>
+          <option value="onhold">Single (on hold)</option>
+        </select>
+      </label><br>
+      <label>Price: <input type="number" id="newItemPrice" min="0" step="0.01" required></label><br>
+      <label>Specials: <textarea id="newItemSpecials" rows="2" placeholder="One per line"></textarea></label><br>
+      <label>Profit Split:
+        <select id="newItemProfitSplit">
+          <option value="90/10">90/10</option>
+          <option value="80/20">80/20</option>
+          <option value="70/30">70/30</option>
+          <option value="60/40">60/40</option>
+          <option value="50/50" selected>50/50</option>
+          <option value="40/60">40/60</option>
+          <option value="30/70">30/70</option>
+          <option value="20/80">20/80</option>
+          <option value="10/90">10/90</option>
+        </select>
+      </label><br>
+      <label>Cosigner Name: <input type="text" id="newItemCosignerName" value="admin" required></label><br>
+      <label>Cosigner Email: <input type="email" id="newItemCosignerEmail" value="mstc.industries.official@gmail.com" required></label><br>
+      <button type="submit" class="btn">Add Item</button>
+      <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
+      <div id="addItemMsg" style="color:red;margin-top:8px;"></div>
+    </form>
+  </div>
+</div>
 </body>
 </html>

@@ -62,32 +62,44 @@ let allitems = {
 
 let currentpage = 'main.html';
 
-// Call this before loading anything else
-checkAdminPassword().then(allowed => {
-    if (allowed) {
-        loadInventory();
-        loadOrders();
-    }
-});
+window.onload = function() {
+  showPasswordOverlay();
+};
 
-async function checkAdminPassword() {
-    let password = prompt("Admin password:");
-    if (!password) {
-        document.body.innerHTML = "<h2>Access denied.</h2><p>No password entered, please reload the page to try again.</p>";
-        return false;
-    }
-    const res = await fetch('https://labelle-co-server.vercel.app/check-admin-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-    });
-    if (res.ok) {
-        return true;
-    } else {
-        document.body.innerHTML = "<h2>Access denied.</h2><p>Incorrect password, please reload the page to try again.</p>";
-        return false;
-    }
+function showPasswordOverlay() {
+  document.getElementById('admin-password-overlay').style.transform = 'translateY(0)';
+  document.getElementById('admin-password-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
+
+window.submitAdminPassword = async function() {
+  const password = document.getElementById('adminPasswordInput').value;
+  const msg = document.getElementById('adminPasswordMsg');
+  if (!password) {
+    msg.textContent = "Please enter a password.";
+    return;
+  }
+  msg.textContent = "Checking...";
+  const res = await fetch('https://labelle-co-server.vercel.app/check-admin-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (res.ok) {
+    // Slide up overlay
+    const overlay = document.getElementById('admin-password-overlay');
+    overlay.style.transform = 'translateY(-100vh)';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 500);
+    // Now load data
+    loadInventory();
+    loadOrders();
+  } else {
+    msg.textContent = "Incorrect password. Try again.";
+  }
+};
 
 // Load inventory
 function loadInventory() {
@@ -95,7 +107,6 @@ function loadInventory() {
     .then(res => res.json())
     .then(data => {
       allitems = data;
-      populatePageSelector();
       renderTable();
     });
 }
@@ -211,34 +222,6 @@ window.editItem = function(category, item, field, value) {
 
 window.removeItem = function(category, item) {
   delete allitems[currentpage][category][item];
-  renderTable();
-};
-
-window.addNewItem = function() {
-  const category = prompt('Category?');
-  const item = prompt('Item name?');
-  if (!category || !item) return;
-  if (!allitems[currentpage][category]) allitems[currentpage][category] = {};
-
-  let img = prompt('Image URL? (Upload to Imgur, Google Drive, etc.)');
-  let type = prompt('Type "stock" for non single items, or "onhold" for single items:').toLowerCase();
-  let newItem = {
-    img: img || '',
-    price: 0,
-    single: false,
-    specials: [],
-    cosignerName: 'admin', //pls update these
-    cosignerEmail: 'mstc.industries.official@gmail.com',
-    profitSplit: "50/50"
-  };
-  if (type === 'stock') {
-    newItem.stock = 1;
-    newItem.itemsOnHold = 0;
-  } else if (type === 'onhold') {
-    newItem.onhold = false;
-  }
-
-  allitems[currentpage][category][item] = newItem;
   renderTable();
 };
 
@@ -462,3 +445,129 @@ async function cancelOrder(orderId) {
 
   loadOrders();
 }
+
+function logoutToHub() {
+      window.location.href = "adminhub.html";
+}
+
+function openAddItemOverlay() {
+  const overlay = document.getElementById('add-item-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    overlay.style.transform = 'translateY(0)';
+  }, 10);
+  document.body.style.overflow = 'hidden';
+  updateAdminPageDropdown();
+}
+
+function closeAddItemOverlay() {
+  const overlay = document.getElementById('add-item-overlay');
+  overlay.style.transform = 'translateY(-100vh)';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('addItemForm').reset();
+    document.getElementById('addItemMsg').textContent = '';
+  }, 500);
+}
+
+window.openAddItemOverlay = openAddItemOverlay;
+window.closeAddItemOverlay = closeAddItemOverlay;
+
+function updateAdminPageDropdown() {
+  const pageDropdown = document.getElementById('newItemPageDropdown');
+  pageDropdown.innerHTML = '';
+  Object.keys(allitems).forEach(page => {
+    pageDropdown.innerHTML += `<option value="${page}">${page}</option>`;
+  });
+  // Set to current page if possible
+  pageDropdown.value = currentpage;
+  updateAdminCategoryDropdown();
+}
+
+function updateAdminCategoryDropdown() {
+  const page = document.getElementById('newItemPageDropdown').value;
+  const dropdown = document.getElementById('newItemCategoryDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Category --</option>';
+  if (allitems[page]) {
+    Object.keys(allitems[page]).forEach(cat => {
+      dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+    });
+  }
+  dropdown.innerHTML += '<option value="__new__">-- New Category --</option>';
+  document.getElementById('newItemCategoryInput').style.display = 'none';
+}
+
+function onAdminCategoryDropdownChange() {
+  const dropdown = document.getElementById('newItemCategoryDropdown');
+  const input = document.getElementById('newItemCategoryInput');
+  if (dropdown.value === '__new__') {
+    input.style.display = '';
+    input.required = true;
+  } else {
+    input.style.display = 'none';
+    input.required = false;
+  }
+}
+
+window.updateAdminPageDropdown = updateAdminPageDropdown;
+window.updateAdminCategoryDropdown = updateAdminCategoryDropdown;
+window.onAdminCategoryDropdownChange = onAdminCategoryDropdownChange;
+
+window.submitNewAdminItem = function(event) {
+  event.preventDefault();
+  const page = document.getElementById('newItemPageDropdown').value;
+  let category = document.getElementById('newItemCategoryDropdown').value;
+  if (category === '__new__') {
+    category = document.getElementById('newItemCategoryInput').value.trim();
+  }
+  const item = document.getElementById('newItemName').value.trim();
+  const img = document.getElementById('newItemImg').value.trim();
+  const type = document.getElementById('newItemType').value;
+  const price = Number(document.getElementById('newItemPrice').value);
+  const specials = document.getElementById('newItemSpecials').value
+    .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  const profitSplit = document.getElementById('newItemProfitSplit').value;
+  const cosignerName = document.getElementById('newItemCosignerName').value.trim();
+  const cosignerEmail = document.getElementById('newItemCosignerEmail').value.trim();
+
+  if (!page || !category || !item) {
+    document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
+    return false;
+  }
+
+  if (!allitems[page]) allitems[page] = {};
+  if (!allitems[page][category]) allitems[page][category] = {};
+
+  let newItem = {
+    img: img || '',
+    price: price || 0,
+    single: false,
+    specials: specials,
+    cosignerName: cosignerName,
+    cosignerEmail: cosignerEmail,
+    profitSplit: profitSplit
+  };
+  if (type === 'stock') {
+    newItem.stock = 1;
+    newItem.itemsOnHold = 0;
+  } else if (type === 'onhold') {
+    newItem.onhold = false;
+  }
+
+  allitems[page][category][item] = newItem;
+
+  fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(allitems)
+  })
+  .then(res => res.text())
+  .then(msg => {
+    closeAddItemOverlay();
+    loadInventory();
+    setTimeout(() => alert('Item added!'), 100);
+  });
+
+  return false;
+};
