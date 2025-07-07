@@ -44,7 +44,7 @@ async function cosignerCreate(event) {
   } else if (res.status === 409) {
     msg.textContent = "That email is already registered. Please use another.";
   } else {
-    msg.textContent = "Account creation failed. Try a different email.";
+    msg.textContent = "Account creation failed.";
   }
   return false;
 }

@@ -106,6 +106,7 @@ function updateCartItem(item) {
 }
 
 async function loadPage(page) {
+  showLoading();
   try {
     const response = await fetch(page);
     if (!response.ok) throw new Error("Page not found");
@@ -114,8 +115,11 @@ async function loadPage(page) {
     currentpage = page;
     await fetchData()
   } catch (error) {
-    console.error(error);
+    console.error(error); 
+    showLoadingError("Network error: " + error.message);
     document.getElementById("pagestuff").innerHTML = "<p>Error loading page</p>";
+  } finally {
+    hideLoading();
   }
 }
 
@@ -151,21 +155,28 @@ function addcards(self, items) {
       const item = document.createElement("div");
       item.className = "card";
 
-      // Add green banner if on hold
+      // Add green banner if on hold, red if bought/out of stock
       let holdBanner = "";
+      let boughtBanner = "";
+      let disabled = "";
+
       if (itemDetails.onhold === true) {
         holdBanner = `<div class="hold-banner">On Hold</div>`;
-      } else if ('stock' in itemDetails && itemDetails.stock <= itemDetails.itemsOnHold) {
-        holdBanner = `<div class="outofstock-banner">All on Hold</div>`;
+        disabled = "disabled";
+      } else if (itemDetails.bought === true) {
+        boughtBanner = `<div class="bought-banner">Bought</div>`;
+        disabled = "disabled";
+      } else if ('stock' in itemDetails && (itemDetails.stock <= (itemDetails.itemsOnHold || 0) + (itemDetails.itemsBought || 0))) {
+        boughtBanner = `<div class="outofstock-banner">All Bought/Held</div>`;
+        disabled = "disabled";
       }
 
       const checkmarks = itemDetails.specials.map(quality => `<p>✅ ${quality}</p>`).join("");
       const checkmarkSection = `<div class='checkmarks'>${checkmarks}</div>`;
 
-      const disabled = (itemDetails.onhold === true || ('stock' in itemDetails && itemDetails && itemDetails.stock <= itemDetails.itemsOnHold)) ? "disabled" : "";
-
       const itemHTML = `
         ${holdBanner}
+        ${boughtBanner}
         <img src='${itemDetails.img}' alt='Product Image'>
         ${checkmarkSection}
         <div class='info'>
@@ -174,7 +185,7 @@ function addcards(self, items) {
           ${!itemDetails.single ? `
             <div class='quantity-selector'>
               <label for='quantity'>Quantity: </label>
-              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock - itemDetails.itemsOnHold}' value='0'>
+              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock - (itemDetails.itemsOnHold || 0) - (itemDetails.itemsBought || 0)}' value='0'>
             </div>` : ""}
           <button onclick='addToCart(this, ${itemDetails.single})' id='add' ${disabled}>Add to Cart</button>
         </div>`;
@@ -223,15 +234,12 @@ async function pay(event, orderType) {
             allitems[itemData.page][itemData.category][itemData.item].itemsOnHold = prevOnHold + quantity;
           }
         } else if (orderType === "buy") {
-          // Buy logic: remove from inventory
+          // Buy logic: update bought/itemsBought instead of removing
           if ('onhold' in itemData.data) {
-            // Remove the item entirely
-            delete allitems[itemData.page][itemData.category][itemData.item];
+            allitems[itemData.page][itemData.category][itemData.item].bought = true;
           } else if ('stock' in itemData.data) {
-            allitems[itemData.page][itemData.category][itemData.item].stock -= quantity;
-            if (allitems[itemData.page][itemData.category][itemData.item].stock <= 0) {
-              delete allitems[itemData.page][itemData.category][itemData.item];
-            }
+            let prevBought = allitems[itemData.page][itemData.category][itemData.item].itemsBought || 0;
+            allitems[itemData.page][itemData.category][itemData.item].itemsBought = prevBought + quantity;
           }
         }
       }
@@ -254,11 +262,18 @@ async function pay(event, orderType) {
     // Save order to backend
     await submitOrder({...order, items: {...order.items}, orderType: orderType});
 
-    await fetch('https://labelle-co-server.vercel.app/notify-owner', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    });
+    showLoading();
+    try {
+      await fetch('https://labelle-co-server.vercel.app/notify-owner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+    } catch (err) {
+      showLoadingError("Failed to notify owner: " + err.message);
+    } finally {
+      hideLoading();
+    }
 
     addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
   }
@@ -284,18 +299,23 @@ function getItemObject(itemName) {
 
 // Load allitems from the cloud
 async function fetchData() {
+  showLoading();
   try {
     const response = await fetch('https://labelle-co-server.vercel.app/cloud');
     const data = await response.json();
     allitems = data;
     addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
   } catch (error) {
+    showLoadingError("Failed to notify owner: " + error.message);
     console.error('Error fetching items from cloud:', error);
+  } finally {
+    hideLoading();
   }
 }
 
 // Save allitems to the cloud
 async function saveData() {
+  showLoading();
   try {
     const response = await fetch('https://labelle-co-server.vercel.app/cloud', {
       method: 'POST',
@@ -305,11 +325,15 @@ async function saveData() {
     const data = await response.text();
     console.log('Saved to cloud:', data);
   } catch (error) {
+    showLoadingError("Failed to notify owner: " + error.message);
     console.error('Error saving items to cloud:', error);
+  } finally {
+    hideLoading();
   }
 }
 
 async function submitOrder(newOrder) {
+  showLoading();
   try {
     const res = await fetch('https://labelle-co-server.vercel.app/orders');
     let orders = await res.json();
@@ -324,7 +348,10 @@ async function submitOrder(newOrder) {
     });
     console.log('Order submitted!');
   } catch (error) {
+    showLoadingError("Error submitting order: " + error.message);
     console.error('Error submitting order:', error);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -367,4 +394,37 @@ function validateContactAndPay(event) {
     // Call your pay function
     pay(event);
     return false; // Prevent default form submission, let pay handle it
+}
+
+function showLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  document.getElementById('loading-text').style.display = '';
+  document.getElementById('loading-error').style.display = 'none';
+  document.getElementById('loading-error-close').style.display = 'none';
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('active'), 10);
+}
+
+function hideLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+function showLoadingError(message) {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  document.getElementById('loading-text').style.display = 'none';
+  const errorDiv = document.getElementById('loading-error');
+  errorDiv.textContent = message || "An error occurred.";
+  errorDiv.style.display = '';
+  document.getElementById('loading-error-close').style.display = '';
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+}
+
+function hideLoadingError() {
+  hideLoading();
 }

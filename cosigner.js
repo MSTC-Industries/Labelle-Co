@@ -10,32 +10,43 @@ loadInventory();
 
 async function fetchCosignerInfo() {
   if (!cosignerEmail) return;
-  const res = await fetch(`${COSIGNER_INFO_URL}?email=${encodeURIComponent(cosignerEmail)}`);
-  if (res.ok) {
-    const data = await res.json();
-    cosignerName = data.name;
-    document.getElementById('cosignerEmail').textContent = data.email;
-    document.getElementById('cosignerName').textContent = data.name;
-  } else {
-    document.getElementById('cosignerEmail').textContent = cosignerEmail;
-    document.getElementById('cosignerName').textContent = '';
+  showLoading();
+  try {
+    const res = await fetch(`${COSIGNER_INFO_URL}?email=${encodeURIComponent(cosignerEmail)}`);
+    if (res.ok) {
+      const data = await res.json();
+      cosignerName = data.name;
+      document.getElementById('cosignerEmail').textContent = data.email;
+      document.getElementById('cosignerName').textContent = data.name;
+    } else {
+      document.getElementById('cosignerEmail').textContent = cosignerEmail;
+      document.getElementById('cosignerName').textContent = '';
+      showLoadingError("Could not fetch cosigner info.");
+    }
+  } catch (err) {
+    showLoadingError("Network error: " + err.message);
+  } finally {
+    hideLoading();
   }
 }
 
 // Load inventory and filter for this cosigner
 function loadInventory() {
+  showLoading();
   fetch(CLOUD_API_URL)
     .then(res => res.json())
     .then(data => {
       allitems = data;
       renderTable();
       updatePageDropdown();
-    });
+    })
+    .catch(err => showLoadingError(err.message))
+    .finally(hideLoading);
 }
 
 function renderTable() {
   const container = document.getElementById('inventory');
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Profit Split</th><th>Cosigner Profit</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Actions</th></tr>';
+  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Bought</th><th>Profit Split</th><th>Cosigner Profit</th><th>Barcode ID</th><th>Actions</th></tr>';
   // Gather all categories for dropdown
   let allCategories = new Set();
   for (const categories of Object.values(allitems)) {
@@ -81,16 +92,31 @@ function renderTable() {
                 ${hasOnHoldProp ? 'disabled' : ''}>
             </td>
             <td>
-              <input type="checkbox" ${details.onhold ? 'checked' : ''} 
-                onchange="editItem('${page}','${category}','${item}','onhold', this.checked)" 
-                ${hasStockProp ? 'disabled' : ''}>
+              ${
+                typeof details.itemsOnHold === 'number'
+                  ? `<input type="number" min="0" value="${details.itemsOnHold}" 
+                      onchange="editItem('${page}','${category}','${item}','itemsOnHold', this.value)">`
+                  : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
+                      onchange="editItem('${page}','${category}','${item}','onhold', this.checked)" 
+                      ${hasStockProp ? 'disabled' : ''}>`
+              }
+            </td>
+            <td>
+              ${
+                typeof details.itemsBought === 'number'
+                  ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
+                        onchange="editItem('${category}','${item}','itemsBought', this.value)">`
+                  : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
+                        onchange="editItem('${category}','${item}','bought', this.checked)" 
+                        ${hasStockProp ? 'disabled' : ''}>`
+              }
             </td>
             <td>${details.profitSplit || "50/50"}</td>
             <td>${cosignerProfit}</td>
-            <td>${details.cosignerName || ''}</td>
-            <td>${details.cosignerEmail || ''}</td>
+            <td>${details.barcode}</td>
             <td>
               <button onclick="removeItem('${page}','${category}','${item}')">Remove</button>
+              <button onclick="showBarcodeModal('${details.barcode}', '${item}', '${details.price}')">Barcode</button>
             </td>
           </tr>`;
         }
@@ -110,6 +136,7 @@ window.removeItem = function(page, category, item) {
   if (allitems[page] && allitems[page][category] && allitems[page][category][item]) {
     delete allitems[page][category][item];
     // Save to backend
+    showLoading();
     fetch(CLOUD_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -117,9 +144,10 @@ window.removeItem = function(page, category, item) {
     })
     .then(res => res.text())
     .then(msg => {
-      alert('Item removed!');
       loadInventory();
-    });
+    })
+    .catch(err => showLoadingError(err.message))
+    .finally(hideLoading);
   }
 };
 
@@ -133,9 +161,16 @@ window.editItem = function(page, category, item, field, value) {
       .split('\n')
       .map(s => s.trim())
       .filter(s => s.length > 0);
-  } else if (field === 'onhold') {
-    itemObj.onhold = value;
-  } else if (field === 'price' || field === 'stock') {
+  } else if (field === 'onhold' || field === 'bought') {
+    // Checkbox: convert to boolean
+    itemObj[field] = value === true || value === "true" || value === "on" || value === "checked";
+  } else if (
+    field === 'price' ||
+    field === 'stock' ||
+    field === 'itemsOnHold' ||
+    field === 'itemsBought'
+  ) {
+    // Number fields
     itemObj[field] = Number(value);
   } else {
     itemObj[field] = value;
@@ -167,13 +202,15 @@ window.changeCategory = function(page, oldCategory, item, newCategory) {
 };
 
 window.saveAll = function() {
+  showLoading();
   fetch(CLOUD_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(allitems)
   })
   .then(res => res.text())
-  .then(msg => alert('Saved!'));
+  .catch(err => showLoadingError(err.message))
+  .finally(hideLoading);
 };
 
 function logoutToHub() {
@@ -236,17 +273,21 @@ window.submitNewItem = function(event) {
     specials: specials,
     cosignerName: cosignerName,
     cosignerEmail: cosignerEmail,
-    profitSplit: "50/50"
+    profitSplit: "50/50",
+    barcode: Date.now().toString()
   };
   if (type === 'stock') {
     newItem.stock = 1;
     newItem.itemsOnHold = 0;
+    newItem.itemsBought = 0;
   } else if (type === 'onhold') {
     newItem.onhold = false;
+    newItem.bought = false;
   }
 
   allitems[page][category][item] = newItem;
 
+  showLoading();
   fetch(CLOUD_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -257,7 +298,9 @@ window.submitNewItem = function(event) {
     closeAddItemOverlay();
     loadInventory();
     setTimeout(() => alert('Item added!'), 100);
-  });
+  })
+  .catch(err => showLoadingError(err.message))
+  .finally(hideLoading);
 
   return false;
 };
@@ -301,4 +344,103 @@ function onCategoryDropdownChange() {
     input.style.display = 'none';
     input.required = false;
   }
+}
+
+window.showBarcodeModal = function(barcode, itemName, price) {
+  if (!barcode) {
+    alert("No barcode assigned to this item.");
+    return;
+  }
+  document.getElementById('barcode-modal').style.display = 'flex';
+  JsBarcode("#barcode-svg", barcode, {
+    format: "CODE128",
+    lineColor: "#000",
+    width: 2,
+    height: 100,
+    displayValue: true
+  });
+  // Show item name and price instead of barcode value
+  document.getElementById('barcode-value').textContent = `${itemName} - $${price}`;
+  // Store for printing
+  document.getElementById('barcode-value').setAttribute('data-barcode', barcode);
+  document.getElementById('barcode-value').setAttribute('data-item', itemName);
+  document.getElementById('barcode-value').setAttribute('data-price', price);
+};
+
+window.closeBarcodeModal = function() {
+  document.getElementById('barcode-modal').style.display = 'none';
+  document.getElementById('barcode-svg').innerHTML = '';
+  document.getElementById('barcode-value').textContent = '';
+};
+
+window.printBarcode = function() {
+  const svg = document.getElementById('barcode-svg').outerHTML;
+  const valueDiv = document.getElementById('barcode-value');
+  const itemName = valueDiv.getAttribute('data-item') || '';
+  const price = valueDiv.getAttribute('data-price') || '';
+  const barcode = valueDiv.getAttribute('data-barcode') || '';
+  const printWindow = window.open('', '', 'width=400,height=300');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Barcode</title>
+        <style>
+          body { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+          .barcode-value { margin-top: 12px; font-size: 18px; font-family: monospace; }
+        </style>
+      </head>
+      <body>
+        <div>${svg}</div>
+        <div class="barcode-value">${itemName} - $${price}</div>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script>
+          if (window.JsBarcode && document.querySelector('svg')) {
+            JsBarcode(document.querySelector('svg'), "${barcode}", {
+              format: "CODE128",
+              lineColor: "#000",
+              width: 2,
+              height: 100,
+              displayValue: true
+            });
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 500);
+};
+
+function showLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  document.getElementById('loading-text').style.display = '';
+  document.getElementById('loading-error').style.display = 'none';
+  document.getElementById('loading-error-close').style.display = 'none';
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('active'), 10);
+}
+
+function hideLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+function showLoadingError(message) {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  document.getElementById('loading-text').style.display = 'none';
+  const errorDiv = document.getElementById('loading-error');
+  errorDiv.textContent = message || "An error occurred.";
+  errorDiv.style.display = '';
+  document.getElementById('loading-error-close').style.display = '';
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+}
+
+function hideLoadingError() {
+  hideLoading();
 }

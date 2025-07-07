@@ -88,5 +88,14 @@
     <!-- Scripts -->
     <!-- <script src="https://js.stripe.com/basil/stripe.js"></script> -->
     <script src="index.js"></script>
+
+    <div id="loading-overlay" style="
+        position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;
+        background:rgba(255,255,255,0.8);display:none;align-items:center;justify-content:center;
+        flex-direction:column;transition:opacity 0.3s;">
+        <div style="font-size:2rem;color:#333;" id="loading-text">Loading...</div>
+        <div id="loading-error" style="color:#c00;font-size:1.2rem;margin-top:16px;display:none;"></div>
+        <button id="loading-error-close" style="display:none;margin-top:12px;" onclick="hideLoadingError()">Close</button>
+    </div>
 </body>
 </html>
