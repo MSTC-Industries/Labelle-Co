@@ -1,6 +1,8 @@
 initialize();
 
 async function initialize() {
+  document.getElementById('exit').style.display = 'none';
+
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
   const sessionId = urlParams.get('session_id');
@@ -10,9 +12,6 @@ async function initialize() {
   if (session.status == 'open') {
     window.location.replace('index.html');
   } else if (session.status == 'complete') {
-    document.getElementById('success').classList.remove('hidden');
-    document.getElementById('customer-email').textContent = session.customer_email;
-
     // Submit the order if it exists in localStorage
     const pendingOrderStr = localStorage.getItem("pendingOrder");
     if (pendingOrderStr) {
@@ -66,6 +65,11 @@ async function initialize() {
         console.error("Order submission failed:", err);
       } finally {
         hideLoading();
+        
+        document.getElementById('message').innerHTML = 'Thank You!';
+        document.getElementById('details').innerHTML = `Your payment was successful.<br>
+        We appreciate your order and will process it soon.`;
+        document.getElementById('exit').style.display = 'block';
       }
     }
   }

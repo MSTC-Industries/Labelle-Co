@@ -382,13 +382,27 @@ async function acceptOrder(orderId) {
     // Load inventory
     let inventory = await (await fetch(CLOUD_API_URL)).json();
 
-    // Remove items from inventory for both buy and hold orders
     for (const [itemName, qty] of Object.entries(order.items)) {
       let found = false;
       for (const page in inventory) {
         for (const category in inventory[page]) {
           if (inventory[page][category][itemName]) {
-            delete inventory[page][category][itemName];
+            let item = inventory[page][category][itemName];
+            if ('stock' in item) {
+              // Subtract ordered quantity from stock
+              item.stock = Math.max(0, (item.stock || 0) - qty);
+              // Increase itemsOnHold or itemsBought by qty
+              if (order.orderType === 'hold' && 'itemsOnHold' in item) {
+                item.itemsOnHold = (item.itemsOnHold || 0) + qty;
+              } else if (order.orderType === 'buy' && 'itemsBought' in item) {
+                item.itemsBought = (item.itemsBought || 0) + qty;
+              }
+              // Optionally remove item if stock is 0
+              // if (item.stock === 0) delete inventory[page][category][itemName];
+            } else {
+              // No stock property: remove item
+              delete inventory[page][category][itemName];
+            }
             found = true;
             break;
           }
@@ -396,6 +410,7 @@ async function acceptOrder(orderId) {
         if (found) break;
       }
     }
+
     // Remove the order
     orders.splice(orderIndex, 1);
 
@@ -432,17 +447,20 @@ async function cancelOrder(orderId) {
     let inventory = await (await fetch(CLOUD_API_URL)).json();
 
     if (order.orderType === 'buy') {
-      // Restore bought/itemsBought status
+      // Restore bought/itemsBought status and stock
       for (const [itemName, qty] of Object.entries(order.items)) {
         let found = false;
         for (const page in inventory) {
           for (const category in inventory[page]) {
             if (inventory[page][category][itemName]) {
               let item = inventory[page][category][itemName];
-              if ('bought' in item) {
+              if ('stock' in item) {
+                item.stock = (item.stock || 0) + qty;
+                if ('itemsBought' in item) {
+                  item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
+                }
+              } else if ('bought' in item) {
                 item.bought = false;
-              } else if ('itemsBought' in item) {
-                item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
               }
               found = true;
               break;
@@ -452,17 +470,20 @@ async function cancelOrder(orderId) {
         }
       }
     } else if (order.orderType === 'hold') {
-      // Restore onhold/itemsOnHold status
+      // Restore onhold/itemsOnHold status and stock
       for (const [itemName, qty] of Object.entries(order.items)) {
         let found = false;
         for (const page in inventory) {
           for (const category in inventory[page]) {
             if (inventory[page][category][itemName]) {
               let item = inventory[page][category][itemName];
-              if ('onhold' in item) {
+              if ('stock' in item) {
+                item.stock = (item.stock || 0) + qty;
+                if ('itemsOnHold' in item) {
+                  item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
+                }
+              } else if ('onhold' in item) {
                 item.onhold = false;
-              } else if ('itemsOnHold' in item) {
-                item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
               }
               found = true;
               break;
