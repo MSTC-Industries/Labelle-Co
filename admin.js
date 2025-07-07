@@ -180,9 +180,9 @@ function renderTable() {
           ${
               typeof details.itemsOnHold === 'number'
                 ? `<input type="number" min="0" value="${details.itemsOnHold}" 
-                    onchange="editItem('${currentpage}','${category}','${item}','itemsOnHold', this.value)">`
+                    onchange="editItem('${category}','${item}','itemsOnHold', this.value)">`
                 : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
-                    onchange="editItem('${currentpage}','${category}','${item}','onhold', this.checked)" 
+                    onchange="editItem('${category}','${item}','onhold', this.checked)" 
                     ${hasStockProp ? 'disabled' : ''}>`
             }
         </td>

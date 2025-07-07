@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Thank You for Your Order!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="return.js" defer></script>
+  <style>
+    body {
+      background: #f7f7fa;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+    .thankyou-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2.5rem 2rem 2rem 2rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.7s;
+    }
+    .thankyou-container h1 {
+      color: #4CAF50;
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+    }
+    .thankyou-container p {
+      color: #333;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+    .thankyou-container button {
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .thankyou-container button:hover {
+      background: #388e3c;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="thankyou-container" id="success" class="hidden">
+    <h1>Thank You!</h1>
+    <p>Your payment was successful.<br>
+    We appreciate your order and will process it soon.</p>
+    <button onclick="window.location.href='index.html'">Return to Home</button>
+  </div>
+</body>

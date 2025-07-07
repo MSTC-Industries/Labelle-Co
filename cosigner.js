@@ -105,9 +105,9 @@ function renderTable() {
               ${
                 typeof details.itemsBought === 'number'
                   ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
-                        onchange="editItem('${category}','${item}','itemsBought', this.value)">`
+                        onchange="editItem('${page}','${category}','${item}','itemsBought', this.value)">`
                   : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
-                        onchange="editItem('${category}','${item}','bought', this.checked)" 
+                        onchange="editItem('${page}','${category}','${item}','bought', this.checked)" 
                         ${hasStockProp ? 'disabled' : ''}>`
               }
             </td>

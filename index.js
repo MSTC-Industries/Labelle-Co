@@ -1,3 +1,5 @@
+const stripe = Stripe("pk_test_51RUqjwI71UXMKz4PWxaW4fEWQH6TtyqGKb2oC4odsVxJIWsetUL55eU9wos1KQJ1wxxiJgILTsr7fcuvvypP9ZAD00rWNs4Iip");
+
 var allitems = {}
 
 var order = {
@@ -9,8 +11,6 @@ var order = {
 
 let totalprice = 0;
 let currentpage = "";
-
-//var stripe = Stripe("pk_test_TYooMQauvdEDq54NiTphI7jx"); //for payment, deal w/ this later
 
 function ready() {
   document.getElementById("searchback").style.display = "none";
@@ -200,68 +200,64 @@ function addcards(self, items) {
 
 async function pay(event, orderType) {
   if (event) event.preventDefault();
-  if (totalprice === 0) { return; }
+  if (totalprice === 0) return;
+
   await fetchData();
   const cart = document.getElementById("cartItems");
 
   order.name = document.getElementById("nameinput").value;
   order.phone = document.getElementById("phone").value;
   order.email = document.getElementById("email").value;
-  order.orderType = orderType; // <-- Add orderType to order
+  order.orderType = orderType;
 
-  var failed = false;
-  var failedItem = "";
+  // 1. Check for on hold or bought items
+  let failed = false;
+  let failedItem = "";
+  let cartItems = [];
   cart.querySelectorAll("*").forEach(node => {
     const text = getChildById(node, "text");
-    if (text) { 
-      var itemData = getItemObject(text.value)
-      var quantity = text.dataset.price / itemData.data.price;
-
-      // Check for stock/hold issues
-      if ((('onhold' in itemData.data && itemData.data.onhold == true) || ('stock' in itemData.data && (itemData.data.stock - (itemData.data.itemsOnHold || 0)) < quantity)) && !failed ) { 
+    if (text) {
+      const itemData = getItemObject(text.value);
+      const quantity = text.dataset.price / itemData.data.price;
+      if (
+        (itemData.data.onhold === true) ||
+        (itemData.data.bought === true) ||
+        ('stock' in itemData.data && (itemData.data.stock - (itemData.data.itemsOnHold || 0) - (itemData.data.itemsBought || 0)) < quantity)
+      ) {
         failed = true;
         failedItem = text.value;
-      } else {
-        order.items[text.value] = quantity;
-
-        if (orderType === "hold") {
-          // Place Hold logic
-          if ('onhold' in itemData.data) {
-            allitems[itemData.page][itemData.category][itemData.item].onhold = true;
-          } else if ('stock' in itemData.data) {
-            // Add or update itemsOnHold
-            let prevOnHold = allitems[itemData.page][itemData.category][itemData.item].itemsOnHold || 0;
-            allitems[itemData.page][itemData.category][itemData.item].itemsOnHold = prevOnHold + quantity;
-          }
-        } else if (orderType === "buy") {
-          // Buy logic: update bought/itemsBought instead of removing
-          if ('onhold' in itemData.data) {
-            allitems[itemData.page][itemData.category][itemData.item].bought = true;
-          } else if ('stock' in itemData.data) {
-            let prevBought = allitems[itemData.page][itemData.category][itemData.item].itemsBought || 0;
-            allitems[itemData.page][itemData.category][itemData.item].itemsBought = prevBought + quantity;
-          }
-        }
       }
+      cartItems.push({ itemData, quantity });
     }
   });
 
   if (failed) {
-    document.getElementById("error-message").innerText = 
-      `Sorry, the item "${failedItem}" is already on hold or is out of stock and cannot be ordered.`;
+    document.getElementById("error-message").innerText =
+      `Sorry, the item "${failedItem}" is already on hold, bought, or out of stock and cannot be ordered.`;
     document.getElementById("error-message").style.color = "red";
-  } else {
-    document.getElementById("error-message").innerText = 
+    return;
+  }
+
+  // 2. If orderType is "hold"
+  if (orderType === "hold") {
+    cartItems.forEach(({ itemData, quantity }) => {
+      order.items[itemData.item] = quantity;
+      if ('onhold' in itemData.data) {
+        allitems[itemData.page][itemData.category][itemData.item].onhold = true;
+      } else if ('stock' in itemData.data) {
+        let prevOnHold = allitems[itemData.page][itemData.category][itemData.item].itemsOnHold || 0;
+        allitems[itemData.page][itemData.category][itemData.item].itemsOnHold = prevOnHold + quantity;
+      }
+    });
+
+    document.getElementById("error-message").innerText =
       `Thank you for your order, ${order.name}! Your order will be processed shortly.`;
     document.getElementById("error-message").style.color = "green";
     document.getElementById("cartItems").innerHTML = "";
     totalprice = 0;
     document.getElementById("totalAmount").innerHTML = "Total: $0.00";
     await saveData();
-
-    // Save order to backend
-    await submitOrder({...order, items: {...order.items}, orderType: orderType});
-
+    await submitOrder({ ...order, items: { ...order.items }, orderType });
     showLoading();
     try {
       await fetch('https://labelle-co-server.vercel.app/notify-owner', {
@@ -274,11 +270,24 @@ async function pay(event, orderType) {
     } finally {
       hideLoading();
     }
-
     addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
+    order.items = {};
+    return;
   }
 
-  order.items = {};
+  // 3. If orderType is "buy"
+  if (orderType === "buy") {
+    // Save items to order for later use after payment
+    cartItems.forEach(({ itemData, quantity }) => {
+      order.items[itemData.item] = quantity;
+    });
+
+    // Save order to localStorage for use after payment
+    localStorage.setItem("pendingOrder", JSON.stringify(order));
+
+    // Open Stripe Checkout
+    await initialize();
+  }
 }
 
 function getItemObject(itemName) {
@@ -427,4 +436,37 @@ function showLoadingError(message) {
 
 function hideLoadingError() {
   hideLoading();
+}
+
+async function initialize() {
+  const cart = document.getElementById("cartItems");
+  let cartItems = [];
+  cart.querySelectorAll("*").forEach(node => {
+    const text = getChildById(node, "text");
+    if (text) {
+      const itemData = getItemObject(text.value);
+      const quantity = text.dataset.price / itemData.data.price;
+      cartItems.push({
+        name: itemData.item,
+        price: Math.round(itemData.data.price * 100), // convert dollars to cents
+        quantity: quantity
+      });
+    }
+  });
+
+  const fetchClientSecret = async () => {
+    const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: cartItems })
+    });
+    const { clientSecret } = await response.json();
+    return clientSecret;
+  };
+
+  const checkout = await stripe.initEmbeddedCheckout({
+    fetchClientSecret,
+  });
+
+  checkout.mount('#checkout');
 }
