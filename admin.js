@@ -65,7 +65,15 @@ let barcodeQueue = [];
 
 window.onload = function() {
   showPasswordOverlay();
+  showSection('inventory');
 };
+
+function showSection(section) {
+  document.getElementById('order-section').style.display = (section === 'orders') ? '' : 'none';
+  document.getElementById('inventory-section').style.display = (section === 'inventory') ? '' : 'none';
+  document.getElementById('cosigners-section').style.display = (section === 'cosigners') ? '' : 'none';
+  if (section === 'cosigners') renderCosigners();
+}
 
 function showPasswordOverlay() {
   document.getElementById('admin-password-overlay').style.transform = 'translateY(0)';
@@ -148,7 +156,7 @@ function renderTable() {
       printBtn.className = 'btn';
       printBtn.style.marginBottom = '10px';
       printBtn.onclick = printBarcodeQueue;
-      container.parentNode.insertBefore(printBtn, container);
+      document.getElementById('options-card').appendChild(printBtn);
     } else {
       printBtn.style.display = '';
       printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
@@ -173,7 +181,7 @@ function renderTable() {
       const price = Number(details.price) || 0;
       const adminPercent = Number(profitSplit.split('/')[0]) || 50;
       const adminProfit = ((price * adminPercent) / 100).toFixed(2);
-      totalAdminProfit += adminProfit;
+      totalAdminProfit += Number(adminProfit);
 
       html += `<tr>
         <td>
@@ -186,8 +194,14 @@ function renderTable() {
         </td>
         <td><input type="text" value="${item}" onchange="editItem('${category}','${item}', 'item', this.value)"></td>
         <td>
-        <input type="text" value="${details.img || ''}" onchange="editItem('${category}','${item}', 'img', this.value)" placeholder="Image URL">
-        ${details.img ? `<br><img src="${details.img}" alt="preview" style="max-width:60px;max-height:60px;">` : ''}
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <input type="text" 
+                  value="${details.img || ''}" 
+                  onchange="editItem('${category}','${item}', 'img', this.value)" 
+                  placeholder="Image URL"
+                  style="flex: 1;">
+            ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
+          </div>
         </td>
         <td><input type="number" value="${details.price}" onchange="editItem('${category}','${item}', 'price', this.value)"></td>
         <td>
@@ -219,7 +233,7 @@ function renderTable() {
           }
         </td>
         <td>
-          <select onchange="editItem('${category}','${item}','profitSplit', this.value)">
+          <select onchange="editItem('${category}','${item}','profitSplit', this.value)" class="profit-split-select">
             ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
               `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
             ).join('')}
@@ -239,13 +253,9 @@ function renderTable() {
       </tr>`;
     }
   }
-  html += '</table>';
-  container.innerHTML = html;
 
-  const totalDiv = document.createElement('div');
-  totalDiv.style.marginTop = '16px';
-  totalDiv.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>`;
-  container.appendChild(totalDiv);
+  html += '</table>';
+  container.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>` + html;
 }
 
 window.editItem = function(category, item, field, value) {
@@ -769,3 +779,31 @@ window.printBarcodeQueue = function() {
   barcodeQueue = [];
   setTimeout(renderTable, 1000);
 };
+
+async function renderCosigners() {
+  const cosignersDiv = document.getElementById('cosigners-list');
+  cosignersDiv.innerHTML = 'Loading...';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    if (!Array.isArray(cosigners) || cosigners.length === 0) {
+      cosignersDiv.innerHTML = '<p>No cosigners found.</p>';
+      return;
+    }
+    let html = `<table>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+      </tr>`;
+    for (const c of cosigners) {
+      html += `<tr>
+        <td>${c.name || ''}</td>
+        <td>${c.email || ''}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    cosignersDiv.innerHTML = html;
+  } catch (err) {
+    cosignersDiv.innerHTML = `<p style="color:red;">Failed to load cosigners: ${err.message}</p>`;
+  }
+}

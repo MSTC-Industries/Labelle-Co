@@ -17,10 +17,8 @@ async function fetchCosignerInfo() {
     if (res.ok) {
       const data = await res.json();
       cosignerName = data.name;
-      document.getElementById('cosignerEmail').textContent = data.email;
       document.getElementById('cosignerName').textContent = data.name;
     } else {
-      document.getElementById('cosignerEmail').textContent = cosignerEmail;
       document.getElementById('cosignerName').textContent = '';
       showLoadingError("Could not fetch cosigner info.");
     }
@@ -58,7 +56,7 @@ function renderTable() {
       printBtn.className = 'btn';
       printBtn.style.marginBottom = '10px';
       printBtn.onclick = printBarcodeQueue;
-      container.parentNode.insertBefore(printBtn, container);
+      document.getElementById('options-card').appendChild(printBtn);
     } else {
       printBtn.style.display = '';
       printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
@@ -82,13 +80,13 @@ function renderTable() {
         if (details.cosignerEmail === cosignerEmail) {
           const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
           const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
-          const isChecked = barcodeQueue.some(q => q.page === currentpage && q.category === category && q.item === item);
+          const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === item);
 
           const profitSplit = details.profitSplit || "50/50";
           const price = Number(details.price) || 0;
           const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
           const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
-          totalCosignerProfit += cosignerProfit;
+          totalCosignerProfit += Number(cosignerProfit);
 
           html += `<tr>
             <td>
@@ -101,8 +99,14 @@ function renderTable() {
             </td>
             <td><input type="text" value="${item}" onchange="editItem('${page}','${category}','${item}','item', this.value)"></td>
             <td>
-              <input type="text" value="${details.img || ''}" onchange="editItem('${page}','${category}','${item}','img', this.value)" placeholder="Image URL">
-              ${details.img ? `<br><img src="${details.img}" alt="preview" style="max-width:60px;max-height:60px;">` : ''}
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="text" 
+                      value="${details.img || ''}" 
+                      onchange="editItem('${category}','${item}', 'img', this.value)" 
+                      placeholder="Image URL"
+                      style="flex: 1;">
+                ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
+              </div>
             </td>
             <td><input type="number" value="${details.price}" onchange="editItem('${page}','${category}','${item}','price', this.value)"></td>
             <td>
@@ -139,7 +143,7 @@ function renderTable() {
             <td>
               <button onclick="removeItem('${page}','${category}','${item}')">Remove</button>
               <label style="display:inline-flex;align-items:center;">
-                <input type="checkbox" onchange="toggleBarcodeQueue('${currentpage}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
+                <input type="checkbox" onchange="toggleBarcodeQueue('${page}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
                 Barcode
               </label>
             </td>
@@ -148,13 +152,9 @@ function renderTable() {
       }
     }
   }
-  html += '</table>';
-  container.innerHTML = html;
 
-  const totalDiv = document.createElement('div');
-  totalDiv.style.marginTop = '16px';
-  totalDiv.innerHTML = `<strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>`;
-  container.appendChild(totalDiv);
+  html += '</table>';
+  container.innerHTML = `<strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>` + html;
 }
 
 window.removeItem = function(page, category, item) {
