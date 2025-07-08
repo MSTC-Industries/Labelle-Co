@@ -90,16 +90,6 @@
   </div>
 </div>
 
-<div id="barcode-modal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:2000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-  <div style="background:#fff;padding:32px 24px;border-radius:8px;box-shadow:0 2px 16px #0002;min-width:320px;position:relative;">
-    <button onclick="closeBarcodeModal()" style="position:absolute;top:8px;right:8px;">&times;</button>
-    <h3>Barcode</h3>
-    <svg id="barcode-svg"></svg>
-    <div id="barcode-value" style="margin-top:8px;font-family:monospace;"></div>
-    <button class="btn" onclick="printBarcode()">Print</button>
-  </div>
-</div>
-
 <div id="loading-overlay" style="
   position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;
   background:rgba(255,255,255,0.8);display:none;align-items:center;justify-content:center;

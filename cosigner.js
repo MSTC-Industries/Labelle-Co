@@ -4,6 +4,7 @@ const COSIGNER_INFO_URL = 'https://labelle-co-server.vercel.app/cosigner-info';
 let allitems = {};
 let cosignerEmail = localStorage.getItem('cosignerEmail');
 let cosignerName = '';
+let barcodeQueue = [];
 
 fetchCosignerInfo();
 loadInventory();
@@ -46,6 +47,26 @@ function loadInventory() {
 
 function renderTable() {
   const container = document.getElementById('inventory');
+  
+  // Show/hide Print Barcodes button
+  let printBtn = document.getElementById('printBarcodesBtn');
+  if (barcodeQueue.length > 0) {
+    if (!printBtn) {
+      printBtn = document.createElement('button');
+      printBtn.id = 'printBarcodesBtn';
+      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+      printBtn.className = 'btn';
+      printBtn.style.marginBottom = '10px';
+      printBtn.onclick = printBarcodeQueue;
+      container.parentNode.insertBefore(printBtn, container);
+    } else {
+      printBtn.style.display = '';
+      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+    }
+  } else if (printBtn) {
+    printBtn.style.display = 'none';
+  }
+  
   let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Bought</th><th>Profit Split</th><th>Cosigner Profit</th><th>Barcode ID</th><th>Actions</th></tr>';
   // Gather all categories for dropdown
   let allCategories = new Set();
@@ -61,7 +82,8 @@ function renderTable() {
         if (details.cosignerEmail === cosignerEmail) {
           const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
           const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
-          
+          const isChecked = barcodeQueue.some(q => q.page === currentpage && q.category === category && q.item === item);
+
           const profitSplit = details.profitSplit || "50/50";
           const price = Number(details.price) || 0;
           const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
@@ -116,7 +138,10 @@ function renderTable() {
             <td>${details.barcode}</td>
             <td>
               <button onclick="removeItem('${page}','${category}','${item}')">Remove</button>
-              <button onclick="showBarcodeModal('${details.barcode}', '${item}', '${details.price}')">Barcode</button>
+              <label style="display:inline-flex;align-items:center;">
+                <input type="checkbox" onchange="toggleBarcodeQueue('${currentpage}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
+                Barcode
+              </label>
             </td>
           </tr>`;
         }
@@ -346,72 +371,6 @@ function onCategoryDropdownChange() {
   }
 }
 
-window.showBarcodeModal = function(barcode, itemName, price) {
-  if (!barcode) {
-    alert("No barcode assigned to this item.");
-    return;
-  }
-  document.getElementById('barcode-modal').style.display = 'flex';
-  JsBarcode("#barcode-svg", barcode, {
-    format: "CODE128",
-    lineColor: "#000",
-    width: 2,
-    height: 100,
-    displayValue: true
-  });
-  // Show item name and price instead of barcode value
-  document.getElementById('barcode-value').textContent = `${itemName} - $${price}`;
-  // Store for printing
-  document.getElementById('barcode-value').setAttribute('data-barcode', barcode);
-  document.getElementById('barcode-value').setAttribute('data-item', itemName);
-  document.getElementById('barcode-value').setAttribute('data-price', price);
-};
-
-window.closeBarcodeModal = function() {
-  document.getElementById('barcode-modal').style.display = 'none';
-  document.getElementById('barcode-svg').innerHTML = '';
-  document.getElementById('barcode-value').textContent = '';
-};
-
-window.printBarcode = function() {
-  const svg = document.getElementById('barcode-svg').outerHTML;
-  const valueDiv = document.getElementById('barcode-value');
-  const itemName = valueDiv.getAttribute('data-item') || '';
-  const price = valueDiv.getAttribute('data-price') || '';
-  const barcode = valueDiv.getAttribute('data-barcode') || '';
-  const printWindow = window.open('', '', 'width=400,height=300');
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Print Barcode</title>
-        <style>
-          body { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
-          .barcode-value { margin-top: 12px; font-size: 18px; font-family: monospace; }
-        </style>
-      </head>
-      <body>
-        <div>${svg}</div>
-        <div class="barcode-value">${itemName} - $${price}</div>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-        <script>
-          if (window.JsBarcode && document.querySelector('svg')) {
-            JsBarcode(document.querySelector('svg'), "${barcode}", {
-              format: "CODE128",
-              lineColor: "#000",
-              width: 2,
-              height: 100,
-              displayValue: true
-            });
-          }
-        <\/script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => printWindow.print(), 500);
-};
-
 function showLoading() {
   const overlay = document.getElementById('loading-overlay');
   if (!overlay) return;
@@ -444,3 +403,67 @@ function showLoadingError(message) {
 function hideLoadingError() {
   hideLoading();
 }
+
+window.toggleBarcodeQueue = function(page, category, item) {
+  const idx = barcodeQueue.findIndex(q => q.page === page && q.category === category && q.item === item);
+  if (idx === -1) {
+    barcodeQueue.push({ page, category, item });
+  } else {
+    barcodeQueue.splice(idx, 1);
+  }
+  renderTable();
+};
+
+window.printBarcodeQueue = function() {
+  if (barcodeQueue.length === 0) return;
+  let printWindow = window.open('', '', 'width=600,height=800');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Barcodes</title>
+        <style>
+          body { font-family: sans-serif; }
+          .barcode-block { margin-bottom: 32px; text-align: center; }
+          .barcode-value { margin-top: 12px; font-size: 18px; font-family: monospace; }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+      </head>
+      <body>
+        ${barcodeQueue.map(q => {
+          const details = allitems[q.page][q.category][q.item];
+          const barcode = details.barcode || '';
+          const itemName = q.item;
+          const price = details.price || '';
+          return `
+            <div class="barcode-block">
+              <svg class="barcode-svg" data-barcode="${barcode}"></svg>
+              <div class="barcode-value">${itemName} - $${price}</div>
+            </div>
+          `;
+        }).join('')}
+        <script>
+          window.onload = function() {
+            document.querySelectorAll('.barcode-svg').forEach(svg => {
+              const code = svg.getAttribute('data-barcode');
+              if (window.JsBarcode && code) {
+                JsBarcode(svg, code, {
+                  format: "CODE128",
+                  lineColor: "#000",
+                  width: 2,
+                  height: 100,
+                  displayValue: true
+                });
+              }
+            });
+            setTimeout(() => window.print(), 500);
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  // Optionally clear the queue after printing
+  barcodeQueue = [];
+  setTimeout(renderTable, 1000);
+};
