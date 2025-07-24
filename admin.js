@@ -119,9 +119,9 @@ function loadInventory() {
     .then(data => {
       allitems = data;
       renderTable();
+      hideLoading();
     })
     .catch(err => showLoadingError(err.message))
-    .finally(hideLoading);
 }
 
 // Populate the page selector dropdown
@@ -294,8 +294,8 @@ window.saveAll = function() {
     body: JSON.stringify(allitems)
   })
   .then(res => res.text())
-  .catch(err => showLoadingError(err.message))
-  .finally(hideLoading);
+  .then(hideLoading)
+  .catch(err => showLoadingError(err.message));
 };
 
 window.changeCategory = function(oldCategory, item, newCategory) {
@@ -399,8 +399,8 @@ function loadOrders() {
       html += '</table>';
       container.innerHTML = html;
     })
-    .catch(err => showLoadingError(err.message))
-    .finally(hideLoading);
+    .then(hideLoading)
+    .catch(err => showLoadingError(err.message));
 
   loadInventory();
 }
@@ -408,15 +408,40 @@ function loadOrders() {
 async function acceptOrder(orderId) {
   showLoading();
   try {
-    // Load orders and inventory
-    let orders = await (await fetch('https://labelle-co-server.vercel.app/orders')).json();
-    let orderIndex = orders.findIndex(o => o.id === orderId);
+    // Load orders, inventory, and cosigners
+    const [ordersRes, inventoryRes, cosignerRes] = await Promise.all([
+      fetch('https://labelle-co-server.vercel.app/orders'),
+      fetch(CLOUD_API_URL),
+      fetch('https://labelle-co-server.vercel.app/cosigners')
+    ]);
+    const orders = await ordersRes.json();
+    const inventory = await inventoryRes.json();
+    const cosigners = await cosignerRes.json();
+
+    const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) throw new Error("Order not found.");
-    let order = orders[orderIndex];
+    const order = orders[orderIndex];
 
-    // Load inventory
-    let inventory = await (await fetch(CLOUD_API_URL)).json();
+    const emailToProfit = {};
 
+    // STEP 1: Calculate profits BEFORE inventory mutation
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      for (const page in inventory) {
+        for (const category in inventory[page]) {
+          const item = inventory[page][category][itemName];
+          if (item) {
+            const price = Number(item.price);
+            const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+            const cosignerPercent = Number(cosignerPercentStr);
+            const profit = price * cosignerPercent / 100 * qty;
+            const email = item.cosignerEmail;
+            emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+          }
+        }
+      }
+    }
+
+    // STEP 2: Mutate inventory using your original logic
     for (const [itemName, qty] of Object.entries(order.items)) {
       let found = false;
       for (const page in inventory) {
@@ -424,18 +449,13 @@ async function acceptOrder(orderId) {
           if (inventory[page][category][itemName]) {
             let item = inventory[page][category][itemName];
             if ('stock' in item) {
-              // Subtract ordered quantity from stock
               item.stock = Math.max(0, (item.stock || 0) - qty);
-              // Increase itemsOnHold or itemsBought by qty
               if (order.orderType === 'hold' && 'itemsOnHold' in item) {
                 item.itemsOnHold = (item.itemsOnHold || 0) + qty;
               } else if (order.orderType === 'buy' && 'itemsBought' in item) {
                 item.itemsBought = (item.itemsBought || 0) + qty;
               }
-              // Optionally remove item if stock is 0
-              // if (item.stock === 0) delete inventory[page][category][itemName];
             } else {
-              // No stock property: remove item
               delete inventory[page][category][itemName];
             }
             found = true;
@@ -446,26 +466,38 @@ async function acceptOrder(orderId) {
       }
     }
 
-    // Remove the order
+    // STEP 3: Apply profits to cosigners
+    cosigners.forEach(c => {
+      if (emailToProfit[c.email]) {
+        c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
+      }
+    });
+
+    // STEP 4: Remove order and persist changes
     orders.splice(orderIndex, 1);
 
-    // Save updated orders and inventory
-    await fetch('https://labelle-co-server.vercel.app/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orders)
-    });
-    await fetch(CLOUD_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inventory)
-    });
+    await Promise.all([
+      fetch('https://labelle-co-server.vercel.app/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orders)
+      }),
+      fetch('https://labelle-co-server.vercel.app/cosigners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cosigners)
+      }),
+      fetch(CLOUD_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inventory)
+      })
+    ]);
 
     loadOrders();
+    hideLoading();
   } catch (err) {
     showLoadingError(err.message);
-  } finally {
-    hideLoading();
   }
 }
 
@@ -545,10 +577,9 @@ async function cancelOrder(orderId) {
     });
 
     loadOrders();
+    hideLoading();
   } catch (err) {
     showLoadingError(err.message);
-  } finally {
-    hideLoading();
   }
 }
 
@@ -564,6 +595,7 @@ function openAddItemOverlay() {
   }, 10);
   document.body.style.overflow = 'hidden';
   updateAdminPageDropdown();
+  populateCosignerDropdown();
 }
 
 function closeAddItemOverlay() {
@@ -634,8 +666,9 @@ window.submitNewAdminItem = function(event) {
   const specials = document.getElementById('newItemSpecials').value
     .split('\n').map(s => s.trim()).filter(s => s.length > 0);
   const profitSplit = document.getElementById('newItemProfitSplit').value;
-  const cosignerName = document.getElementById('newItemCosignerName').value.trim();
-  const cosignerEmail = document.getElementById('newItemCosignerEmail').value.trim();
+  const cosignerData = JSON.parse(document.getElementById('cosignerDropdown').value || '{}');
+  const cosignerName = cosignerData.name || '';
+  const cosignerEmail = cosignerData.email || '';
 
   if (!page || !category || !item) {
     document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
@@ -648,7 +681,7 @@ window.submitNewAdminItem = function(event) {
   let newItem = {
     img: img || '',
     price: price || 0,
-    single: false,
+    single: (type === 'onhold'),
     specials: specials,
     cosignerName: cosignerName,
     cosignerEmail: cosignerEmail,
@@ -676,9 +709,9 @@ window.submitNewAdminItem = function(event) {
   .then(msg => {
     closeAddItemOverlay();
     loadInventory();
+    hideLoading();
   })
-  .catch(err => showLoadingError(err.message))
-  .finally(hideLoading);
+  .catch(err => showLoadingError(err.message));
 
   return false;
 };
@@ -790,20 +823,96 @@ async function renderCosigners() {
       cosignersDiv.innerHTML = '<p>No cosigners found.</p>';
       return;
     }
+
     let html = `<table>
       <tr>
         <th>Name</th>
         <th>Email</th>
+        <th>Owed Amount</th>
+        <th>Pay Back</th>
       </tr>`;
+
     for (const c of cosigners) {
+      const profit = Number(c.owedProfit) || 0;
       html += `<tr>
         <td>${c.name || ''}</td>
         <td>${c.email || ''}</td>
+        <td>$${profit.toFixed(2)}</td>
+        <td>
+          <input type="number" 
+                id="payInput-${c.email}" 
+                min="0" 
+                max="${profit}" 
+                placeholder="Amount" 
+                style="width:80px;"
+                ${profit <= 0 ? 'disabled' : ''}>
+          <button onclick="submitCosignerPayment('${c.email}')" ${profit <= 0 ? 'disabled' : ''}>
+            Submit
+          </button>
+        </td>
       </tr>`;
     }
+
     html += '</table>';
     cosignersDiv.innerHTML = html;
   } catch (err) {
     cosignersDiv.innerHTML = `<p style="color:red;">Failed to load cosigners: ${err.message}</p>`;
+  }
+}
+
+window.submitCosignerPayment = async function(email) {
+  const input = document.getElementById(`payInput-${email}`);
+  const value = Number(input.value);
+
+  if (isNaN(value) || value <= 0) {
+    alert("Enter a valid amount.");
+    return;
+  }
+
+  showLoading(); // 🔄 Show loading before processing
+
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+
+    const c = cosigners.find(c => c.email === email);
+    if (!c) throw new Error("Cosigner not found.");
+
+    const currentOwed = Number(c.owedProfit) || 0;
+    if (value > currentOwed) {
+      alert(`You can't pay more than $${currentOwed.toFixed(2)}.`);
+      return;
+    }
+
+    c.owedProfit = Math.max(0, currentOwed - value);
+
+    await fetch('https://labelle-co-server.vercel.app/cosigners', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+
+    renderCosigners(); // Refresh the cosigner table
+    hideLoading();
+  } catch (err) {
+    alert("Failed to process payment: " + err.message);
+  }
+};
+
+async function populateCosignerDropdown() {
+  const dropdown = document.getElementById('cosignerDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Cosigner --</option>';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    cosigners.forEach(c => {
+      const option = document.createElement('option');
+      option.value = JSON.stringify({ name: c.name, email: c.email }); // store both
+      option.textContent = `${c.name} (${c.email})`;
+      dropdown.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Failed to fetch cosigners:', err);
+    dropdown.innerHTML = '<option value="">Error loading cosigners</option>';
   }
 }

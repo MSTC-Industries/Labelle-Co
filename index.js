@@ -114,12 +114,11 @@ async function loadPage(page) {
     document.getElementById("pagestuff").innerHTML = data;
     currentpage = page;
     await fetchData()
+    hideLoading();
   } catch (error) {
     console.error(error); 
     showLoadingError("Network error: " + error.message);
     document.getElementById("pagestuff").innerHTML = "<p>Error loading page</p>";
-  } finally {
-    hideLoading();
   }
 }
 
@@ -265,10 +264,9 @@ async function pay(event, orderType) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
       });
+      hideLoading();
     } catch (err) {
       showLoadingError("Failed to notify owner: " + err.message);
-    } finally {
-      hideLoading();
     }
     addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
     order.items = {};
@@ -314,11 +312,10 @@ async function fetchData() {
     const data = await response.json();
     allitems = data;
     addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
+    hideLoading();
   } catch (error) {
     showLoadingError("Failed to notify owner: " + error.message);
     console.error('Error fetching items from cloud:', error);
-  } finally {
-    hideLoading();
   }
 }
 
@@ -333,11 +330,10 @@ async function saveData() {
     });
     const data = await response.text();
     console.log('Saved to cloud:', data);
+    hideLoading();
   } catch (error) {
     showLoadingError("Failed to notify owner: " + error.message);
     console.error('Error saving items to cloud:', error);
-  } finally {
-    hideLoading();
   }
 }
 
@@ -356,11 +352,10 @@ async function submitOrder(newOrder) {
       body: JSON.stringify(orders)
     });
     console.log('Order submitted!');
+    hideLoading();
   } catch (error) {
     showLoadingError("Error submitting order: " + error.message);
     console.error('Error submitting order:', error);
-  } finally {
-    hideLoading();
   }
 }
 
@@ -469,4 +464,24 @@ async function initialize() {
   });
 
   checkout.mount('#checkout');
+}
+
+function cancelCart() {
+  const cart = document.getElementById("cartItems");
+  const checkout = document.getElementById("checkout");
+
+  // Reset cart state
+  cart.innerHTML = "";
+  totalprice = 0;
+  document.getElementById("totalAmount").textContent = "Total: $0.00";
+  document.getElementById("nameinput").value = "";
+  document.getElementById("phone").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("error-message").textContent = "";
+
+  // Reset Stripe checkout if mounted
+  checkout.innerHTML = "";
+
+  // Optional: hide cart panel
+  document.getElementById("cart-panel").classList.remove("open");
 }

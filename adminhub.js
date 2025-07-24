@@ -29,12 +29,13 @@ async function cosignerCreate(event) {
   const email = document.getElementById('createEmail').value;
   const password = document.getElementById('createPassword').value;
   const name = document.getElementById('createName').value;
+  const owedProfit = 0.0;
   const msg = document.getElementById('createMsg');
   msg.textContent = "Creating account...";
   const res = await fetch('https://labelle-co-server.vercel.app/cosigner-create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, name })
+    body: JSON.stringify({ email, password, name, owedProfit })
   });
   if (res.ok) {
     // Save cosigner info for later use

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labelle & Co</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body onload="loadPage('main.html'); ready()">
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo" id="logo">Labelle & Co</div>
+        <a href="#contactinfo">Home</a></li>
+        <a href="#Products">Products</a></li>
+        <div class="searchbar">
+            <input type="text" id="searchbox" placeholder="Search">
+            <button id="searchenter" onclick="search()">Go!</button>
+            <button id="searchback" onclick="searchback()">Back</button>
+        </div>
+        <button id="button">Shop
+            <div class="dropdownstuff" id="category-dropdown">
+                <!-- Categories will be inserted here -->
+            </div>
+        </button>
+        <button class="cart-button" onclick="toggleCart()">Cart</button>
+    </nav>
+
+    <!-- Contact Info -->
+    <div class="contactinfo" id="contactinfo">
+        <h1>Contact us at</h1>
+        <p>Email: shoplabelleandco@yahoo.com</p>
+        <p>Phone: (804)-655-2131</p>
+        <p>Address: 8906 W Broad St Suite J, Henrico, VA 23294</p>
+        <br>
+        <a href="https://qr.koalafi.com/a4ff0cb6-00d5-4f53-80fd-1c5700c398d7">Koalafi</a>
+        <a href="https://www.instagram.com/labelleandcompany?igsh=MWN4M2l2dndzejJxdA%3D%3D&utm_source=qr">Instagram</a>
+        <a href="https://www.facebook.com/LabelleandCo?mibextid=ViGcVu">Facebook</a>
+    </div>
+
+    <!-- Sale Section -->
+    <div class="sale-tile">
+        <h1>Catch these end-of-the-month sales before they are gone!</h1>
+        <div class="sale-item">
+            <img src="Images/petitebuffetsale.jpg" alt="Petite Buffet Sale" />
+            <div class="sale-details">
+                <p>Petite buffet <strong>$299</strong> <del>$329</del></p>
+            </div>
+        </div>
+        <div class="sale-item">
+            <img src="Images/rusticbookshelfsale.jpg" alt="Rustic Bookshelf Sale" />
+            <div class="sale-details">
+                <p>Rustic bookshelf <strong>$99</strong> <del>$120</del></p>
+            </div>
+        </div>
+    </div>
+
+    <h2 style="color: red; text-align: center; margin: 10px;">NO REFUNDS MAY BE MADE</h2>
+
+    <!-- Dynamic Page Content -->
+    <div class="container" id="pagestuff">
+        <!-- the pages will go here -->
+    </div>
+
+    <!-- Cart Panel -->
+    <div id="cart-panel" class="cart-panel">
+        <div class="cart-content">
+            <h2>Your Cart</h2>
+            <ul id="cartItems"></ul>
+            <p id="totalAmount">Total: $0.00</p>
+            <form id="cartForm">
+                <input class="form" type="text" id="nameinput" placeholder="Name" required>
+                <input class="form" type="tel" id="phone" placeholder="Phone Number (xxx-xxx-xxxx)" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
+                <input class="form" type="email" id="email" placeholder="Email">
+                <br>
+                <input class="pay" type="button" value="Place Hold" onclick="pay(event, 'hold')">
+                <input class="pay" type="button" value="Buy Now" onclick="pay(event, 'buy')">
+                <button class="close-cart-button" onclick="toggleCart()">Close</button>
+                <div id="error-message" style="margin: 10px 0;"></div>
+            </form>
+
+            <div id="checkout">
+                <!-- Checkout will insert the payment form here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Labelle & Co. All Rights Reserved.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://js.stripe.com/basil/stripe.js"></script>
+    <script src="index.js"></script>
+
+    <div id="loading-overlay" style="
+        position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;
+        background:rgba(255,255,255,0.8);display:none;align-items:center;justify-content:center;
+        flex-direction:column;transition:opacity 0.3s;">
+        <div style="font-size:2rem;color:#333;" id="loading-text">Loading...</div>
+        <div id="loading-error" style="color:#c00;font-size:1.2rem;margin-top:16px;display:none;"></div>
+        <button id="loading-error-close" style="display:none;margin-top:12px;" onclick="hideLoadingError()">Close</button>
+    </div>
+</body>
+</html>
+const stripe = Stripe("pk_test_51RUqjwI71UXMKz4PWxaW4fEWQH6TtyqGKb2oC4odsVxJIWsetUL55eU9wos1KQJ1wxxiJgILTsr7fcuvvypP9ZAD00rWNs4Iip");
+
+var allitems = {}
+
+var order = {
+  "name" : "",
+  "phone" : "",
+  "email" : "",
+  "items" : {}
+}
+
+let totalprice = 0;
+let currentpage = "";
+
+function ready() {
+  document.getElementById("searchback").style.display = "none";
+}
+
+function toggleCart() {
+  document.getElementById("cart-panel").classList.toggle("open");
+  document.getElementById("error-message").innerHTML = "";
+}
+
+function getChildById(parent, id) {
+  return parent?.querySelector(`#${id}`) || null;
+}
+
+function addToCart(button, single) {
+  const parent = button.parentElement;
+  const cart = document.getElementById("cartItems");
+  const title = getChildById(parent, "name");
+  const priceElem = getChildById(parent, "v");
+  let quantityInput = getChildById(parent, "quantity");
+  let max = quantityInput ? Number(quantityInput.max) : 1;
+  let quantity = single ? 1 : Math.min(Number(quantityInput?.value || 0), max);
+  if (quantityInput && quantityInput.value > max) quantityInput.value = max;
+  const pricePer = priceElem?.getAttribute("value") || 1;
+
+  let itemTotal = quantity * pricePer;
+  itemTotal = Math.round(itemTotal * 100) / 100;
+  totalprice += itemTotal;
+
+  // Remove existing item if present
+  cart.querySelectorAll("*").forEach(node => {
+    const text = getChildById(node, "text");
+    if (text && text.value === title.innerText) {
+      totalprice -= text.dataset.price;
+      node.remove();
+    }
+  });
+
+  totalprice = Math.round(totalprice * 100) / 100;
+
+  if (itemTotal !== 0) {
+    const cartitem = document.createElement("div");
+    const text = document.createElement("p");
+    text.innerHTML = `${title.innerText}: $${itemTotal}`;
+    text.id = "text";
+    text.dataset.price = itemTotal;
+    text.value = title.innerText;
+
+    const removeButton = document.createElement("button");
+    removeButton.textContent = "Remove";
+    removeButton.id = "remove";
+
+    cartitem.appendChild(text);
+
+    if (!single) {
+      const quantityInput = document.createElement("input");
+      quantityInput.type = "number";
+      quantityInput.id = "quantity";
+      quantityInput.min = 1;
+      quantityInput.max = max;
+      quantityInput.dataset.multiplier = pricePer;
+      quantityInput.value = getChildById(parent, "quantity")?.value || 0;
+      cartitem.appendChild(quantityInput);
+      quantityInput.addEventListener("input", () => updateCartItem(cartitem));
+    }
+
+    cartitem.appendChild(removeButton);
+    cart.appendChild(cartitem);
+
+    removeButton.addEventListener("click", () => {
+      totalprice -= parseFloat(text.dataset.price);
+      totalprice = Math.round(totalprice * 100) / 100;
+      document.getElementById("totalAmount").innerHTML = `Total: $${totalprice}`;
+      cartitem.remove();
+    });
+  }
+
+  document.getElementById("totalAmount").innerHTML = `Total: $${totalprice}`;
+}
+
+function updateCartItem(item) {
+  const quantity = getChildById(item, "quantity");
+  const max = Number(quantity.max);
+  if (quantity.value > max) quantity.value = max;
+  const newPrice = quantity.dataset.multiplier * quantity.value;
+  const text = getChildById(item, "text");
+  text.innerHTML = `${text.value}: $${newPrice}`;
+  totalprice -= parseFloat(text.dataset.price);
+  totalprice += Number(newPrice);
+  text.dataset.price = newPrice;
+  totalprice = Math.round(totalprice * 100) / 100;
+  document.getElementById("totalAmount").innerHTML = `Total: $${totalprice}`;
+}
+
+async function loadPage(page) {
+  showLoading();
+  try {
+    const response = await fetch(page);
+    if (!response.ok) throw new Error("Page not found");
+    const data = await response.text();
+    document.getElementById("pagestuff").innerHTML = data;
+    currentpage = page;
+    await fetchData()
+    hideLoading();
+  } catch (error) {
+    console.error(error); 
+    showLoadingError("Network error: " + error.message);
+    document.getElementById("pagestuff").innerHTML = "<p>Error loading page</p>";
+  }
+}
+
+function search(searchinput = document.getElementById("searchbox").value) {
+  document.querySelectorAll(".card").forEach(node => {
+    const title = getChildById(node, "name")?.innerText.toLowerCase();
+    node.style.display = title?.includes(searchinput.toLowerCase()) ? "block" : "none";
+  });
+  document.getElementById("searchback").style.display = searchinput ? "block" : "none";
+}
+
+function searchback() {
+  search("");
+  document.getElementById("searchback").style.display = "none";
+  document.getElementById("searchbox").value = "";
+}
+
+function addcards(self, items) {
+  self.innerHTML = "";
+  Object.entries(items).forEach(([category, categoryItems]) => {
+    const title = document.createElement("h1");
+    title.innerHTML = category;
+    title.className = "categorytitle";
+    title.id = category;
+
+    const container = document.createElement("div");
+    container.className = "category";
+
+    self.appendChild(title);
+    self.appendChild(container);
+
+    Object.entries(categoryItems).forEach(([itemkey, itemDetails]) => {
+      const item = document.createElement("div");
+      item.className = "card";
+
+      // Add green banner if on hold, red if bought/out of stock
+      let holdBanner = "";
+      let boughtBanner = "";
+      let disabled = "";
+
+      if (itemDetails.onhold === true) {
+        holdBanner = `<div class="hold-banner">On Hold</div>`;
+        disabled = "disabled";
+      } else if (itemDetails.bought === true) {
+        boughtBanner = `<div class="bought-banner">Bought</div>`;
+        disabled = "disabled";
+      } else if ('stock' in itemDetails && (itemDetails.stock <= (itemDetails.itemsOnHold || 0) + (itemDetails.itemsBought || 0))) {
+        boughtBanner = `<div class="outofstock-banner">All Bought/Held</div>`;
+        disabled = "disabled";
+      }
+
+      const checkmarks = itemDetails.specials.map(quality => `<p>✅ ${quality}</p>`).join("");
+      const checkmarkSection = `<div class='checkmarks'>${checkmarks}</div>`;
+
+      const itemHTML = `
+        ${holdBanner}
+        ${boughtBanner}
+        <img src='${itemDetails.img}' alt='Product Image'>
+        ${checkmarkSection}
+        <div class='info'>
+          <h2 id='name'>${itemkey}</h2>
+          <p value='${itemDetails.price}' id='v'>$${itemDetails.price} per item</p>
+          ${!itemDetails.single ? `
+            <div class='quantity-selector'>
+              <label for='quantity'>Quantity: </label>
+              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock - (itemDetails.itemsOnHold || 0) - (itemDetails.itemsBought || 0)}' value='0'>
+            </div>` : ""}
+          <button onclick='addToCart(this, ${itemDetails.single})' id='add' ${disabled}>Add to Cart</button>
+        </div>`;
+
+      item.innerHTML = itemHTML;
+      container.appendChild(item);
+    });
+  });
+
+  populateCategoryDropdown();
+}
+
+async function pay(event, orderType) {
+  if (event) event.preventDefault();
+  if (totalprice === 0) return;
+
+  await fetchData();
+  const cart = document.getElementById("cartItems");
+
+  order.name = document.getElementById("nameinput").value;
+  order.phone = document.getElementById("phone").value;
+  order.email = document.getElementById("email").value;
+  order.orderType = orderType;
+
+  // 1. Check for on hold or bought items
+  let failed = false;
+  let failedItem = "";
+  let cartItems = [];
+  cart.querySelectorAll("*").forEach(node => {
+    const text = getChildById(node, "text");
+    if (text) {
+      const itemData = getItemObject(text.value);
+      const quantity = text.dataset.price / itemData.data.price;
+      if (
+        (itemData.data.onhold === true) ||
+        (itemData.data.bought === true) ||
+        ('stock' in itemData.data && (itemData.data.stock - (itemData.data.itemsOnHold || 0) - (itemData.data.itemsBought || 0)) < quantity)
+      ) {
+        failed = true;
+        failedItem = text.value;
+      }
+      cartItems.push({ itemData, quantity });
+    }
+  });
+
+  if (failed) {
+    document.getElementById("error-message").innerText =
+      `Sorry, the item "${failedItem}" is already on hold, bought, or out of stock and cannot be ordered.`;
+    document.getElementById("error-message").style.color = "red";
+    return;
+  }
+
+  // 2. If orderType is "hold"
+  if (orderType === "hold") {
+    cartItems.forEach(({ itemData, quantity }) => {
+      order.items[itemData.item] = quantity;
+      if ('onhold' in itemData.data) {
+        allitems[itemData.page][itemData.category][itemData.item].onhold = true;
+      } else if ('stock' in itemData.data) {
+        let prevOnHold = allitems[itemData.page][itemData.category][itemData.item].itemsOnHold || 0;
+        allitems[itemData.page][itemData.category][itemData.item].itemsOnHold = prevOnHold + quantity;
+      }
+    });
+
+    document.getElementById("error-message").innerText =
+      `Thank you for your order, ${order.name}! Your order will be processed shortly.`;
+    document.getElementById("error-message").style.color = "green";
+    document.getElementById("cartItems").innerHTML = "";
+    totalprice = 0;
+    document.getElementById("totalAmount").innerHTML = "Total: $0.00";
+    await saveData();
+    await submitOrder({ ...order, items: { ...order.items }, orderType });
+    showLoading();
+    try {
+      await fetch('https://labelle-co-server.vercel.app/notify-owner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+      hideLoading();
+    } catch (err) {
+      showLoadingError("Failed to notify owner: " + err.message);
+    }
+    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
+    order.items = {};
+    return;
+  }
+
+  // 3. If orderType is "buy"
+  if (orderType === "buy") {
+    // Save items to order for later use after payment
+    cartItems.forEach(({ itemData, quantity }) => {
+      order.items[itemData.item] = quantity;
+    });
+
+    // Save order to localStorage for use after payment
+    localStorage.setItem("pendingOrder", JSON.stringify(order));
+
+    // Open Stripe Checkout
+    await initialize();
+  }
+}
+
+function getItemObject(itemName) {
+  for (const page in allitems) {
+    for (const category in allitems[page]) {
+      if (allitems[page][category][itemName]) {
+        return {
+          "page" : page,
+          "category" : category,
+          "item" : itemName,
+          "data" : allitems[page][category][itemName]
+        };
+      }
+    }
+  }
+  return null; // Not found
+}
+
+// Load allitems from the cloud
+async function fetchData() {
+  showLoading();
+  try {
+    const response = await fetch('https://labelle-co-server.vercel.app/cloud');
+    const data = await response.json();
+    allitems = data;
+    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
+    hideLoading();
+  } catch (error) {
+    showLoadingError("Failed to notify owner: " + error.message);
+    console.error('Error fetching items from cloud:', error);
+  }
+}
+
+// Save allitems to the cloud
+async function saveData() {
+  showLoading();
+  try {
+    const response = await fetch('https://labelle-co-server.vercel.app/cloud', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(allitems)
+    });
+    const data = await response.text();
+    console.log('Saved to cloud:', data);
+    hideLoading();
+  } catch (error) {
+    showLoadingError("Failed to notify owner: " + error.message);
+    console.error('Error saving items to cloud:', error);
+  }
+}
+
+async function submitOrder(newOrder) {
+  showLoading();
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/orders');
+    let orders = await res.json();
+    if (!Array.isArray(orders)) orders = [];
+    newOrder.id = Date.now();
+    newOrder.status = 'pending';
+    orders.push(newOrder);
+    await fetch('https://labelle-co-server.vercel.app/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders)
+    });
+    console.log('Order submitted!');
+    hideLoading();
+  } catch (error) {
+    showLoadingError("Error submitting order: " + error.message);
+    console.error('Error submitting order:', error);
+  }
+}
+
+function populateCategoryDropdown() {
+  const dropdown = document.getElementById('category-dropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = '';
+  if (!allitems[currentpage]) return;
+  Object.keys(allitems[currentpage]).forEach(category => {
+    const a = document.createElement('a');
+    a.href = `#${category}`;
+    a.textContent = category;
+    dropdown.appendChild(a);
+  });
+}
+
+document.getElementById('cartForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    validateContactAndPay(event);
+});
+ 
+function validateContactAndPay(event) {
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const cart = document.getElementById("cartItems");
+    if (!phone && !email) {
+        document.getElementById('error-message').innerText = "Please provide either a phone number or an email.";
+        document.getElementById('error-message').style.color = "red";
+        event.preventDefault();
+        return false;
+    }
+    // Check if cart is empty
+    if (!cart.hasChildNodes() || cart.innerText.trim() === "") {
+        document.getElementById('error-message').innerText = "Your cart is empty. Please add at least one item.";
+        document.getElementById('error-message').style.color = "red";
+        event.preventDefault();
+        return false;
+    }
+    document.getElementById('error-message').innerText = "";
+    // Call your pay function
+    pay(event);
+    return false; // Prevent default form submission, let pay handle it
+}
+
+function showLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  document.getElementById('loading-text').style.display = '';
+  document.getElementById('loading-error').style.display = 'none';
+  document.getElementById('loading-error-close').style.display = 'none';
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('active'), 10);
+}
+
+function hideLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
+  setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+function showLoadingError(message) {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  document.getElementById('loading-text').style.display = 'none';
+  const errorDiv = document.getElementById('loading-error');
+  errorDiv.textContent = message || "An error occurred.";
+  errorDiv.style.display = '';
+  document.getElementById('loading-error-close').style.display = '';
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+}
+
+function hideLoadingError() {
+  hideLoading();
+}
+
+async function initialize() {
+  const cart = document.getElementById("cartItems");
+  let cartItems = [];
+  cart.querySelectorAll("*").forEach(node => {
+    const text = getChildById(node, "text");
+    if (text) {
+      const itemData = getItemObject(text.value);
+      const quantity = text.dataset.price / itemData.data.price;
+      cartItems.push({
+        name: itemData.item,
+        price: Math.round(itemData.data.price * 100), // convert dollars to cents
+        quantity: quantity
+      });
+    }
+  });
+
+  const fetchClientSecret = async () => {
+    const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: cartItems })
+    });
+    const { clientSecret } = await response.json();
+    return clientSecret;
+  };
+
+  const checkout = await stripe.initEmbeddedCheckout({
+    fetchClientSecret,
+  });
+
+  checkout.mount('#checkout');
+}

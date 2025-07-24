@@ -383,8 +383,7 @@ table tr:hover {
               <option value="10/90">10/90</option>
             </select>
           </label>
-          <label>Cosigner Name: <input type="text" id="newItemCosignerName" required></label>
-          <label>Cosigner Email: <input type="email" id="newItemCosignerEmail" required></label>
+          <select id="cosignerDropdown" required></select>
           <button type="submit" class="btn">Add Item</button>
           <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
           <div id="addItemMsg" style="color:red;margin-top:8px;"></div>

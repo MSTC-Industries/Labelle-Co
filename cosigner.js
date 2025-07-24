@@ -22,10 +22,10 @@ async function fetchCosignerInfo() {
       document.getElementById('cosignerName').textContent = '';
       showLoadingError("Could not fetch cosigner info.");
     }
+
+    hideLoading();
   } catch (err) {
     showLoadingError("Network error: " + err.message);
-  } finally {
-    hideLoading();
   }
 }
 
@@ -38,12 +38,17 @@ function loadInventory() {
       allitems = data;
       renderTable();
       updatePageDropdown();
+      hideLoading();
     })
     .catch(err => showLoadingError(err.message))
-    .finally(hideLoading);
 }
 
-function renderTable() {
+async function renderTable() {
+  const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+  const cosigners = await res.json();
+
+  const me = cosigners.find(c => c.email === cosignerEmail);
+
   const container = document.getElementById('inventory');
   
   // Show/hide Print Barcodes button
@@ -154,7 +159,13 @@ function renderTable() {
   }
 
   html += '</table>';
-  container.innerHTML = `<strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>` + html;
+  const owed = Number(me.owedProfit) || 0;
+  container.innerHTML = `
+    <strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>
+    <br>
+    <strong>Unpaid (Owed by Admin): $${owed.toFixed(2)}</strong>
+  ` + html;
+
 }
 
 window.removeItem = function(page, category, item) {
@@ -170,9 +181,9 @@ window.removeItem = function(page, category, item) {
     .then(res => res.text())
     .then(msg => {
       loadInventory();
+      hideLoading();
     })
     .catch(err => showLoadingError(err.message))
-    .finally(hideLoading);
   }
 };
 
@@ -234,8 +245,8 @@ window.saveAll = function() {
     body: JSON.stringify(allitems)
   })
   .then(res => res.text())
-  .catch(err => showLoadingError(err.message))
-  .finally(hideLoading);
+  .then(hideLoading)
+  .catch(err => showLoadingError(err.message));
 };
 
 function logoutToHub() {
@@ -294,7 +305,7 @@ window.submitNewItem = function(event) {
   let newItem = {
     img: img || '',
     price: price || 0,
-    single: false,
+    single: (type === 'onhold'),
     specials: specials,
     cosignerName: cosignerName,
     cosignerEmail: cosignerEmail,
@@ -322,10 +333,9 @@ window.submitNewItem = function(event) {
   .then(msg => {
     closeAddItemOverlay();
     loadInventory();
-    setTimeout(() => alert('Item added!'), 100);
+    hideLoading();
   })
-  .catch(err => showLoadingError(err.message))
-  .finally(hideLoading);
+  .catch(err => showLoadingError(err.message));
 
   return false;
 };

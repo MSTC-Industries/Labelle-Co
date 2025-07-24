@@ -317,6 +317,19 @@ button:active, input[type="button"]:active {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.close-cart-button, .cancel-cart-button {
+    background: red;
+}
+
+.close-cart-button:hover, .cancel-cart-button:hover:hover {
+    background: rgba(255, 0, 0, 0.7);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+.close-cart-button:active, .cancel-cart-button:hover:active {
+    background: rgba(255, 0, 0, 0.7);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* Info and checkmarks */
 .info {
     position: absolute;
