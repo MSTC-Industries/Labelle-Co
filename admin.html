@@ -357,7 +357,9 @@ table tr:hover {
             <input type="text" id="newItemCategoryInput" placeholder="New category" style="display:none;margin-top:8px;">
           </label>
           <label>Item Name: <input type="text" id="newItemName" required></label>
-          <label>Image URL: <input type="text" id="newItemImg"></label>
+          <label>Upload Image:
+            <input type="file" id="imageUpload" accept="image/*" required>
+          </label>
           <label>Type:
             <select id="newItemType" required>
               <option value="stock">Stock (multiple)</option>

@@ -1,0 +1,532 @@
+{
+  "main.html": {
+    "Tables and Desks": {
+      "Dining Table": {
+        "img": "https://lh3.googleusercontent.com/d/143s7_howfF-6FRYI5Li4BayGogT5eOFP=s800",
+        "price": 1699,
+        "single": true,
+        "specials": [
+          "pads in leather case",
+          "8 chairs",
+          "2 leaves"
+        ],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000001",
+        "bought": false
+      },
+      "Wine&Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1RVr_s28-ToG7Z_l_l473YsjcKqhN9x7B=s800",
+        "price": 449,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000002",
+        "bought": false
+      },
+      "Side table": {
+        "img": "https://lh3.googleusercontent.com/d/1kyTFnesH0i6rO-rOgYWbVGcfpZ_Tkqdk=s800",
+        "price": 199,
+        "single": true,
+        "specials": [
+          "welded/no screws",
+          "no sqeak"
+        ],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000003",
+        "bought": false
+      },
+      "French Blue Desk": {
+        "img": "https://lh3.googleusercontent.com/d/15gdlC39IRDbD2fMXbW-XaW-wZPAqLYNF=s800",
+        "price": 389,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000004",
+        "bought": false
+      },
+      "Writing Desk": {
+        "img": "https://lh3.googleusercontent.com/d/1vo66DV9GHwlsIajLQcpY3nrNHJTdguTu=s800",
+        "price": 299,
+        "single": true,
+        "specials": [
+          "bamboo chair"
+        ],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000005",
+        "bought": false
+      },
+      "Coffee Table": {
+        "img": "https://lh3.googleusercontent.com/d/1B-pSC7WseF7Q-Vg-jt_lmmIYFmwAy8Ts=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000006",
+        "bought": false
+      },
+      "White Coffee Table": {
+        "img": "https://lh3.googleusercontent.com/d/1y-6SXU7vatjJrwTb_V77KOdpVh2Nkrei=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000007",
+        "bought": false
+      },
+      "Wooden Dinner Table": {
+        "img": "https://lh3.googleusercontent.com/d/1dbgis8FRUUHwDJkCj5r_8LvVACYSOD7r=s800",
+        "price": 1299,
+        "single": true,
+        "specials": [
+          "leaves"
+        ],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000008",
+        "bought": false
+      },
+      "Small Table": {
+        "img": "https://lh3.googleusercontent.com/d/1KfFT79KyzQvrWwLdQ2XHxheP-Ks2WcK3=s800",
+        "price": 1895,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000009",
+        "bought": false
+      }
+    },
+    "Cabinets": {
+      "Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1bXsyTPkrtRbsgBsw-MOttgBr2BxUVv_Y=s800",
+        "price": 499,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000010",
+        "bought": false
+      },
+      "Skinny Cabinets": {
+        "img": "https://lh3.googleusercontent.com/d/1CSJE1w7CNyfIJ16DXvm2LLCITXaYDYuC=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000011",
+        "bought": false
+      },
+      "Night Stands(both!)": {
+        "img": "https://lh3.googleusercontent.com/d/1k9Ho_P9hsiulqZ6iEh0NOmyNpidQo8TS=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000012",
+        "bought": false
+      },
+      "Two Drawer Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/11aQZ7h7GYCnwXXi_WZ2diY_xLAojMDzv=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000000",
+        "bought": false
+      },
+      "Regency Style Dresser": {
+        "img": "https://lh3.googleusercontent.com/d/1y4m2ffZp8MMzDa7yxA6z2d4RsjM430zq=s800",
+        "price": 549,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000013",
+        "bought": false
+      },
+      "Five layer Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1hlylmROvdSxlgnBAuLTQv_sx0yiFNxr4=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000014",
+        "bought": false
+      },
+      "Big Blue Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1RsIp7h8rVWjD8tMic5blJ0Hc7jDWcJlD=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000015",
+        "bought": false
+      },
+      "Blue Bookshelf": {
+        "img": "https://lh3.googleusercontent.com/d/1ZxbAUFo4iBPkc_LRLGFfQnhkq1EyS-t8=s800",
+        "price": 499,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000016",
+        "bought": false
+      },
+      "Beutifal Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1NMERjRWMeoXjx8Rsz3ogiqC35b2bC-1S=s800",
+        "price": 529,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000017",
+        "bought": false
+      },
+      "Green Chest": {
+        "img": "https://lh3.googleusercontent.com/d/1TPAz99XK35qP0SQNO8OC3F9Lo_pA4Wyw=s800",
+        "price": 499,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000018",
+        "bought": false
+      },
+      "Hand made bookshelf": {
+        "img": "https://lh3.googleusercontent.com/d/16UjJcB0jv5O4mEVKEnvNXfpNSFmZNoa5=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "000000019",
+        "bought": false
+      },
+      "Red China Hutch": {
+        "img": "https://lh3.googleusercontent.com/d/17Mnq0CSuyL-I0cq_IyE_WrvznvRRRi6Y=s800",
+        "price": 249,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000020",
+        "bought": false
+      },
+      "Tall Blue Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1QeuXkHZCOIFe0l4ZR7fYxQ_bizNB0j-d=s800",
+        "price": 549,
+        "single": true,
+        "specials": [
+          "original bamboo"
+        ],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000021",
+        "bought": false
+      },
+      "Ballerina cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1FFA4q8sUtwmZR7dmhJZVtDf_9VfDJ23k=s800",
+        "price": 349,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000022",
+        "bought": false
+      },
+      "Wardrobe": {
+        "img": "https://lh3.googleusercontent.com/d/1-dEzvVE20nL7lFx0qhspbDa07oBaDBQz=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000023",
+        "bought": false
+      },
+      "Chester Drawer": {
+        "img": "https://lh3.googleusercontent.com/d/1iUOZi3fwGJ4EJXJRBst70reXb9CKoEZq=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000024",
+        "bought": false
+      },
+      "Night Stands": {
+        "img": "https://lh3.googleusercontent.com/d/1SOTm539V02krHkpWD5ZltfZVbphu8AXq=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000025",
+        "bought": false
+      },
+      "Dresser": {
+        "img": "https://lh3.googleusercontent.com/d/1pXfU3CTPG6-MRXWmpy4v2asdFQX7H1BQ=s800",
+        "price": 489,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000032",
+        "bought": false
+      },
+      "Big Drawer": {
+        "img": "https://lh3.googleusercontent.com/d/1oPJms7WRJNGoBQquw3iRPRIdRTkgSAnH=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000027",
+        "bought": false
+      },
+      "Small Drawer": {
+        "img": "https://lh3.googleusercontent.com/d/1ZY2YowVHZo4po13EoPGgRlxblgF60kFr=s800",
+        "price": 99,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000028",
+        "bought": false
+      },
+      "Wine&Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1RVr_s28-ToG7Z_l_l473YsjcKqhN9x7B=s800",
+        "price": 449,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000037",
+        "bought": false
+      },
+      "Grated Night Stand(2x)": {
+        "img": "https://lh3.googleusercontent.com/d/16AoSTYWK22YwyT6s1zNH9WX9tTZW91qy=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000031",
+        "bought": false
+      },
+      "White Chester Drawers": {
+        "img": "https://lh3.googleusercontent.com/d/1OSyvW1_8HI5G9yrcs7AgKUfMEZxQ4VoM=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000033",
+        "bought": false
+      },
+      "Lingerie chest": {
+        "img": "https://lh3.googleusercontent.com/d/1Koz0qRYa09E7DCDGVrdy5Ctl91XKrtCP=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000034",
+        "bought": false
+      },
+      "Large Belgian Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1XWafuTP2N-kzpVit1-cTaxhcnk7T0kyJ=s800",
+        "price": 1395,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000035",
+        "bought": false
+      },
+      "Tall Cabinet": {
+        "img": "https://lh3.googleusercontent.com/d/1Fh_zlsYGHg3Y_MiqU6igHh_A3hfI3Qn0=s800",
+        "price": 299,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000036",
+        "bought": false
+      }
+    },
+    "Beds": {
+      "Rustic Bed(Full Size!)": {
+        "img": "https://lh3.googleusercontent.com/d/1QR09jeBODvz3_2Lb6Jtb-PTCv7toB-11=s800",
+        "price": 399,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000038",
+        "bought": false
+      },
+      "King Bed": {
+        "img": "https://lh3.googleusercontent.com/d/1cfn5zvVpteBoTmCGyE6g0jYqp1J4vQEJ=s800",
+        "price": 599,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000039",
+        "bought": false
+      },
+      "Queen Bed": {
+        "img": "https://lh3.googleusercontent.com/d/1qWnvSw-4FSTqYsN7xNJwUwPJWW2dyzTE=s800",
+        "price": 599,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000042",
+        "bought": false
+      },
+      "Iron king bed": {
+        "img": "https://lh3.googleusercontent.com/d/12XoYenMRJ4Of8sA2ev5Afy-jrJv0rzga=s800",
+        "price": 795,
+        "single": true,
+        "specials": [],
+        "onhold": false,
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000041",
+        "bought": false
+      }
+    },
+    "Other Items": {
+      "Squash Memory Books": {
+        "img": "https://lh3.googleusercontent.com/d/12hXgFMDqQRkYjUlYsn0_2MuTgOnKuJj4=s800",
+        "price": 22,
+        "single": false,
+        "stock": 20,
+        "specials": [],
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000043",
+        "itemsOnHold": 0,
+        "itemsBought": 0
+      },
+      "Geometry Towels": {
+        "img": "https://lh3.googleusercontent.com/d/1kRJB05qut1H9KehJ2r7NEdDUm1cnh3UG=s800",
+        "price": 22,
+        "single": false,
+        "stock": 20,
+        "specials": [],
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000044",
+        "itemsOnHold": 0,
+        "itemsBought": 0
+      },
+      "Lamp": {
+        "img": "https://lh3.googleusercontent.com/d/17wymXzwrw5DWjyvJ2YCuJjqfYGz0koUg=s800",
+        "price": 75.95,
+        "single": false,
+        "stock": 20,
+        "specials": [],
+        "cosignerName": "admin",
+        "cosignerEmail": "mstc.industries.official@gmail.com",
+        "profitSplit": "50/50",
+        "barcode": "00000045",
+        "itemsOnHold": 0,
+        "itemsBought": 0
+      }
+    }
+  }
+}

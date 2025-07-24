@@ -1,64 +1,6 @@
 const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 
-let allitems = {
-  'main.html' : {
-    'Tables and Desks' : {
-      'Dining Table' : {'img': 'Images/diningtablefirst.jpg', 'price': 1699, 'single' : true, 'specials' : ['pads in leather case', '8 chairs', '2 leaves'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000001', 'bought' : false},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000002', 'bought' : false},
-      'Side table' : {'img': 'Images/sidetable.jpg', 'price': 199, 'single' : true, 'specials' : ['welded/no screws', 'no sqeak'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000003', 'bought' : false},
-      'French Blue Desk' : {'img': 'Images/antiquebluetable.jpg', 'price': 389, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000004', 'bought' : false},
-      'Writing Desk' : {'img': 'Images/writingdesk.jpg', 'price': 299, 'single' : true, 'specials' : ['bamboo chair'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000005', 'bought' : false},
-      'Coffee Table' : {'img': 'Images/coffeetable.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000006', 'bought' : false},
-      'White Coffee Table' : {'img': 'Images/coffeetblwhite.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000007', 'bought' : false},
-      'Wooden Dinner Table' : {'img': 'Images/woodentable.jpg', 'price': 1299, 'single' : true, 'specials' : ['leaves'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000008', 'bought' : false},
-      'Small Table' : {'img': 'Images/smalltable.jpg', 'price': 1895, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000009', 'bought' : false},
-  },
-    'Cabinets' : {
-      'Cabinet' : {'img': 'Images/salecabinet.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000010', 'bought' : false},
-      'Skinny Cabinets' : {'img': 'Images/smallcabs.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000011', 'bought' : false},
-      'Night Stands(both!)' : {'img': 'Images/nightstands.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000012', 'bought' : false},
-      'Two Drawer Cabinet' : {'img': 'Images/2layercab.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000000', 'bought' : false},
-      'Regency Style Dresser' : {'img': 'Images/regencystyledresser.jpg', 'price': 549, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000013', 'bought' : false},
-      'Five layer Cabinet' : {'img': 'Images/5layercab.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000014', 'bought' : false},
-      'Big Blue Cabinet' : {'img': 'Images/bigbluecab.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000015', 'bought' : false},
-      'Blue Bookshelf' : {'img': 'Images/smallbluecab.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000016', 'bought' : false},
-      'Beutifal Cabinet' : {'img': 'Images/bigbeutifalcabinet.jpg', 'price': 529, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000017', 'bought' : false},
-      'Green Chest' : {'img': 'Images/bigbeutifalchest.jpg', 'price': 499, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000018', 'bought' : false},
-      'Hand made bookshelf' : {'img': 'Images/handmadebookshelf.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '000000019', 'bought' : false},
-      'Red China Hutch' : {'img': 'Images/redcabinet.jpg', 'price': 249, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000020', 'bought' : false},
-      'Tall Blue Cabinet' : {'img': 'Images/TallblueCabinet.jpg', 'price': 549, 'single' : true, 'specials' : ['original bamboo'], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000021', 'bought' : false},
-      'Ballerina cabinet' : {'img': 'Images/ballerinacab.jpg', 'price': 349, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000022', 'bought' : false},
-      'Wardrobe' : {'img': 'Images/Wardrobe.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000023', 'bought' : false},
-      'Chester Drawer' : {'img': 'Images/chesterdrawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000024', 'bought' : false},
-      'Night Stands' : {'img': 'Images/nightstands2.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000025', 'bought' : false},
-      'Dresser' : {'img': 'Images/dresser.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000026', 'bought' : false},
-      'Big Drawer' : {'img': 'Images/maxstoragedrawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000027', 'bought' : false},
-      'Small Drawer' : {'img': 'Images/small cabinet.jpg', 'price': 99, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000028', 'bought' : false},
-      //'3 drawer night stand' : {'img': 'Images/3drawer.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000029', 'bought' : false},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000030', 'bought' : false},
-      'Grated Night Stand(2x)' : {'img': 'Images/gratenightstand.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000031', 'bought' : false},
-      'Dresser' : {'img': 'Images/large dresser.jpg', 'price': 489, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000032', 'bought' : false},
-      'White Chester Drawers' : {'img': 'Images/chesterdrawer2.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000033', 'bought' : false},
-      'Lingerie chest' : {'img': 'Images/Tallcabinet2.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000034', 'bought' : false},
-      'Large Belgian Cabinet' : {'img': 'Images/bigwoodenboy.jpg', 'price': 1395, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000035', 'bought' : false},
-      'Tall Cabinet' : {'img': 'Images/tallcabinet.jpg', 'price': 299, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000036', 'bought' : false},
-      'Wine&Cabinet' : {'img': 'Images/wineandcabindet.jpg', 'price': 449, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000037', 'bought' : false},
-  },
-    'Beds' : {
-      'Rustic Bed(Full Size!)' : {'img': 'Images/rusticbed.jpg', 'price': 399, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000038', 'bought' : false},
-      'King Bed' : {'img': 'Images/Kingbed.jpg', 'price': 599, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000039', 'bought' : false},
-      'Queen Bed' : {'img': 'Images/queenbed2.jpg', 'price': 695, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000040', 'bought' : false},
-      'Iron king bed' : {'img': 'Images/ironking.jpg', 'price': 795, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000041', 'bought' : false},
-      'Queen Bed' : {'img': 'Images/queenbed.jpg', 'price': 599, 'single' : true, 'specials' : [], 'onhold' : false, 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000042', 'bought' : false},
-  },
-    'Other Items' : {
-      //set the # in stock to what's actually in stock
-      'Squash Memory Books' : {'img': 'Images/squashmemorybooks.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000043', 'itemsOnHold' : 0, 'itemsBought' : 0},
-      'Geometry Towels' : {'img': 'Images/geotowels.jpg', 'price': 22, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000044', 'itemsOnHold' : 0, 'itemsBought' : 0},
-      'Lamp' : {'img': 'Images/lamp.jpg', 'price': 75.95, 'single' : false, 'stock' : 20, 'specials' : [], 'cosignerName': 'admin', 'cosignerEmail': 'mstc.industries.official@gmail.com', 'profitSplit': '50/50', 'barcode' : '00000045', 'itemsOnHold' : 0, 'itemsBought' : 0},
-    },
-  },
-};
+let allitems = {};
 
 let currentpage = 'main.html';
 let barcodeQueue = [];
@@ -123,6 +65,7 @@ function loadInventory() {
     })
     .catch(err => showLoadingError(err.message))
 }
+
 
 // Populate the page selector dropdown
 function populatePageSelector() {
@@ -652,15 +595,16 @@ window.updateAdminPageDropdown = updateAdminPageDropdown;
 window.updateAdminCategoryDropdown = updateAdminCategoryDropdown;
 window.onAdminCategoryDropdownChange = onAdminCategoryDropdownChange;
 
-window.submitNewAdminItem = function(event) {
+window.submitNewAdminItem = async function(event) {
   event.preventDefault();
+  showLoading();
   const page = document.getElementById('newItemPageDropdown').value;
   let category = document.getElementById('newItemCategoryDropdown').value;
   if (category === '__new__') {
     category = document.getElementById('newItemCategoryInput').value.trim();
   }
   const item = document.getElementById('newItemName').value.trim();
-  const img = document.getElementById('newItemImg').value.trim();
+  //const img = document.getElementById('newItemImg').value.trim();
   const type = document.getElementById('newItemType').value;
   const price = Number(document.getElementById('newItemPrice').value);
   const specials = document.getElementById('newItemSpecials').value
@@ -669,6 +613,7 @@ window.submitNewAdminItem = function(event) {
   const cosignerData = JSON.parse(document.getElementById('cosignerDropdown').value || '{}');
   const cosignerName = cosignerData.name || '';
   const cosignerEmail = cosignerData.email || '';
+  const barcode = Date.now().toString();
 
   if (!page || !category || !item) {
     document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
@@ -678,15 +623,35 @@ window.submitNewAdminItem = function(event) {
   if (!allitems[page]) allitems[page] = {};
   if (!allitems[page][category]) allitems[page][category] = {};
 
+  const file = document.getElementById('imageUpload')?.files[0];
+  let imageURL
+
+  if (file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const imageRes = await fetch(`https://script.google.com/macros/s/AKfycbxAs_H6e9VnTcVlHBYR8hXIn3IBNV0EoBGvftQocVDbr2308f7QKV-_CZHNAWLtLcz7/exec?type=uploadImage`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const imageData = await imageRes.json();
+    const imageID = imageData.id;
+
+    if (imageID) {
+      imageURL = `https://lh3.googleusercontent.com/d/${imageID}=s800`;
+    }
+  }
+
   let newItem = {
-    img: img || '',
+    img: imageURL || '',
     price: price || 0,
     single: (type === 'onhold'),
     specials: specials,
     cosignerName: cosignerName,
     cosignerEmail: cosignerEmail,
     profitSplit: profitSplit,
-    barcode: Date.now().toString()
+    barcode: barcode
   };
   if (type === 'stock') {
     newItem.stock = 1;
@@ -699,7 +664,6 @@ window.submitNewAdminItem = function(event) {
 
   allitems[page][category][item] = newItem;
 
-  showLoading();
   fetch(CLOUD_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -734,6 +698,7 @@ function hideLoading() {
 }
 
 function showLoadingError(message) {
+  console.log(message);
   const overlay = document.getElementById('loading-overlay');
   if (!overlay) return;
   document.getElementById('loading-text').style.display = 'none';

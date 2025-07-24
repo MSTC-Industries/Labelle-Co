@@ -1,509 +1,668 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labelle & Co</title>
-    <link rel="stylesheet" href="index.css">
-</head>
-<body onload="loadPage('main.html'); ready()">
-    <!-- Navigation Bar -->
-    <nav>
-        <div class="logo" id="logo">Labelle & Co</div>
-        <a href="#contactinfo">Home</a></li>
-        <a href="#Products">Products</a></li>
-        <div class="searchbar">
-            <input type="text" id="searchbox" placeholder="Search">
-            <button id="searchenter" onclick="search()">Go!</button>
-            <button id="searchback" onclick="searchback()">Back</button>
-        </div>
-        <button id="button">Shop
-            <div class="dropdownstuff" id="category-dropdown">
-                <!-- Categories will be inserted here -->
-            </div>
-        </button>
-        <button class="cart-button" onclick="toggleCart()">Cart</button>
-    </nav>
+//ADMIN.JS
+const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 
-    <!-- Contact Info -->
-    <div class="contactinfo" id="contactinfo">
-        <h1>Contact us at</h1>
-        <p>Email: shoplabelleandco@yahoo.com</p>
-        <p>Phone: (804)-655-2131</p>
-        <p>Address: 8906 W Broad St Suite J, Henrico, VA 23294</p>
-        <br>
-        <a href="https://qr.koalafi.com/a4ff0cb6-00d5-4f53-80fd-1c5700c398d7">Koalafi</a>
-        <a href="https://www.instagram.com/labelleandcompany?igsh=MWN4M2l2dndzejJxdA%3D%3D&utm_source=qr">Instagram</a>
-        <a href="https://www.facebook.com/LabelleandCo?mibextid=ViGcVu">Facebook</a>
-    </div>
+let allitems = {};
 
-    <!-- Sale Section -->
-    <div class="sale-tile">
-        <h1>Catch these end-of-the-month sales before they are gone!</h1>
-        <div class="sale-item">
-            <img src="Images/petitebuffetsale.jpg" alt="Petite Buffet Sale" />
-            <div class="sale-details">
-                <p>Petite buffet <strong>$299</strong> <del>$329</del></p>
-            </div>
-        </div>
-        <div class="sale-item">
-            <img src="Images/rusticbookshelfsale.jpg" alt="Rustic Bookshelf Sale" />
-            <div class="sale-details">
-                <p>Rustic bookshelf <strong>$99</strong> <del>$120</del></p>
-            </div>
-        </div>
-    </div>
+let currentpage = 'main.html';
+let barcodeQueue = [];
 
-    <h2 style="color: red; text-align: center; margin: 10px;">NO REFUNDS MAY BE MADE</h2>
+window.onload = function() {
+  showPasswordOverlay();
+  showSection('inventory');
+};
 
-    <!-- Dynamic Page Content -->
-    <div class="container" id="pagestuff">
-        <!-- the pages will go here -->
-    </div>
-
-    <!-- Cart Panel -->
-    <div id="cart-panel" class="cart-panel">
-        <div class="cart-content">
-            <h2>Your Cart</h2>
-            <ul id="cartItems"></ul>
-            <p id="totalAmount">Total: $0.00</p>
-            <form id="cartForm">
-                <input class="form" type="text" id="nameinput" placeholder="Name" required>
-                <input class="form" type="tel" id="phone" placeholder="Phone Number (xxx-xxx-xxxx)" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}">
-                <input class="form" type="email" id="email" placeholder="Email">
-                <br>
-                <input class="pay" type="button" value="Place Hold" onclick="pay(event, 'hold')">
-                <input class="pay" type="button" value="Buy Now" onclick="pay(event, 'buy')">
-                <button class="close-cart-button" onclick="toggleCart()">Close</button>
-                <div id="error-message" style="margin: 10px 0;"></div>
-            </form>
-
-            <div id="checkout">
-                <!-- Checkout will insert the payment form here -->
-            </div>
-        </div>
-    </div>
-    
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 Labelle & Co. All Rights Reserved.</p>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://js.stripe.com/basil/stripe.js"></script>
-    <script src="index.js"></script>
-
-    <div id="loading-overlay" style="
-        position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;
-        background:rgba(255,255,255,0.8);display:none;align-items:center;justify-content:center;
-        flex-direction:column;transition:opacity 0.3s;">
-        <div style="font-size:2rem;color:#333;" id="loading-text">Loading...</div>
-        <div id="loading-error" style="color:#c00;font-size:1.2rem;margin-top:16px;display:none;"></div>
-        <button id="loading-error-close" style="display:none;margin-top:12px;" onclick="hideLoadingError()">Close</button>
-    </div>
-</body>
-</html>
-const stripe = Stripe("pk_test_51RUqjwI71UXMKz4PWxaW4fEWQH6TtyqGKb2oC4odsVxJIWsetUL55eU9wos1KQJ1wxxiJgILTsr7fcuvvypP9ZAD00rWNs4Iip");
-
-var allitems = {}
-
-var order = {
-  "name" : "",
-  "phone" : "",
-  "email" : "",
-  "items" : {}
+function showSection(section) {
+  document.getElementById('order-section').style.display = (section === 'orders') ? '' : 'none';
+  document.getElementById('inventory-section').style.display = (section === 'inventory') ? '' : 'none';
+  document.getElementById('cosigners-section').style.display = (section === 'cosigners') ? '' : 'none';
+  if (section === 'cosigners') renderCosigners();
 }
 
-let totalprice = 0;
-let currentpage = "";
-
-function ready() {
-  document.getElementById("searchback").style.display = "none";
+function showPasswordOverlay() {
+  document.getElementById('admin-password-overlay').style.transform = 'translateY(0)';
+  document.getElementById('admin-password-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
-function toggleCart() {
-  document.getElementById("cart-panel").classList.toggle("open");
-  document.getElementById("error-message").innerHTML = "";
-}
-
-function getChildById(parent, id) {
-  return parent?.querySelector(`#${id}`) || null;
-}
-
-function addToCart(button, single) {
-  const parent = button.parentElement;
-  const cart = document.getElementById("cartItems");
-  const title = getChildById(parent, "name");
-  const priceElem = getChildById(parent, "v");
-  let quantityInput = getChildById(parent, "quantity");
-  let max = quantityInput ? Number(quantityInput.max) : 1;
-  let quantity = single ? 1 : Math.min(Number(quantityInput?.value || 0), max);
-  if (quantityInput && quantityInput.value > max) quantityInput.value = max;
-  const pricePer = priceElem?.getAttribute("value") || 1;
-
-  let itemTotal = quantity * pricePer;
-  itemTotal = Math.round(itemTotal * 100) / 100;
-  totalprice += itemTotal;
-
-  // Remove existing item if present
-  cart.querySelectorAll("*").forEach(node => {
-    const text = getChildById(node, "text");
-    if (text && text.value === title.innerText) {
-      totalprice -= text.dataset.price;
-      node.remove();
-    }
-  });
-
-  totalprice = Math.round(totalprice * 100) / 100;
-
-  if (itemTotal !== 0) {
-    const cartitem = document.createElement("div");
-    const text = document.createElement("p");
-    text.innerHTML = `${title.innerText}: $${itemTotal}`;
-    text.id = "text";
-    text.dataset.price = itemTotal;
-    text.value = title.innerText;
-
-    const removeButton = document.createElement("button");
-    removeButton.textContent = "Remove";
-    removeButton.id = "remove";
-
-    cartitem.appendChild(text);
-
-    if (!single) {
-      const quantityInput = document.createElement("input");
-      quantityInput.type = "number";
-      quantityInput.id = "quantity";
-      quantityInput.min = 1;
-      quantityInput.max = max;
-      quantityInput.dataset.multiplier = pricePer;
-      quantityInput.value = getChildById(parent, "quantity")?.value || 0;
-      cartitem.appendChild(quantityInput);
-      quantityInput.addEventListener("input", () => updateCartItem(cartitem));
-    }
-
-    cartitem.appendChild(removeButton);
-    cart.appendChild(cartitem);
-
-    removeButton.addEventListener("click", () => {
-      totalprice -= parseFloat(text.dataset.price);
-      totalprice = Math.round(totalprice * 100) / 100;
-      document.getElementById("totalAmount").innerHTML = `Total: $${totalprice}`;
-      cartitem.remove();
-    });
-  }
-
-  document.getElementById("totalAmount").innerHTML = `Total: $${totalprice}`;
-}
-
-function updateCartItem(item) {
-  const quantity = getChildById(item, "quantity");
-  const max = Number(quantity.max);
-  if (quantity.value > max) quantity.value = max;
-  const newPrice = quantity.dataset.multiplier * quantity.value;
-  const text = getChildById(item, "text");
-  text.innerHTML = `${text.value}: $${newPrice}`;
-  totalprice -= parseFloat(text.dataset.price);
-  totalprice += Number(newPrice);
-  text.dataset.price = newPrice;
-  totalprice = Math.round(totalprice * 100) / 100;
-  document.getElementById("totalAmount").innerHTML = `Total: $${totalprice}`;
-}
-
-async function loadPage(page) {
-  showLoading();
-  try {
-    const response = await fetch(page);
-    if (!response.ok) throw new Error("Page not found");
-    const data = await response.text();
-    document.getElementById("pagestuff").innerHTML = data;
-    currentpage = page;
-    await fetchData()
-    hideLoading();
-  } catch (error) {
-    console.error(error); 
-    showLoadingError("Network error: " + error.message);
-    document.getElementById("pagestuff").innerHTML = "<p>Error loading page</p>";
-  }
-}
-
-function search(searchinput = document.getElementById("searchbox").value) {
-  document.querySelectorAll(".card").forEach(node => {
-    const title = getChildById(node, "name")?.innerText.toLowerCase();
-    node.style.display = title?.includes(searchinput.toLowerCase()) ? "block" : "none";
-  });
-  document.getElementById("searchback").style.display = searchinput ? "block" : "none";
-}
-
-function searchback() {
-  search("");
-  document.getElementById("searchback").style.display = "none";
-  document.getElementById("searchbox").value = "";
-}
-
-function addcards(self, items) {
-  self.innerHTML = "";
-  Object.entries(items).forEach(([category, categoryItems]) => {
-    const title = document.createElement("h1");
-    title.innerHTML = category;
-    title.className = "categorytitle";
-    title.id = category;
-
-    const container = document.createElement("div");
-    container.className = "category";
-
-    self.appendChild(title);
-    self.appendChild(container);
-
-    Object.entries(categoryItems).forEach(([itemkey, itemDetails]) => {
-      const item = document.createElement("div");
-      item.className = "card";
-
-      // Add green banner if on hold, red if bought/out of stock
-      let holdBanner = "";
-      let boughtBanner = "";
-      let disabled = "";
-
-      if (itemDetails.onhold === true) {
-        holdBanner = `<div class="hold-banner">On Hold</div>`;
-        disabled = "disabled";
-      } else if (itemDetails.bought === true) {
-        boughtBanner = `<div class="bought-banner">Bought</div>`;
-        disabled = "disabled";
-      } else if ('stock' in itemDetails && (itemDetails.stock <= (itemDetails.itemsOnHold || 0) + (itemDetails.itemsBought || 0))) {
-        boughtBanner = `<div class="outofstock-banner">All Bought/Held</div>`;
-        disabled = "disabled";
-      }
-
-      const checkmarks = itemDetails.specials.map(quality => `<p>✅ ${quality}</p>`).join("");
-      const checkmarkSection = `<div class='checkmarks'>${checkmarks}</div>`;
-
-      const itemHTML = `
-        ${holdBanner}
-        ${boughtBanner}
-        <img src='${itemDetails.img}' alt='Product Image'>
-        ${checkmarkSection}
-        <div class='info'>
-          <h2 id='name'>${itemkey}</h2>
-          <p value='${itemDetails.price}' id='v'>$${itemDetails.price} per item</p>
-          ${!itemDetails.single ? `
-            <div class='quantity-selector'>
-              <label for='quantity'>Quantity: </label>
-              <input type='number' id='quantity' name='quantity' min='0' max='${itemDetails.stock - (itemDetails.itemsOnHold || 0) - (itemDetails.itemsBought || 0)}' value='0'>
-            </div>` : ""}
-          <button onclick='addToCart(this, ${itemDetails.single})' id='add' ${disabled}>Add to Cart</button>
-        </div>`;
-
-      item.innerHTML = itemHTML;
-      container.appendChild(item);
-    });
-  });
-
-  populateCategoryDropdown();
-}
-
-async function pay(event, orderType) {
-  if (event) event.preventDefault();
-  if (totalprice === 0) return;
-
-  await fetchData();
-  const cart = document.getElementById("cartItems");
-
-  order.name = document.getElementById("nameinput").value;
-  order.phone = document.getElementById("phone").value;
-  order.email = document.getElementById("email").value;
-  order.orderType = orderType;
-
-  // 1. Check for on hold or bought items
-  let failed = false;
-  let failedItem = "";
-  let cartItems = [];
-  cart.querySelectorAll("*").forEach(node => {
-    const text = getChildById(node, "text");
-    if (text) {
-      const itemData = getItemObject(text.value);
-      const quantity = text.dataset.price / itemData.data.price;
-      if (
-        (itemData.data.onhold === true) ||
-        (itemData.data.bought === true) ||
-        ('stock' in itemData.data && (itemData.data.stock - (itemData.data.itemsOnHold || 0) - (itemData.data.itemsBought || 0)) < quantity)
-      ) {
-        failed = true;
-        failedItem = text.value;
-      }
-      cartItems.push({ itemData, quantity });
-    }
-  });
-
-  if (failed) {
-    document.getElementById("error-message").innerText =
-      `Sorry, the item "${failedItem}" is already on hold, bought, or out of stock and cannot be ordered.`;
-    document.getElementById("error-message").style.color = "red";
+window.submitAdminPassword = async function() {
+  const password = document.getElementById('adminPasswordInput').value;
+  const msg = document.getElementById('adminPasswordMsg');
+  if (!password) {
+    msg.textContent = "Please enter a password.";
     return;
   }
+  msg.textContent = "Checking...";
+  const res = await fetch('https://labelle-co-server.vercel.app/check-admin-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (res.ok) {
+    // Slide up overlay
+    const overlay = document.getElementById('admin-password-overlay');
+    overlay.style.transform = 'translateY(-100vh)';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 500);
+    // Now load data
+    populatePageSelector()
+    loadInventory();
+    loadOrders();
+  } else {
+    msg.textContent = "Incorrect password. Try again.";
+  }
+};
 
-  // 2. If orderType is "hold"
-  if (orderType === "hold") {
-    cartItems.forEach(({ itemData, quantity }) => {
-      order.items[itemData.item] = quantity;
-      if ('onhold' in itemData.data) {
-        allitems[itemData.page][itemData.category][itemData.item].onhold = true;
-      } else if ('stock' in itemData.data) {
-        let prevOnHold = allitems[itemData.page][itemData.category][itemData.item].itemsOnHold || 0;
-        allitems[itemData.page][itemData.category][itemData.item].itemsOnHold = prevOnHold + quantity;
+// Load inventory
+function loadInventory() {
+  showLoading();
+  fetch(CLOUD_API_URL)
+    .then(res => res.json())
+    .then(data => {
+      allitems = data;
+      renderTable();
+      hideLoading();
+    })
+    .catch(err => showLoadingError(err.message))
+}
+
+
+// Populate the page selector dropdown
+function populatePageSelector() {
+  const pageSelect = document.getElementById('pageSelect');
+  pageSelect.innerHTML = '';
+  Object.keys(allitems).forEach(page => {
+    const option = document.createElement('option');
+    option.value = page;
+    option.textContent = page;
+    if (page === currentpage) option.selected = true;
+    pageSelect.appendChild(option);
+  });
+}
+
+// Switch between pages
+window.switchPage = function(page) {
+  currentpage = page;
+  renderTable();
+};
+
+function renderTable() {
+  const container = document.getElementById('inventory');
+  
+  // Show/hide Print Barcodes button
+  let printBtn = document.getElementById('printBarcodesBtn');
+  if (barcodeQueue.length > 0) {
+    if (!printBtn) {
+      printBtn = document.createElement('button');
+      printBtn.id = 'printBarcodesBtn';
+      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+      printBtn.className = 'btn';
+      printBtn.style.marginBottom = '10px';
+      printBtn.onclick = printBarcodeQueue;
+      document.getElementById('options-card').appendChild(printBtn);
+    } else {
+      printBtn.style.display = '';
+      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+    }
+  } else if (printBtn) {
+    printBtn.style.display = 'none';
+  }
+  
+  if (!allitems[currentpage]) {
+    container.innerHTML = '<p>No data for this page.</p>';
+    return;
+  }
+  let totalAdminProfit = 0;
+  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Bought</th><th>Profit Split</th><th>Admin Profit</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Barcode ID</th><th>Actions</th></tr>';
+  for (const [category, items] of Object.entries(allitems[currentpage])) {
+    for (const [item, details] of Object.entries(items)) {
+      const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
+      const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+      const isChecked = barcodeQueue.some(q => q.page === currentpage && q.category === category && q.item === item);
+
+      const profitSplit = details.profitSplit || "50/50";
+      const price = Number(details.price) || 0;
+      const adminPercent = Number(profitSplit.split('/')[0]) || 50;
+      const adminProfit = ((price * adminPercent) / 100).toFixed(2);
+      totalAdminProfit += Number(adminProfit);
+
+      html += `<tr>
+        <td>
+        <select onchange="changeCategory('${category}','${item}', this.value)">
+            ${Object.keys(allitems[currentpage]).map(cat =>
+            `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
+            ).join('')}
+            <option value="__new__">-- New Category --</option>
+        </select>
+        </td>
+        <td><input type="text" value="${item}" onchange="editItem('${category}','${item}', 'item', this.value)"></td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <input type="text" 
+                  value="${details.img || ''}" 
+                  onchange="editItem('${category}','${item}', 'img', this.value)" 
+                  placeholder="Image URL"
+                  style="flex: 1;">
+            ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
+          </div>
+        </td>
+        <td><input type="number" value="${details.price}" onchange="editItem('${category}','${item}', 'price', this.value)"></td>
+        <td>
+            <textarea rows="2" cols="18" onchange="editItem('${category}','${item}', 'specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
+        </td>
+        <td>
+          <input type="number" value="${details.stock ?? ''}" 
+            onchange="editItem('${category}','${item}', 'stock', this.value)" 
+            ${hasOnHoldProp ? 'disabled' : ''}>
+        </td>
+        <td>
+          ${
+              typeof details.itemsOnHold === 'number'
+                ? `<input type="number" min="0" value="${details.itemsOnHold}" 
+                    onchange="editItem('${category}','${item}','itemsOnHold', this.value)">`
+                : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
+                    onchange="editItem('${category}','${item}','onhold', this.checked)" 
+                    ${hasStockProp ? 'disabled' : ''}>`
+            }
+        </td>
+        <td>
+          ${
+            typeof details.itemsBought === 'number'
+              ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
+                    onchange="editItem('${category}','${item}','itemsBought', this.value)">`
+              : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
+                    onchange="editItem('${category}','${item}','bought', this.checked)" 
+                    ${hasStockProp ? 'disabled' : ''}>`
+          }
+        </td>
+        <td>
+          <select onchange="editItem('${category}','${item}','profitSplit', this.value)" class="profit-split-select">
+            ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+              `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td>${adminProfit}</td>
+        <td>${details.cosignerName || ''}</td>
+        <td>${details.cosignerEmail || ''}</td>
+        <td>${details.barcode}</td>
+        <td>
+          <button onclick="removeItem('${category}','${item}')">Remove</button>
+          <label style="display:inline-flex;align-items:center;">
+            <input type="checkbox" onchange="toggleBarcodeQueue('${currentpage}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
+            Barcode
+          </label>
+        </td>
+      </tr>`;
+    }
+  }
+
+  html += '</table>';
+  container.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>` + html;
+}
+
+window.editItem = function(category, item, field, value) {
+  const itemObj = allitems[currentpage][category][item];
+  if (field === 'item') {
+    // Rename item
+    allitems[currentpage][category][value] = itemObj;
+    delete allitems[currentpage][category][item];
+  } else if (field === 'specials') {
+    itemObj.specials = value
+      .split('\n')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+  } else if (field === 'onhold' || field === 'bought') {
+    // Checkbox: convert to boolean
+    itemObj[field] = value === true || value === "true" || value === "on" || value === "checked";
+  } else if (field === 'price' || field === 'stock' || field === 'itemsOnHold' || field === 'itemsBought') {
+    // Number fields
+    itemObj[field] = Number(value);
+  } else {
+    itemObj[field] = value;
+  }
+  renderTable();
+};
+
+window.removeItem = function(category, item) {
+  delete allitems[currentpage][category][item];
+  renderTable();
+};
+
+window.saveAll = function() {
+  showLoading();
+  fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(allitems)
+  })
+  .then(res => res.text())
+  .then(hideLoading)
+  .catch(err => showLoadingError(err.message));
+};
+
+window.changeCategory = function(oldCategory, item, newCategory) {
+  if (newCategory === "__new__") {
+    const name = prompt("Enter new category name:");
+    if (!name) {
+      renderTable();
+      return;
+    }
+    newCategory = name.trim();
+    if (!newCategory) {
+      renderTable();
+      return;
+    }
+  }
+  if (!allitems[currentpage][newCategory]) allitems[currentpage][newCategory] = {};
+  allitems[currentpage][newCategory][item] = allitems[currentpage][oldCategory][item];
+  delete allitems[currentpage][oldCategory][item];
+  // Remove old category if empty
+  if (Object.keys(allitems[currentpage][oldCategory]).length === 0) {
+    delete allitems[currentpage][oldCategory];
+  }
+  renderTable();
+};
+
+function loadOrders() {
+  showLoading();
+  fetch('https://labelle-co-server.vercel.app/orders')
+    .then(res => res.json())
+    .then(orders => {
+      const container = document.getElementById('orders');
+      if (!orders.length) {
+        container.innerHTML = '<p>No orders yet.</p>';
+        return;
+      }
+      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Admin Profit</th><th>Cosigner Profits</th><th>Status</th><th>Actions</th></tr>';
+      for (const order of orders) {
+        // Calculate profits
+        let adminProfit = 0;
+        let cosignerProfits = {}; // { email: { name, profit } }
+        let itemsHtml = '';
+        for (const [itemName, qty] of Object.entries(order.items)) {
+          let found = false;
+          for (const page in allitems) {
+            for (const category in allitems[page]) {
+              if (allitems[page][category][itemName]) {
+                const itemObj = allitems[page][category][itemName];
+                const price = Number(itemObj.price) || 0;
+                const profitSplit = (itemObj.profitSplit || "50/50").split('/');
+                const adminPercent = Number(profitSplit[0]) || 50;
+                const cosignerPercent = Number(profitSplit[1]) || 50;
+                const itemAdminProfit = (price * adminPercent / 100) * qty;
+                const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
+                adminProfit += itemAdminProfit;
+
+                // Cosigner info
+                const cosignerEmail = itemObj.cosignerEmail || 'unknown';
+                const cosignerName = itemObj.cosignerName || 'unknown';
+                if (!cosignerProfits[cosignerEmail]) {
+                  cosignerProfits[cosignerEmail] = { name: cosignerName, profit: 0 };
+                }
+                cosignerProfits[cosignerEmail].profit += itemCosignerProfit;
+
+                itemsHtml += `${itemName} (${qty})<br>
+                  <small>Split: ${profitSplit[0]}/${profitSplit[1]}, Price: $${price}, 
+                  Admin: $${(itemAdminProfit).toFixed(2)}, 
+                  Cosigner: $${(itemCosignerProfit).toFixed(2)}</small><br>`;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          if (!found) {
+            itemsHtml += `${itemName} (${qty}) <small style="color:red;">(not found in inventory)</small><br>`;
+          }
+        }
+
+        // Cosigner profits summary
+        let cosignerProfitsHtml = '';
+        for (const [email, { name, profit }] of Object.entries(cosignerProfits)) {
+          cosignerProfitsHtml += `${name} (${email}): $${profit.toFixed(2)}<br>`;
+        }
+
+        html += `<tr>
+          <td>${order.name}</td>
+          <td>${order.phone}</td>
+          <td>${order.email}</td>
+          <td>${itemsHtml}</td>
+          <td>$${adminProfit.toFixed(2)}</td>
+          <td>${cosignerProfitsHtml || '-'}</td>
+          <td>
+            ${order.orderType === 'buy' ? 'Buying' : order.orderType === 'hold' ? 'On Hold' : order.status}
+          </td>
+          <td>
+            <button onclick="acceptOrder(${order.id})">Accept</button>
+            <button onclick="cancelOrder(${order.id})">Cancel</button>
+          </td>
+        </tr>`;
+      }
+      html += '</table>';
+      container.innerHTML = html;
+    })
+    .then(hideLoading)
+    .catch(err => showLoadingError(err.message));
+
+  loadInventory();
+}
+
+async function acceptOrder(orderId) {
+  showLoading();
+  try {
+    // Load orders, inventory, and cosigners
+    const [ordersRes, inventoryRes, cosignerRes] = await Promise.all([
+      fetch('https://labelle-co-server.vercel.app/orders'),
+      fetch(CLOUD_API_URL),
+      fetch('https://labelle-co-server.vercel.app/cosigners')
+    ]);
+    const orders = await ordersRes.json();
+    const inventory = await inventoryRes.json();
+    const cosigners = await cosignerRes.json();
+
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found.");
+    const order = orders[orderIndex];
+
+    const emailToProfit = {};
+
+    // STEP 1: Calculate profits BEFORE inventory mutation
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      for (const page in inventory) {
+        for (const category in inventory[page]) {
+          const item = inventory[page][category][itemName];
+          if (item) {
+            const price = Number(item.price);
+            const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+            const cosignerPercent = Number(cosignerPercentStr);
+            const profit = price * cosignerPercent / 100 * qty;
+            const email = item.cosignerEmail;
+            emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+          }
+        }
+      }
+    }
+
+    // STEP 2: Mutate inventory using your original logic
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      let found = false;
+      for (const page in inventory) {
+        for (const category in inventory[page]) {
+          if (inventory[page][category][itemName]) {
+            let item = inventory[page][category][itemName];
+            if ('stock' in item) {
+              item.stock = Math.max(0, (item.stock || 0) - qty);
+              if (order.orderType === 'hold' && 'itemsOnHold' in item) {
+                item.itemsOnHold = (item.itemsOnHold || 0) + qty;
+              } else if (order.orderType === 'buy' && 'itemsBought' in item) {
+                item.itemsBought = (item.itemsBought || 0) + qty;
+              }
+            } else {
+              delete inventory[page][category][itemName];
+            }
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+
+    // STEP 3: Apply profits to cosigners
+    cosigners.forEach(c => {
+      if (emailToProfit[c.email]) {
+        c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
       }
     });
 
-    document.getElementById("error-message").innerText =
-      `Thank you for your order, ${order.name}! Your order will be processed shortly.`;
-    document.getElementById("error-message").style.color = "green";
-    document.getElementById("cartItems").innerHTML = "";
-    totalprice = 0;
-    document.getElementById("totalAmount").innerHTML = "Total: $0.00";
-    await saveData();
-    await submitOrder({ ...order, items: { ...order.items }, orderType });
-    showLoading();
-    try {
-      await fetch('https://labelle-co-server.vercel.app/notify-owner', {
+    // STEP 4: Remove order and persist changes
+    orders.splice(orderIndex, 1);
+
+    await Promise.all([
+      fetch('https://labelle-co-server.vercel.app/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order)
-      });
-      hideLoading();
-    } catch (err) {
-      showLoadingError("Failed to notify owner: " + err.message);
-    }
-    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
-    order.items = {};
-    return;
-  }
+        body: JSON.stringify(orders)
+      }),
+      fetch('https://labelle-co-server.vercel.app/cosigners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cosigners)
+      }),
+      fetch(CLOUD_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inventory)
+      })
+    ]);
 
-  // 3. If orderType is "buy"
-  if (orderType === "buy") {
-    // Save items to order for later use after payment
-    cartItems.forEach(({ itemData, quantity }) => {
-      order.items[itemData.item] = quantity;
-    });
-
-    // Save order to localStorage for use after payment
-    localStorage.setItem("pendingOrder", JSON.stringify(order));
-
-    // Open Stripe Checkout
-    await initialize();
+    loadOrders();
+    hideLoading();
+  } catch (err) {
+    showLoadingError(err.message);
   }
 }
 
-function getItemObject(itemName) {
-  for (const page in allitems) {
-    for (const category in allitems[page]) {
-      if (allitems[page][category][itemName]) {
-        return {
-          "page" : page,
-          "category" : category,
-          "item" : itemName,
-          "data" : allitems[page][category][itemName]
-        };
+async function cancelOrder(orderId) {
+  showLoading();
+  try {
+    // Load orders and inventory
+    let orders = await (await fetch('https://labelle-co-server.vercel.app/orders')).json();
+    let orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found.");
+    let order = orders[orderIndex];
+
+    // Load inventory
+    let inventory = await (await fetch(CLOUD_API_URL)).json();
+
+    if (order.orderType === 'buy') {
+      // Restore bought/itemsBought status and stock
+      for (const [itemName, qty] of Object.entries(order.items)) {
+        let found = false;
+        for (const page in inventory) {
+          for (const category in inventory[page]) {
+            if (inventory[page][category][itemName]) {
+              let item = inventory[page][category][itemName];
+              if ('stock' in item) {
+                item.stock = (item.stock || 0) + qty;
+                if ('itemsBought' in item) {
+                  item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
+                }
+              } else if ('bought' in item) {
+                item.bought = false;
+              }
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+      }
+    } else if (order.orderType === 'hold') {
+      // Restore onhold/itemsOnHold status and stock
+      for (const [itemName, qty] of Object.entries(order.items)) {
+        let found = false;
+        for (const page in inventory) {
+          for (const category in inventory[page]) {
+            if (inventory[page][category][itemName]) {
+              let item = inventory[page][category][itemName];
+              if ('stock' in item) {
+                item.stock = (item.stock || 0) + qty;
+                if ('itemsOnHold' in item) {
+                  item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
+                }
+              } else if ('onhold' in item) {
+                item.onhold = false;
+              }
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
       }
     }
-  }
-  return null; // Not found
-}
 
-// Load allitems from the cloud
-async function fetchData() {
-  showLoading();
-  try {
-    const response = await fetch('https://labelle-co-server.vercel.app/cloud');
-    const data = await response.json();
-    allitems = data;
-    addcards(getChildById(document.getElementById("pagestuff"), "c"), allitems[currentpage]);
-    hideLoading();
-  } catch (error) {
-    showLoadingError("Failed to notify owner: " + error.message);
-    console.error('Error fetching items from cloud:', error);
-  }
-}
+    // Remove the order
+    orders.splice(orderIndex, 1);
 
-// Save allitems to the cloud
-async function saveData() {
-  showLoading();
-  try {
-    const response = await fetch('https://labelle-co-server.vercel.app/cloud', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(allitems)
-    });
-    const data = await response.text();
-    console.log('Saved to cloud:', data);
-    hideLoading();
-  } catch (error) {
-    showLoadingError("Failed to notify owner: " + error.message);
-    console.error('Error saving items to cloud:', error);
-  }
-}
-
-async function submitOrder(newOrder) {
-  showLoading();
-  try {
-    const res = await fetch('https://labelle-co-server.vercel.app/orders');
-    let orders = await res.json();
-    if (!Array.isArray(orders)) orders = [];
-    newOrder.id = Date.now();
-    newOrder.status = 'pending';
-    orders.push(newOrder);
+    // Save updated orders and inventory
     await fetch('https://labelle-co-server.vercel.app/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orders)
     });
-    console.log('Order submitted!');
+    await fetch(CLOUD_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inventory)
+    });
+
+    loadOrders();
     hideLoading();
-  } catch (error) {
-    showLoadingError("Error submitting order: " + error.message);
-    console.error('Error submitting order:', error);
+  } catch (err) {
+    showLoadingError(err.message);
   }
 }
 
-function populateCategoryDropdown() {
-  const dropdown = document.getElementById('category-dropdown');
-  if (!dropdown) return;
-  dropdown.innerHTML = '';
-  if (!allitems[currentpage]) return;
-  Object.keys(allitems[currentpage]).forEach(category => {
-    const a = document.createElement('a');
-    a.href = `#${category}`;
-    a.textContent = category;
-    dropdown.appendChild(a);
-  });
+function logoutToHub() {
+      window.location.href = "adminhub.html";
 }
 
-document.getElementById('cartForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    validateContactAndPay(event);
-});
- 
-function validateContactAndPay(event) {
-    const phone = document.getElementById('phone').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const cart = document.getElementById("cartItems");
-    if (!phone && !email) {
-        document.getElementById('error-message').innerText = "Please provide either a phone number or an email.";
-        document.getElementById('error-message').style.color = "red";
-        event.preventDefault();
-        return false;
-    }
-    // Check if cart is empty
-    if (!cart.hasChildNodes() || cart.innerText.trim() === "") {
-        document.getElementById('error-message').innerText = "Your cart is empty. Please add at least one item.";
-        document.getElementById('error-message').style.color = "red";
-        event.preventDefault();
-        return false;
-    }
-    document.getElementById('error-message').innerText = "";
-    // Call your pay function
-    pay(event);
-    return false; // Prevent default form submission, let pay handle it
+function openAddItemOverlay() {
+  const overlay = document.getElementById('add-item-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    overlay.style.transform = 'translateY(0)';
+  }, 10);
+  document.body.style.overflow = 'hidden';
+  updateAdminPageDropdown();
+  populateCosignerDropdown();
 }
+
+function closeAddItemOverlay() {
+  const overlay = document.getElementById('add-item-overlay');
+  overlay.style.transform = 'translateY(-100vh)';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('addItemForm').reset();
+    document.getElementById('addItemMsg').textContent = '';
+  }, 500);
+}
+
+window.openAddItemOverlay = openAddItemOverlay;
+window.closeAddItemOverlay = closeAddItemOverlay;
+
+function updateAdminPageDropdown() {
+  const pageDropdown = document.getElementById('newItemPageDropdown');
+  pageDropdown.innerHTML = '';
+  Object.keys(allitems).forEach(page => {
+    pageDropdown.innerHTML += `<option value="${page}">${page}</option>`;
+  });
+  // Set to current page if possible
+  pageDropdown.value = currentpage;
+  updateAdminCategoryDropdown();
+}
+
+function updateAdminCategoryDropdown() {
+  const page = document.getElementById('newItemPageDropdown').value;
+  const dropdown = document.getElementById('newItemCategoryDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Category --</option>';
+  if (allitems[page]) {
+    Object.keys(allitems[page]).forEach(cat => {
+      dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+    });
+  }
+  dropdown.innerHTML += '<option value="__new__">-- New Category --</option>';
+  document.getElementById('newItemCategoryInput').style.display = 'none';
+}
+
+function onAdminCategoryDropdownChange() {
+  const dropdown = document.getElementById('newItemCategoryDropdown');
+  const input = document.getElementById('newItemCategoryInput');
+  if (dropdown.value === '__new__') {
+    input.style.display = '';
+    input.required = true;
+  } else {
+    input.style.display = 'none';
+    input.required = false;
+  }
+}
+
+window.updateAdminPageDropdown = updateAdminPageDropdown;
+window.updateAdminCategoryDropdown = updateAdminCategoryDropdown;
+window.onAdminCategoryDropdownChange = onAdminCategoryDropdownChange;
+
+window.submitNewAdminItem = async function(event) {
+  event.preventDefault();
+  showLoading();
+  const page = document.getElementById('newItemPageDropdown').value;
+  let category = document.getElementById('newItemCategoryDropdown').value;
+  if (category === '__new__') {
+    category = document.getElementById('newItemCategoryInput').value.trim();
+  }
+  const item = document.getElementById('newItemName').value.trim();
+  //const img = document.getElementById('newItemImg').value.trim();
+  const type = document.getElementById('newItemType').value;
+  const price = Number(document.getElementById('newItemPrice').value);
+  const specials = document.getElementById('newItemSpecials').value
+    .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  const profitSplit = document.getElementById('newItemProfitSplit').value;
+  const cosignerData = JSON.parse(document.getElementById('cosignerDropdown').value || '{}');
+  const cosignerName = cosignerData.name || '';
+  const cosignerEmail = cosignerData.email || '';
+  const barcode = Date.now().toString();
+
+  if (!page || !category || !item) {
+    document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
+    return false;
+  }
+
+  if (!allitems[page]) allitems[page] = {};
+  if (!allitems[page][category]) allitems[page][category] = {};
+
+  const file = document.getElementById('imageUpload')?.files[0];
+  let imageURL
+
+  let newItem = {
+    img: imageURL || '',
+    price: price || 0,
+    single: (type === 'onhold'),
+    specials: specials,
+    cosignerName: cosignerName,
+    cosignerEmail: cosignerEmail,
+    profitSplit: profitSplit,
+    barcode: barcode
+  };
+  if (type === 'stock') {
+    newItem.stock = 1;
+    newItem.itemsOnHold = 0;
+    newItem.itemsBought = 0;
+  } else if (type === 'onhold') {
+    newItem.onhold = false;
+    newItem.bought = false;
+  }
+
+  allitems[page][category][item] = newItem;
+
+  fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(allitems)
+  })
+  .then(res => res.text())
+  .then(msg => {
+    closeAddItemOverlay();
+    loadInventory();
+    hideLoading();
+  })
+  .catch(err => showLoadingError(err.message));
+
+  return false;
+};
 
 function showLoading() {
   const overlay = document.getElementById('loading-overlay');
@@ -523,6 +682,7 @@ function hideLoading() {
 }
 
 function showLoadingError(message) {
+  console.log(message);
   const overlay = document.getElementById('loading-overlay');
   if (!overlay) return;
   document.getElementById('loading-text').style.display = 'none';
@@ -538,35 +698,460 @@ function hideLoadingError() {
   hideLoading();
 }
 
-async function initialize() {
-  const cart = document.getElementById("cartItems");
-  let cartItems = [];
-  cart.querySelectorAll("*").forEach(node => {
-    const text = getChildById(node, "text");
-    if (text) {
-      const itemData = getItemObject(text.value);
-      const quantity = text.dataset.price / itemData.data.price;
-      cartItems.push({
-        name: itemData.item,
-        price: Math.round(itemData.data.price * 100), // convert dollars to cents
-        quantity: quantity
-      });
+window.toggleBarcodeQueue = function(page, category, item) {
+  const idx = barcodeQueue.findIndex(q => q.page === page && q.category === category && q.item === item);
+  if (idx === -1) {
+    barcodeQueue.push({ page, category, item });
+  } else {
+    barcodeQueue.splice(idx, 1);
+  }
+  renderTable();
+};
+
+window.printBarcodeQueue = function() {
+  if (barcodeQueue.length === 0) return;
+  let printWindow = window.open('', '', 'width=600,height=800');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Barcodes</title>
+        <style>
+          body { font-family: sans-serif; }
+          .barcode-block { margin-bottom: 32px; text-align: center; }
+          .barcode-value { margin-top: 12px; font-size: 18px; font-family: monospace; }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+      </head>
+      <body>
+        ${barcodeQueue.map(q => {
+          const details = allitems[q.page][q.category][q.item];
+          const barcode = details.barcode || '';
+          const itemName = q.item;
+          const price = details.price || '';
+          return `
+            <div class="barcode-block">
+              <svg class="barcode-svg" data-barcode="${barcode}"></svg>
+              <div class="barcode-value">${itemName} - $${price}</div>
+            </div>
+          `;
+        }).join('')}
+        <script>
+          window.onload = function() {
+            document.querySelectorAll('.barcode-svg').forEach(svg => {
+              const code = svg.getAttribute('data-barcode');
+              if (window.JsBarcode && code) {
+                JsBarcode(svg, code, {
+                  format: "CODE128",
+                  lineColor: "#000",
+                  width: 2,
+                  height: 100,
+                  displayValue: true
+                });
+              }
+            });
+            setTimeout(() => window.print(), 500);
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  // Optionally clear the queue after printing
+  barcodeQueue = [];
+  setTimeout(renderTable, 1000);
+};
+
+async function renderCosigners() {
+  const cosignersDiv = document.getElementById('cosigners-list');
+  cosignersDiv.innerHTML = 'Loading...';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    if (!Array.isArray(cosigners) || cosigners.length === 0) {
+      cosignersDiv.innerHTML = '<p>No cosigners found.</p>';
+      return;
+    }
+
+    let html = `<table>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Owed Amount</th>
+        <th>Pay Back</th>
+      </tr>`;
+
+    for (const c of cosigners) {
+      const profit = Number(c.owedProfit) || 0;
+      html += `<tr>
+        <td>${c.name || ''}</td>
+        <td>${c.email || ''}</td>
+        <td>$${profit.toFixed(2)}</td>
+        <td>
+          <input type="number" 
+                id="payInput-${c.email}" 
+                min="0" 
+                max="${profit}" 
+                placeholder="Amount" 
+                style="width:80px;"
+                ${profit <= 0 ? 'disabled' : ''}>
+          <button onclick="submitCosignerPayment('${c.email}')" ${profit <= 0 ? 'disabled' : ''}>
+            Submit
+          </button>
+        </td>
+      </tr>`;
+    }
+
+    html += '</table>';
+    cosignersDiv.innerHTML = html;
+  } catch (err) {
+    cosignersDiv.innerHTML = `<p style="color:red;">Failed to load cosigners: ${err.message}</p>`;
+  }
+}
+
+window.submitCosignerPayment = async function(email) {
+  const input = document.getElementById(`payInput-${email}`);
+  const value = Number(input.value);
+
+  if (isNaN(value) || value <= 0) {
+    alert("Enter a valid amount.");
+    return;
+  }
+
+  showLoading(); // 🔄 Show loading before processing
+
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+
+    const c = cosigners.find(c => c.email === email);
+    if (!c) throw new Error("Cosigner not found.");
+
+    const currentOwed = Number(c.owedProfit) || 0;
+    if (value > currentOwed) {
+      alert(`You can't pay more than $${currentOwed.toFixed(2)}.`);
+      return;
+    }
+
+    c.owedProfit = Math.max(0, currentOwed - value);
+
+    await fetch('https://labelle-co-server.vercel.app/cosigners', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+
+    renderCosigners(); // Refresh the cosigner table
+    hideLoading();
+  } catch (err) {
+    alert("Failed to process payment: " + err.message);
+  }
+};
+
+async function populateCosignerDropdown() {
+  const dropdown = document.getElementById('cosignerDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Cosigner --</option>';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    cosigners.forEach(c => {
+      const option = document.createElement('option');
+      option.value = JSON.stringify({ name: c.name, email: c.email }); // store both
+      option.textContent = `${c.name} (${c.email})`;
+      dropdown.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Failed to fetch cosigners:', err);
+    dropdown.innerHTML = '<option value="">Error loading cosigners</option>';
+  }
+}
+
+//BACKEND.JS
+const express = require('express');
+const nodemailer = require('nodemailer');
+const stripe = require('stripe')('sk_test_51RUqjwI71UXMKz4PmfNcNYoW5Ui6wxwhpVciop00STAMnzNPvMHRIZfcfX5KNdkCcHDf8g2506lY6tC3hEe9hLpB00DFPvqjV1');
+
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() }); // stores file in memory buffer
+const FormData = require('form-data');
+
+const app = express();
+app.use(express.json());
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyGFznmGT87xy-tAh6mDgzj7sBGlbcH73JO4FKP04eK2JW6ltOEYJ7wDzc9-kLgGwGm/exec';
+
+const ADMIN_PASSWORD = 'password'; //make a real password here
+
+app.post('/check-admin-password', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+// Proxy GET requests
+app.get('/cloud', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.type('json').send(data);
+  } catch (err) {
+    res.status(500).send('Proxy GET error: ' + err.message);
+  }
+});
+
+// Proxy POST requests
+app.post('/cloud', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST error: ' + err.message);
+  }
+});
+
+// GET all orders
+app.get('/orders', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=orders');
+    const data = await response.text();
+    res.type('json').send(data);
+  } catch (err) {
+    res.status(500).send('Proxy GET orders error: ' + err.message);
+  }
+});
+
+// POST (overwrite) all orders
+app.post('/orders', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.text();
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST orders error: ' + err.message);
+  }
+});
+
+app.post('/notify-owner', async (req, res) => {
+  const order = req.body;
+
+  // Compose a readable email body
+  const itemsList = Object.entries(order.items)
+    .map(([item, qty]) => `- ${item}: ${qty}`)
+    .join('\n');
+
+  const emailBody = `
+New Order Received!
+
+Name: ${order.name}
+Phone: ${order.phone || 'N/A'}
+Email: ${order.email || 'N/A'}
+
+Items:
+${itemsList}
+
+-------------------------
+Check the admin panel for more details.
+`; //add admin site here
+
+
+  // Set up transporter (use your real email and app password or SMTP credentials)
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'mstc.industries.official@gmail.com',
+      pass: 'uvpfeqssibtxxgdq'
     }
   });
 
-  const fetchClientSecret = async () => {
-    const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: cartItems })
-    });
-    const { clientSecret } = await response.json();
-    return clientSecret;
+  // Compose email
+  let mailOptions = {
+    from: 'mstc.industries.official@gmail.com',
+    to: 'mstc.industries.official@gmail.com', //change to the owner's email
+    subject: `New Order from ${order.name} for LabelleCo`,
+    text: emailBody
   };
 
-  const checkout = await stripe.initEmbeddedCheckout({
-    fetchClientSecret,
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('Notification sent!');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to send email');
+  }
+});
+
+
+// Load cosigners from Google Drive via Apps Script
+async function loadCosigners() {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=cosigner');
+    if (!response.ok) throw new Error('Failed to load cosigners');
+    return await response.json();
+  } catch (err) {
+    return [];
+  }
+}
+
+// Save cosigners to Google Drive via Apps Script
+async function saveCosigners(cosigners) {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=cosigner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+    if (!response.ok) throw new Error('Failed to save cosigners');
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Create cosigner account
+app.post('/cosigner-create', async (req, res) => {
+  const { email, password, name } = req.body;
+  if (!email || !password || !name) return res.status(400).send('Missing fields');
+  let cosigners = await loadCosigners();
+  if (cosigners.find(c => c.email === email)) return res.status(409).send('Email already exists');
+  cosigners.push({ email, password, name }); // For demo: store password in plain text (not secure!)
+  await saveCosigners(cosigners);
+  res.status(200).send('Account created');
+});
+
+// Cosigner login
+app.post('/cosigner-login', async (req, res) => {
+  const { email, password } = req.body;
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email && c.password === password);
+  if (user) {
+    res.status(200).send('Login successful');
+  } else {
+    res.status(401).send('Invalid credentials');
+  }
+});
+
+app.get('/cosigner-info', async (req, res) => {
+  const email = req.query.email;
+  if (!email) return res.status(400).send('Missing email');
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email);
+  if (user) {
+    res.json({ name: user.name, email: user.email });
+  } else {
+    res.status(404).send('Not found');
+  }
+});
+
+app.get('/', (req, res) => {
+  res.send('Hello from backend!');
+});
+
+const YOUR_DOMAIN = 'http://127.0.0.1:3000'; // Change this to your actual domain
+
+app.post('/create-checkout-session', async (req, res) => {
+  const items = req.body.items; // [{ name, price, quantity }]
+  const line_items = items.map(item => ({
+    price_data: {
+      currency: 'usd',
+      product_data: { name: item.name },
+      unit_amount: item.price, // price in cents
+    },
+    quantity: item.quantity,
+  }));
+
+  const session = await stripe.checkout.sessions.create({
+    ui_mode: 'embedded',
+    line_items,
+    mode: 'payment',
+    return_url: `${YOUR_DOMAIN}/return.html?session_id={CHECKOUT_SESSION_ID}`,
   });
 
-  checkout.mount('#checkout');
+  res.send({ clientSecret: session.client_secret });
+});
+
+app.get('/session-status', async (req, res) => {
+  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+
+  res.send({
+    status: session.status,
+    customer_email: session.customer_details.email
+  });
+});
+
+app.get('/cosigners', async (req, res) => {
+  // Fetch from your database or data source
+  const cosigners = await loadCosigners();
+  res.json(cosigners);
+});
+
+app.post('/cosigners', async (req, res) => {
+  const updated = req.body;
+  await saveCosigners(updated); // Must write changes to your data store
+  res.json({ message: 'Cosigners updated.' });
+});
+
+module.exports = app;
+
+app.listen(3000, () => console.log('Proxy running at http://localhost:3000'));
+
+//GOOGLE APPS SCRIPT 
+const FILE_IDS = {
+  inventory: '17w1w7LukoD11vaU7gf2N1jVOXIMBWlZs',
+  orders:    '1pF3KUoqGJvO2YOjpkNLfwUg928qFgY_X',
+  cosigner:  '1-JaTQYyJ8Ium0jK4NS3SanciGRfkeiWN',
+};
+
+function doGet(e) {
+  const type = (e && e.parameter && ['orders', 'cosigner'].includes(e.parameter.type)) 
+    ? e.parameter.type 
+    : 'inventory';
+  try {
+    var file = DriveApp.getFileById(FILE_IDS[type]);
+    var content = file.getBlob().getDataAsString();
+    return ContentService.createTextOutput(content).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput('[]').setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  const type = ['orders', 'cosigner'].includes(e?.parameter?.type) ? e.parameter.type : 'inventory';
+
+  try {
+    if (!e.postData || !e.postData.contents) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "Missing JSON body" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const file = DriveApp.getFileById(FILE_IDS[type]);
+    file.setContent(e.postData.contents);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "Saved!", type })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message })).setMimeType(ContentService.MimeType.JSON);
+  }
 }
