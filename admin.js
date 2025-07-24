@@ -630,17 +630,12 @@ window.submitNewAdminItem = async function(event) {
     const formData = new FormData();
     formData.append('image', file);
 
-    const imageRes = await fetch(`https://script.google.com/macros/s/AKfycbxAs_H6e9VnTcVlHBYR8hXIn3IBNV0EoBGvftQocVDbr2308f7QKV-_CZHNAWLtLcz7/exec?type=uploadImage`, {
+    const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
       method: 'POST',
-      body: formData,
+      body: formData
     });
-
-    const imageData = await imageRes.json();
-    const imageID = imageData.id;
-
-    if (imageID) {
-      imageURL = `https://lh3.googleusercontent.com/d/${imageID}=s800`;
-    }
+    const { id } = await res.json();
+    imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
   }
 
   let newItem = {
