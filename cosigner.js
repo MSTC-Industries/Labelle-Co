@@ -104,12 +104,8 @@ async function renderTable() {
             </td>
             <td><input type="text" value="${item}" onchange="editItem('${page}','${category}','${item}','item', this.value)"></td>
             <td>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <input type="text" 
-                      value="${details.img || ''}" 
-                      onchange="editItem('${category}','${item}', 'img', this.value)" 
-                      placeholder="Image URL"
-                      style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${page}','${category}','${item}', this)">
                 ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
               </div>
             </td>
@@ -280,15 +276,16 @@ function closeAddItemOverlay() {
 window.openAddItemOverlay = openAddItemOverlay;
 window.closeAddItemOverlay = closeAddItemOverlay;
 
-window.submitNewItem = function(event) {
+window.submitNewItem = async function(event) {
   event.preventDefault();
+  showLoading();
   const page = document.getElementById('newItemPageDropdown').value;
   let category = document.getElementById('newItemCategoryDropdown').value;
   if (category === '__new__') {
     category = document.getElementById('newItemCategoryInput').value.trim();
   }
   const item = document.getElementById('newItemName').value.trim();
-  const img = document.getElementById('newItemImg').value.trim();
+  //const img = document.getElementById('newItemImg').value.trim();
   const type = document.getElementById('newItemType').value;
   const price = Number(document.getElementById('newItemPrice').value);
   const specials = document.getElementById('newItemSpecials').value
@@ -302,8 +299,23 @@ window.submitNewItem = function(event) {
   if (!allitems[page]) allitems[page] = {};
   if (!allitems[page][category]) allitems[page][category] = {};
 
+  const file = document.getElementById('imageUpload')?.files[0];
+  let imageURL
+
+  if (file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
+      method: 'POST',
+      body: formData
+    });
+    const { id } = await res.json();
+    imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
+  }
+
   let newItem = {
-    img: img || '',
+    img: imageURL || '',
     price: price || 0,
     single: (type === 'onhold'),
     specials: specials,
@@ -323,7 +335,6 @@ window.submitNewItem = function(event) {
 
   allitems[page][category][item] = newItem;
 
-  showLoading();
   fetch(CLOUD_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -476,4 +487,36 @@ window.printBarcodeQueue = function() {
   // Optionally clear the queue after printing
   barcodeQueue = [];
   setTimeout(renderTable, 1000);
+};
+
+window.uploadImageAndUpdate = async function(page, category, item, inputElement) {
+  const file = inputElement.files[0];
+  showLoading();
+
+  if (!file) {
+    hideLoading();
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
+      method: 'POST',
+      body: formData
+    });
+
+    const { id } = await res.json();
+    const imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
+
+    console.log(allitems[page][category][item].img)
+    allitems[page][category][item].img = imageURL;
+    console.log(allitems[page][category][item].img)
+    renderTable();
+  } catch (err) {
+    showLoadingError("Image upload failed: " + err.message);
+  }
+
+  hideLoading();
 };

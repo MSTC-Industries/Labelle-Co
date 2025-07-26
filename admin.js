@@ -137,12 +137,8 @@ function renderTable() {
         </td>
         <td><input type="text" value="${item}" onchange="editItem('${category}','${item}', 'item', this.value)"></td>
         <td>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <input type="text" 
-                  value="${details.img || ''}" 
-                  onchange="editItem('${category}','${item}', 'img', this.value)" 
-                  placeholder="Image URL"
-                  style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${category}','${item}', this)">
             ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
           </div>
         </td>
@@ -659,6 +655,8 @@ window.submitNewAdminItem = async function(event) {
 
   allitems[page][category][item] = newItem;
 
+  console.log(allitems)
+
   fetch(CLOUD_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -876,3 +874,34 @@ async function populateCosignerDropdown() {
     dropdown.innerHTML = '<option value="">Error loading cosigners</option>';
   }
 }
+
+window.uploadImageAndUpdate = async function(category, item, inputElement) {
+  const file = inputElement.files[0];
+  showLoading();
+
+  if (!file) {
+    hideLoading();
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
+      method: 'POST',
+      body: formData
+    });
+
+    const { id } = await res.json();
+    const imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
+
+    allitems[currentpage][category][item].img = imageURL;
+    renderTable();
+  } catch (err) {
+    showLoadingError("Image upload failed: " + err.message);
+  }
+
+  hideLoading();
+};
+
