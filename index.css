@@ -35,6 +35,7 @@ nav .logo {
     font-weight: bold;
     color: white;
     margin-left: 0px;
+    flex: 1;
 }
 nav div, nav a, nav button {
     margin: 0px;
@@ -66,6 +67,7 @@ a {
     cursor: pointer;
     width: 150px;
     position: relative;
+    flex: 1;
 }
 #button:hover {
     background: rgb(255, 199, 95);
@@ -93,6 +95,7 @@ a {
 .searchbar {
     padding: 1rem;
     display: flex;
+    flex: 1;
 }
 #searchbox {
     width: 10rem;
@@ -377,3 +380,4 @@ footer {
   pointer-events: all;
 
 }
+
