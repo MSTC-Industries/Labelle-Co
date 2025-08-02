@@ -22,7 +22,7 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
+    width: 90%;
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -34,7 +34,7 @@ nav .logo {
     font-size: 24px;
     font-weight: bold;
     color: white;
-    margin-left: 20px;
+    margin-left: 0px;
 }
 nav div, nav a, nav button {
     margin: 0px;
@@ -375,4 +375,5 @@ footer {
   display: flex;
   opacity: 1;
   pointer-events: all;
+
 }
