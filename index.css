@@ -18,7 +18,7 @@ html {
 /* Navbar styles */
 nav {
     background: lightblue;
-    padding: 10px 0px;
+    padding: 10px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -29,6 +29,7 @@ nav {
     list-style: none;
     margin: 0;
     flex-wrap: wrap;
+    
     
 
 }
@@ -393,6 +394,7 @@ footer {
   pointer-events: all;
 
 }
+
 
 
 
