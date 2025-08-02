@@ -29,9 +29,7 @@ nav {
     list-style: none;
     margin: 0;
     flex-wrap: wrap;
-    @media (max-width: 768px) {
-        width: 60%;
-    }
+    
 
 }
 nav .logo {
@@ -39,6 +37,9 @@ nav .logo {
     font-weight: bold;
     color: white;
     margin-left: 0px;
+    @media (max-width: 768px) {
+        font-size: 18px;
+    }
     
 }
 nav div, nav a, nav button {
@@ -72,6 +73,9 @@ a {
     width: 150px;
     position: relative;
     /* flex: 1; */
+    @media (max-width: 768px) {
+        width: 120px;
+    }
 }
 #button:hover {
     background: rgb(255, 199, 95);
@@ -109,6 +113,11 @@ a {
     outline: none;
     font-size: 1rem;
     transition: 0.3s ease;
+    @media (max-width: 768px) {
+        width: 7rem;
+        font-size: 0.7rem;
+    }
+    
 }
 
 /* Sale and contact tiles */
@@ -384,5 +393,6 @@ footer {
   pointer-events: all;
 
 }
+
 
 
