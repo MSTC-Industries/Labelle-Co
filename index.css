@@ -18,7 +18,7 @@ html {
 /* Navbar styles */
 nav {
     background: lightblue;
-    padding: 10px 0px;
+    padding: 10px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -29,12 +29,19 @@ nav {
     list-style: none;
     margin: 0;
     flex-wrap: wrap;
+    
+    
+
 }
 nav .logo {
     font-size: 24px;
     font-weight: bold;
     color: white;
-    margin-left: 20px;
+    margin-left: 0px;
+    @media (max-width: 768px) {
+        font-size: 18px;
+    }
+    
 }
 nav div, nav a, nav button {
     margin: 0px;
@@ -66,6 +73,10 @@ a {
     cursor: pointer;
     width: 150px;
     position: relative;
+    /* flex: 1; */
+    @media (max-width: 768px) {
+        width: 120px;
+    }
 }
 #button:hover {
     background: rgb(255, 199, 95);
@@ -93,6 +104,7 @@ a {
 .searchbar {
     padding: 1rem;
     display: flex;
+    /* flex: 1; */
 }
 #searchbox {
     width: 10rem;
@@ -102,6 +114,11 @@ a {
     outline: none;
     font-size: 1rem;
     transition: 0.3s ease;
+    @media (max-width: 768px) {
+        width: 7rem;
+        font-size: 0.7rem;
+    }
+    
 }
 
 /* Sale and contact tiles */
@@ -375,4 +392,9 @@ footer {
   display: flex;
   opacity: 1;
   pointer-events: all;
+
 }
+
+
+
+
