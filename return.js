@@ -153,7 +153,7 @@ async function initialize() {
                 if ('stock' in item) {
                   item.stock = Math.max(0, (item.stock || 0) - qty);
                   if ('itemsBought' in item) {
-                    item.itemsBought = (item.itemsBought || 0) + qty;
+                    item.itemsBought = (item.itemsBought || 0) - qty;
                   }
                 } else if ('onhold' in item) {
                   item.bought = true;

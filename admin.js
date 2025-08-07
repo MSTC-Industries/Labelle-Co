@@ -515,9 +515,9 @@ async function acceptOrder(orderId) {
             if ('stock' in item) {
               item.stock = Math.max(0, (item.stock || 0) - qty);
               if (order.orderType === 'hold' && 'itemsOnHold' in item) {
-                item.itemsOnHold = (item.itemsOnHold || 0) + qty;
+                item.itemsOnHold = (item.itemsOnHold || 0) - qty;
               } else if (order.orderType === 'buy' && 'itemsBought' in item) {
-                item.itemsBought = (item.itemsBought || 0) + qty;
+                item.itemsBought = (item.itemsBought || 0) - qty;
               }
             } else {
               delete inventory[page][category][itemName];

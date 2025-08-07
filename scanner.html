@@ -476,65 +476,12 @@ async function cancelOrder(orderId) {
     if (orderIndex === -1) throw new Error("Order not found.");
     let order = orders[orderIndex];
 
-    let inventory = await (await fetch(CLOUD_API_URL)).json();
-
-    if (order.orderType === 'buy') {
-      for (const [itemName, qty] of Object.entries(order.items)) {
-        let found = false;
-        for (const page in inventory) {
-          for (const category in inventory[page]) {
-            if (inventory[page][category][itemName]) {
-              let item = inventory[page][category][itemName];
-              if ('stock' in item) {
-                item.stock = (item.stock || 0) + qty;
-                if ('itemsBought' in item) {
-                  item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
-                }
-              } else if ('bought' in item) {
-                item.bought = false;
-              }
-              found = true;
-              break;
-            }
-          }
-          if (found) break;
-        }
-      }
-    } else if (order.orderType === 'hold') {
-      for (const [itemName, qty] of Object.entries(order.items)) {
-        let found = false;
-        for (const page in inventory) {
-          for (const category in inventory[page]) {
-            if (inventory[page][category][itemName]) {
-              let item = inventory[page][category][itemName];
-              if ('stock' in item) {
-                item.stock = (item.stock || 0) + qty;
-                if ('itemsOnHold' in item) {
-                  item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
-                }
-              } else if ('onhold' in item) {
-                item.onhold = false;
-              }
-              found = true;
-              break;
-            }
-          }
-          if (found) break;
-        }
-      }
-    }
-
     orders.splice(orderIndex, 1);
 
     await fetch('https://labelle-co-server.vercel.app/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orders)
-    });
-    await fetch(CLOUD_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inventory)
     });
 
     loadOrders();
@@ -579,7 +526,7 @@ async function removeScannedItemsNoPay() {
             item.stock = Math.max(0, (item.stock || 0) - qty);
             // You can change 'buy' to 'hold' if needed for your workflow
             if ('itemsBought' in item) {
-              item.itemsBought = (item.itemsBought || 0) + qty;
+              item.itemsBought = (item.itemsBought || 0) - qty;
             }
           } else {
             delete inventory[page][category][itemName];
