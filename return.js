@@ -1,5 +1,7 @@
 initialize();
 
+let returntype = "index.html"
+
 async function initialize() {
   document.getElementById('exit').style.display = 'none';
 
@@ -14,6 +16,8 @@ async function initialize() {
   } else if (session.status == 'complete') {
     // Submit the order if it exists in localStorage
     const pendingOrderStr = localStorage.getItem("pendingOrder");
+    const completedCartStr = localStorage.getItem("completedCart");
+    const adminCheckoutCartStr = localStorage.getItem("adminCheckoutCart");
     if (pendingOrderStr) {
       try {
         showLoading();
@@ -71,6 +75,143 @@ async function initialize() {
         We appreciate your order and will process it soon.`;
         document.getElementById('exit').style.display = 'block';
       }
+    } else if (completedCartStr) {
+      returntype = "scanner.html"
+      try {
+        showLoading();
+
+        const completedCart = JSON.parse(completedCartStr);
+
+        // Fetch latest allitems and cosigners from the cloud
+        let [allitemsRes, cosignersRes] = await Promise.all([
+          fetch('https://labelle-co-server.vercel.app/cloud'),
+          fetch('https://labelle-co-server.vercel.app/cosigners')
+        ]);
+        let allitems = await allitemsRes.json();
+        let cosigners = await cosignersRes.json();
+
+        // Calculate profits for consigners
+        const emailToProfit = {};
+        for (const [itemName, qty] of Object.entries(completedCart.items)) {
+          for (const page in allitems) {
+            for (const category in allitems[page]) {
+              const item = allitems[page][category][itemName];
+              if (item) {
+                const price = Number(item.price);
+                const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+                const cosignerPercent = Number(cosignerPercentStr);
+                const profit = price * cosignerPercent / 100 * qty;
+                const email = item.cosignerEmail;
+                emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+              }
+            }
+          }
+        }
+
+        // Mutate inventory
+        for (const [itemName, qty] of Object.entries(completedCart.items)) {
+          let found = false;
+          for (const page in allitems) {
+            for (const category in allitems[page]) {
+              if (allitems[page][category][itemName]) {
+                let item = allitems[page][category][itemName];
+                if ('stock' in item) {
+                  item.stock = Math.max(0, (item.stock || 0) - qty);
+                  if ('itemsBought' in item) {
+                    item.itemsBought = (item.itemsBought || 0) + qty;
+                  }
+                } else if ('onhold' in item) {
+                  item.bought = true;
+                } else {
+                  delete allitems[page][category][itemName];
+                }
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+        }
+
+        // Apply profits to consigners
+        cosigners.forEach(c => {
+          if (emailToProfit[c.email]) {
+            c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
+          }
+        });
+
+        // Save updated allitems and cosigners to the cloud
+        await Promise.all([
+          fetch('https://labelle-co-server.vercel.app/cloud', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allitems)
+          }),
+          fetch('https://labelle-co-server.vercel.app/cosigners', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cosigners)
+          })
+        ]);
+
+        // Clear localStorage
+        localStorage.removeItem("completedCart");
+      } catch (err) {
+        console.error("Order submission failed:", err);
+      } finally {
+        hideLoading();
+        document.getElementById('message').innerHTML = 'Thank You!';
+        document.getElementById('details').innerHTML = `Your payment was successful.<br>
+        Thank you for shopping with us!`;
+        document.getElementById('exit').style.display = 'block';
+      }
+    } else if (adminCheckoutCartStr) {
+      returntype = "admin.html"
+      try {
+        showLoading();
+        const adminCheckoutCart = JSON.parse(adminCheckoutCartStr);
+
+        // Fetch cosigners from the cloud
+        let cosignersRes = await fetch('https://labelle-co-server.vercel.app/cosigners');
+        let cosigners = await cosignersRes.json();
+
+        // Calculate profits for consigners
+        const emailToProfit = {};
+        for (const item of adminCheckoutCart.items) {
+          const price = Number(item.price);
+          const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+          const cosignerPercent = Number(cosignerPercentStr);
+          const profit = price * cosignerPercent / 100 * item.qty;
+          const email = item.cosignerEmail;
+          emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+        }
+
+        // Apply profits to consigners
+        cosigners.forEach(c => {
+          if (emailToProfit[c.email]) {
+            c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
+          }
+        });
+
+        // Save updated cosigners to the cloud
+        await fetch('https://labelle-co-server.vercel.app/cosigners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cosigners)
+        });
+
+        // Clear localStorage
+        localStorage.removeItem("adminCheckoutCart");
+        localStorage.removeItem("adminCheckoutItems");
+      } catch (err) {
+        console.error("Order submission failed:", err);
+      } finally {
+        hideLoading();
+        document.getElementById('message').innerHTML = 'Thank You!';
+        document.getElementById('details').innerHTML = `Your payment was successful.<br>
+        Thank you for shopping with us!`;
+        document.getElementById('exit').style.display = 'block';
+      }
     }
   }
 }
@@ -120,4 +261,8 @@ function hideLoading() {
   if (!overlay) return;
   overlay.classList.remove('active');
   setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+function exit() {
+  window.location.href = returntype;
 }

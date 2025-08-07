@@ -296,9 +296,14 @@ table tr:hover {
           </select>
           <input type="text" id="newItemCategoryInput" placeholder="New category" style="display:none;margin-top:8px;">
         </label>
+        <label>Subcategories:
+          <div id="subcategoryList" style="margin-bottom:8px;"></div>
+          <input type="text" id="newSubcategoryInput" placeholder="Subcategory name">
+          <button type="button" onclick="addSubcategory()" style="margin-top:6px;">Add Subcategory</button>
+        </label>
         <label>Item Name: <input type="text" id="newItemName" required></label>
         <label>Upload Image:
-          <input type="file" id="imageUpload" accept="image/*" required>
+          <input type="file" id="imageUpload" accept="image/*">
         </label>
         <label>Type:
           <select id="newItemType" required>

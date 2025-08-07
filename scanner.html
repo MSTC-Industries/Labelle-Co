@@ -352,6 +352,30 @@ function getScannedItemSummary() {
 }
 
 async function initialize() {
+  // Build cart object: { items: { itemName: quantity } }
+  const cart = { items: {} };
+  for (const barcode in scannedItems) {
+    let matchedItem = null;
+    for (const [page, categories] of Object.entries(allitems)) {
+      for (const [category, items] of Object.entries(categories)) {
+        for (const [itemName, details] of Object.entries(items)) {
+          if (details.barcode === barcode) {
+            matchedItem = { name: itemName, ...details };
+            break;
+          }
+        }
+        if (matchedItem) break;
+      }
+      if (matchedItem) break;
+    }
+    if (matchedItem) {
+      cart.items[matchedItem.name] = scannedItems[barcode];
+    }
+  }
+  // Save to localStorage for return.js
+  localStorage.removeItem("pendingOrder");
+  localStorage.setItem("completedCart", JSON.stringify(cart));
+
   let cartItems = getScannedItemSummary();
 
   const fetchClientSecret = async () => {

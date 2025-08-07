@@ -100,11 +100,11 @@ select:focus {
 }
 
 /* === Inputs & Textareas === */
-table input[type="text"],
-table input[type="number"],
-table input[type="email"],
-table input[type="password"],
-table textarea {
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -112,8 +112,8 @@ table textarea {
   width: 100%;
   box-sizing: border-box;
 }
-table input:focus,
-table textarea:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: #3498db;
 }
@@ -282,6 +282,7 @@ table tr:hover {
     <a href="#" onclick="showSection('orders')"><i class="fas fa-box"></i> Orders</a>
     <a href="#" onclick="showSection('inventory')"><i class="fas fa-warehouse"></i> Inventory</a>
     <a href="#" onclick="showSection('cosigners')"><i class="fas fa-users"></i> Cosigners</a>
+    <a href="#" onclick="showSection('checkout')"><i class="fas fa-credit-card"></i> Checkout</a>
     <a href="#" onclick="logoutToHub()"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 
@@ -331,10 +332,60 @@ table tr:hover {
       <br>
       <div id="cosigners-list" class="card"></div>
     </div>
+
+    <div id="checkout-section" style="display: none;">
+      <div class="card" id="checkoutListCard">
+        <h2>Checkout Items</h2>
+        <div id="checkoutList"></div>
+      </div>
+      <div style="display: flex; gap: 32px;">
+        <div class="card" style="max-width:600px;margin-bottom:30px;">
+          <h2>Checkout Form</h2>
+          <form id="checkoutForm" onsubmit="return addCheckoutItem(event)">
+            <div class="form-columns">
+              <div class="column">
+                <label>Name:
+                  <input style="margin-bottom: 10px;" type="text" id="checkoutName" required>
+                </label>
+                <label>Price:
+                  <input style="margin-bottom: 10px;" type="number" id="checkoutPrice" min="0" step="0.01" required>
+                </label>
+                <label>Quantity:
+                  <input style="margin-bottom: 10px;" type="number" id="checkoutQty" min="1" step="1" required>
+                </label>
+                <label>Profit Split:
+                  <select style="margin-bottom: 10px;" id="checkoutProfitSplit">
+                    <option value="90/10">90/10</option>
+                    <option value="80/20">80/20</option>
+                    <option value="70/30">70/30</option>
+                    <option value="60/40">60/40</option>
+                    <option value="50/50" selected>50/50</option>
+                    <option value="40/60">40/60</option>
+                    <option value="30/70">30/70</option>
+                    <option value="20/80">20/80</option>
+                    <option value="10/90">10/90</option>
+                  </select>
+                </label>
+                <label>Cosigner:
+                  <select style="margin-bottom: 10px;" id="checkoutCosignerDropdown" required></select>
+                </label>
+              </div>
+              <div class="column">
+                <button type="submit" class="btn" style="margin-top:16px;width:100%;">Add Item</button>
+                <button class="btn" style="margin-top:16px;width:100%;" onclick="startAdminCheckout()">Checkout</button>
+                <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div id="checkout" class="card" style="max-width:600px;margin-bottom:30px;"></div>
+      </div>
+    </div>
   </div>
   
   <script src="admin.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://js.stripe.com/basil/stripe.js"></script>
 
   <div id="add-item-overlay" style="
   position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:1000;
@@ -356,9 +407,14 @@ table tr:hover {
             </select>
             <input type="text" id="newItemCategoryInput" placeholder="New category" style="display:none;margin-top:8px;">
           </label>
+          <label>Subcategories:
+            <div id="subcategoryList" style="margin-bottom:8px;"></div>
+            <input type="text" id="newSubcategoryInput" placeholder="Subcategory name">
+            <button type="button" onclick="addSubcategory()" style="margin-top:6px;">Add Subcategory</button>
+          </label>
           <label>Item Name: <input type="text" id="newItemName" required></label>
           <label>Upload Image:
-            <input type="file" id="imageUpload" accept="image/*" required>
+            <input type="file" id="imageUpload" accept="image/*">
           </label>
           <label>Type:
             <select id="newItemType" required>

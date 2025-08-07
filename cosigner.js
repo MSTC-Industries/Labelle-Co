@@ -5,6 +5,7 @@ let allitems = {};
 let cosignerEmail = localStorage.getItem('cosignerEmail');
 let cosignerName = '';
 let barcodeQueue = [];
+let expandedGroups = {};
 
 fetchCosignerInfo();
 loadInventory();
@@ -46,31 +47,33 @@ function loadInventory() {
 async function renderTable() {
   const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
   const cosigners = await res.json();
-
   const me = cosigners.find(c => c.email === cosignerEmail);
 
   const container = document.getElementById('inventory');
-  
-  // Show/hide Print Barcodes button
-  let printBtn = document.getElementById('printBarcodesBtn');
+  const optionsCard = document.getElementById('options-card');
+  const oldBtn = document.getElementById('print-barcode-btn');
+  if (oldBtn) oldBtn.remove();
+  let totalCosignerProfit = 0;
+  let printBtnHtml = '';
   if (barcodeQueue.length > 0) {
-    if (!printBtn) {
-      printBtn = document.createElement('button');
-      printBtn.id = 'printBarcodesBtn';
-      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
-      printBtn.className = 'btn';
-      printBtn.style.marginBottom = '10px';
-      printBtn.onclick = printBarcodeQueue;
-      document.getElementById('options-card').appendChild(printBtn);
-    } else {
-      printBtn.style.display = '';
-      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
-    }
-  } else if (printBtn) {
-    printBtn.style.display = 'none';
+    printBtnHtml = `<button onclick="printBarcodeQueue()" style="margin-bottom:12px;">Print Barcodes (${barcodeQueue.length})</button>`;
   }
-  
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Bought</th><th>Profit Split</th><th>Cosigner Profit</th><th>Barcode ID</th><th>Actions</th></tr>';
+  let html = `<table>
+    <tr>
+      <th>Category</th>
+      <th>Item</th>
+      <th>Image</th>
+      <th>Price</th>
+      <th>Specials</th>
+      <th>Stock</th>
+      <th>On Hold</th>
+      <th>Bought</th>
+      <th>Profit Split</th>
+      <th>Cosigner Profit</th>
+      <th>Barcode ID</th>
+      <th>Actions</th>
+    </tr>`;
+
   // Gather all categories for dropdown
   let allCategories = new Set();
   for (const categories of Object.values(allitems)) {
@@ -78,53 +81,151 @@ async function renderTable() {
       allCategories.add(category);
     }
   }
-  let totalCosignerProfit = 0;
+
   for (const [page, categories] of Object.entries(allitems)) {
     for (const [category, items] of Object.entries(categories)) {
-      for (const [item, details] of Object.entries(items)) {
-        if (details.cosignerEmail === cosignerEmail) {
-          const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
-          const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
-          const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === item);
+      // Only show items for this cosigner
+      // Group items by generalName
+      const groups = {};
+      for (const [itemKey, details] of Object.entries(items)) {
+        if (details.cosignerEmail !== cosignerEmail) continue;
+        const groupKey = details.generalName || null;
+        if (groupKey) {
+          if (!groups[groupKey]) groups[groupKey] = [];
+          groups[groupKey].push({ itemKey, details });
+        } else {
+          groups[itemKey] = [{ itemKey, details }];
+        }
+      }
 
+      for (const [groupName, groupItems] of Object.entries(groups)) {
+        const isGrouped = groupItems.length > 1 || groupItems[0].details.generalName;
+        const groupId = `${category}-${groupName}`.replace(/\s+/g, '_');
+
+        if (groupItems[0].details.generalName) {
+          // Title row for grouped items
+          html += `<tr style="background:#eaf6fb;">
+            <td colspan="12" style="font-weight:bold;">
+              <input type="text" value="${groupName}" style="font-weight:bold;font-size:16px;width:220px;" onchange="editGeneralName('${page}','${category}','${groupName}', this.value)">
+              <button id="toggleBtn-${groupId}" onclick="toggleGroupRows('${groupId}')">
+                ${expandedGroups[groupId] ? 'Hide Subcategories' : 'Show Subcategories'}
+              </button>
+            </td>
+          </tr>`;
+          // Subcategory rows (hidden by default)
+          groupItems.forEach(({ itemKey, details }, idx) => {
+            const profitSplit = details.profitSplit || "50/50";
+            const price = Number(details.price) || 0;
+            const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
+            const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
+            totalCosignerProfit += Number(cosignerProfit);
+            const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
+            const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+            const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === itemKey);
+
+            html += `<tr class="group-row-${groupId}" style="background:#f0f8ff;display:${expandedGroups[groupId] ? '' : 'none'};">
+              <td>
+                <input type="text" value="${details.subcategory || ''}" onchange="editSubcategory('${page}','${category}','${itemKey}', this.value)">
+              </td>
+              <td>
+                <select onchange="changeCategory('${page}','${category}','${itemKey}', this.value)">
+                  ${Array.from(allCategories).map(cat =>
+                    `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
+                  ).join('')}
+                  <option value="__new__">-- New Category --</option>
+                </select>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${page}','${category}','${itemKey}', this)">
+                  ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
+                </div>
+              </td>
+              <td><input type="number" value="${details.price}" onchange="editItem('${page}','${category}','${itemKey}', 'price', this.value)"></td>
+              <td>
+                <textarea rows="2" cols="18" onchange="editItem('${page}','${category}','${itemKey}', 'specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
+              </td>
+              <td>
+                <input type="number" value="${details.stock ?? ''}" 
+                  onchange="editItem('${page}','${category}','${itemKey}', 'stock', this.value)" 
+                  ${hasOnHoldProp ? 'disabled' : ''}>
+              </td>
+              <td>
+                ${
+                  typeof details.itemsOnHold === 'number'
+                    ? `<input type="number" min="0" value="${details.itemsOnHold}" 
+                        onchange="editItem('${page}','${category}','${itemKey}','itemsOnHold', this.value)">`
+                    : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
+                        onchange="editItem('${page}','${category}','${itemKey}','onhold', this.checked)" 
+                        ${hasStockProp ? 'disabled' : ''}>`
+                }
+              </td>
+              <td>
+                ${
+                  typeof details.itemsBought === 'number'
+                    ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
+                          onchange="editItem('${page}','${category}','${itemKey}','itemsBought', this.value)">`
+                    : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
+                          onchange="editItem('${page}','${category}','${itemKey}','bought', this.checked)" 
+                          ${hasStockProp ? 'disabled' : ''}>`
+                }
+              </td>
+              <td>${details.profitSplit || "50/50"}</td>
+              <td>${cosignerProfit}</td>
+              <td>${details.barcode}</td>
+              <td>
+                <button onclick="removeItem('${page}','${category}','${itemKey}')">Remove</button>
+                <label style="display:inline-flex;align-items:center;">
+                  <input type="checkbox" onchange="toggleBarcodeQueue('${page}','${category}','${itemKey}')" ${isChecked ? 'checked' : ''}>
+                  Barcode
+                </label>
+              </td>
+            </tr>`;
+          });
+        } else {
+          // Normal item row (not grouped)
+          const { itemKey, details } = groupItems[0];
           const profitSplit = details.profitSplit || "50/50";
           const price = Number(details.price) || 0;
           const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
           const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
           totalCosignerProfit += Number(cosignerProfit);
+          const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
+          const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+          const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === itemKey);
 
-          html += `<tr>
+          html += `<tr style="background:#ffffff;">
             <td>
-              <select onchange="changeCategory('${page}','${category}','${item}', this.value)">
+              <select onchange="changeCategory('${page}','${category}','${itemKey}', this.value)">
                 ${Array.from(allCategories).map(cat =>
                   `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
                 ).join('')}
                 <option value="__new__">-- New Category --</option>
               </select>
             </td>
-            <td><input type="text" value="${item}" onchange="editItem('${page}','${category}','${item}','item', this.value)"></td>
+            <td><input type="text" value="${itemKey}" onchange="editItem('${page}','${category}','${itemKey}', 'item', this.value)"></td>
             <td>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${page}','${category}','${item}', this)">
+                <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${page}','${category}','${itemKey}', this)">
                 ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
               </div>
             </td>
-            <td><input type="number" value="${details.price}" onchange="editItem('${page}','${category}','${item}','price', this.value)"></td>
+            <td><input type="number" value="${details.price}" onchange="editItem('${page}','${category}','${itemKey}', 'price', this.value)"></td>
             <td>
-              <textarea rows="2" cols="18" onchange="editItem('${page}','${category}','${item}','specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
+              <textarea rows="2" cols="18" onchange="editItem('${page}','${category}','${itemKey}', 'specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
             </td>
             <td>
               <input type="number" value="${details.stock ?? ''}" 
-                onchange="editItem('${page}','${category}','${item}','stock', this.value)" 
+                onchange="editItem('${page}','${category}','${itemKey}', 'stock', this.value)" 
                 ${hasOnHoldProp ? 'disabled' : ''}>
             </td>
             <td>
               ${
                 typeof details.itemsOnHold === 'number'
                   ? `<input type="number" min="0" value="${details.itemsOnHold}" 
-                      onchange="editItem('${page}','${category}','${item}','itemsOnHold', this.value)">`
+                      onchange="editItem('${page}','${category}','${itemKey}','itemsOnHold', this.value)">`
                   : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
-                      onchange="editItem('${page}','${category}','${item}','onhold', this.checked)" 
+                      onchange="editItem('${page}','${category}','${itemKey}','onhold', this.checked)" 
                       ${hasStockProp ? 'disabled' : ''}>`
               }
             </td>
@@ -132,9 +233,9 @@ async function renderTable() {
               ${
                 typeof details.itemsBought === 'number'
                   ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
-                        onchange="editItem('${page}','${category}','${item}','itemsBought', this.value)">`
+                        onchange="editItem('${page}','${category}','${itemKey}','itemsBought', this.value)">`
                   : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
-                        onchange="editItem('${page}','${category}','${item}','bought', this.checked)" 
+                        onchange="editItem('${page}','${category}','${itemKey}','bought', this.checked)" 
                         ${hasStockProp ? 'disabled' : ''}>`
               }
             </td>
@@ -142,9 +243,9 @@ async function renderTable() {
             <td>${cosignerProfit}</td>
             <td>${details.barcode}</td>
             <td>
-              <button onclick="removeItem('${page}','${category}','${item}')">Remove</button>
+              <button onclick="removeItem('${page}','${category}','${itemKey}')">Remove</button>
               <label style="display:inline-flex;align-items:center;">
-                <input type="checkbox" onchange="toggleBarcodeQueue('${page}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
+                <input type="checkbox" onchange="toggleBarcodeQueue('${page}','${category}','${itemKey}')" ${isChecked ? 'checked' : ''}>
                 Barcode
               </label>
             </td>
@@ -155,14 +256,54 @@ async function renderTable() {
   }
 
   html += '</table>';
-  const owed = Number(me.owedProfit) || 0;
+  const owed = Number(me?.owedProfit) || 0;
+  if (barcodeQueue.length > 0) {
+    const printBtn = document.createElement('button');
+    printBtn.id = 'print-barcode-btn';
+    printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+    printBtn.onclick = printBarcodeQueue;
+    optionsCard.appendChild(printBtn);
+  }
   container.innerHTML = `
     <strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>
     <br>
     <strong>Unpaid (Owed by Admin): $${owed.toFixed(2)}</strong>
-  ` + html;
-
+    <br>
+    ${html}
+  `;
 }
+
+// --- Helper functions for grouping ---
+window.toggleGroupRows = function(groupId) {
+  expandedGroups[groupId] = !expandedGroups[groupId];
+  renderTable();
+};
+
+window.editGeneralName = function(page, category, oldGeneralName, newGeneralName) {
+  if (!newGeneralName.trim()) return;
+  const items = allitems[page][category];
+  Object.entries(items).forEach(([key, details]) => {
+    if (details.generalName === oldGeneralName) {
+      const subcat = details.subcategory;
+      const newKey = newGeneralName + ' (' + subcat + ')';
+      details.generalName = newGeneralName;
+      items[newKey] = details;
+      delete items[key];
+    }
+  });
+  renderTable();
+};
+
+window.editSubcategory = function(page, category, itemKey, value) {
+  const items = allitems[page][category];
+  const details = items[itemKey];
+  if (!details || !details.generalName) return;
+  const newKey = details.generalName + ' (' + value + ')';
+  details.subcategory = value;
+  items[newKey] = details;
+  delete items[itemKey];
+  renderTable();
+};
 
 window.removeItem = function(page, category, item) {
   if (allitems[page] && allitems[page][category] && allitems[page][category][item]) {
@@ -253,6 +394,7 @@ function logoutToHub() {
 }
 
 function openAddItemOverlay() {
+  resetSubcategories();
   const overlay = document.getElementById('add-item-overlay');
   overlay.style.display = 'flex';
   setTimeout(() => {
@@ -263,6 +405,7 @@ function openAddItemOverlay() {
 }
 
 function closeAddItemOverlay() {
+  resetSubcategories();
   const overlay = document.getElementById('add-item-overlay');
   overlay.style.transform = 'translateY(-100vh)';
   setTimeout(() => {
@@ -314,26 +457,54 @@ window.submitNewItem = async function(event) {
     imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
   }
 
-  let newItem = {
-    img: imageURL || '',
-    price: price || 0,
-    single: (type === 'onhold'),
-    specials: specials,
-    cosignerName: cosignerName,
-    cosignerEmail: cosignerEmail,
-    profitSplit: "50/50",
-    barcode: Date.now().toString()
-  };
-  if (type === 'stock') {
-    newItem.stock = 1;
-    newItem.itemsOnHold = 0;
-    newItem.itemsBought = 0;
-  } else if (type === 'onhold') {
-    newItem.onhold = false;
-    newItem.bought = false;
+  if (subcategories.length > 0) {
+    subcategories.forEach(subcategory => {
+      const barcode = Date.now().toString() + Math.floor(Math.random() * 1000000).toString();
+      let newItem = {
+        img: imageURL || '',
+        price: price || 0,
+        single: (type === 'onhold'),
+        specials: specials,
+        cosignerName: cosignerName,
+        cosignerEmail: cosignerEmail,
+        profitSplit: "50/50",
+        barcode: barcode,
+        subcategory: subcategory,
+        generalName: item
+      };
+      if (type === 'stock') {
+        newItem.stock = 1;
+        newItem.itemsOnHold = 0;
+        newItem.itemsBought = 0;
+      } else if (type === 'onhold') {
+        newItem.onhold = false;
+        newItem.bought = false;
+      }
+      allitems[page][category][item + ' (' + subcategory + ')'] = newItem;
+    });
+  } else {
+    const barcode = Date.now().toString();
+    let newItem = {
+      img: imageURL || '',
+      price: price || 0,
+      single: (type === 'onhold'),
+      specials: specials,
+      cosignerName: cosignerName,
+      cosignerEmail: cosignerEmail,
+      profitSplit: "50/50",
+      barcode: barcode
+      // no subcategory field
+    };
+    if (type === 'stock') {
+      newItem.stock = 1;
+      newItem.itemsOnHold = 0;
+      newItem.itemsBought = 0;
+    } else if (type === 'onhold') {
+      newItem.onhold = false;
+      newItem.bought = false;
+    }
+    allitems[page][category][item] = newItem;
   }
-
-  allitems[page][category][item] = newItem;
 
   fetch(CLOUD_API_URL, {
     method: 'POST',
@@ -520,3 +691,36 @@ window.uploadImageAndUpdate = async function(page, category, item, inputElement)
 
   hideLoading();
 };
+
+let subcategories = [];
+
+window.addSubcategory = function() {
+  const input = document.getElementById('newSubcategoryInput');
+  const name = input.value.trim();
+  if (name && !subcategories.includes(name)) {
+    subcategories.push(name);
+    input.value = '';
+    renderSubcategoryList();
+  }
+};
+
+window.removeSubcategory = function(name) {
+  subcategories = subcategories.filter(sub => sub !== name);
+  renderSubcategoryList();
+};
+
+function renderSubcategoryList() {
+  const listDiv = document.getElementById('subcategoryList');
+  listDiv.innerHTML = subcategories.map(sub =>
+    `<span style="display:inline-block;background:#eee;padding:4px 8px;margin:2px;border-radius:4px;">
+      ${sub}
+      <button type="button" onclick="removeSubcategory('${sub}')"
+        style="margin-left:4px;background:#c00;color:#fff;border:none;border-radius:2px;cursor:pointer;">x</button>
+    </span>`
+  ).join('');
+}
+
+function resetSubcategories() {
+  subcategories = [];
+  renderSubcategoryList();
+}

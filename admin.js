@@ -1,6 +1,7 @@
 const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 
 let allitems = {};
+let expandedGroups = {};
 
 let currentpage = 'main.html';
 let barcodeQueue = [];
@@ -14,7 +15,12 @@ function showSection(section) {
   document.getElementById('order-section').style.display = (section === 'orders') ? '' : 'none';
   document.getElementById('inventory-section').style.display = (section === 'inventory') ? '' : 'none';
   document.getElementById('cosigners-section').style.display = (section === 'cosigners') ? '' : 'none';
+  document.getElementById('checkout-section').style.display = (section === 'checkout') ? '' : 'none';
   if (section === 'cosigners') renderCosigners();
+  if (section === 'checkout') {
+    populateCheckoutCosignerDropdown();
+    renderCheckoutList();
+  }
 }
 
 function showPasswordOverlay() {
@@ -88,113 +94,232 @@ window.switchPage = function(page) {
 
 function renderTable() {
   const container = document.getElementById('inventory');
-  
-  // Show/hide Print Barcodes button
-  let printBtn = document.getElementById('printBarcodesBtn');
-  if (barcodeQueue.length > 0) {
-    if (!printBtn) {
-      printBtn = document.createElement('button');
-      printBtn.id = 'printBarcodesBtn';
-      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
-      printBtn.className = 'btn';
-      printBtn.style.marginBottom = '10px';
-      printBtn.onclick = printBarcodeQueue;
-      document.getElementById('options-card').appendChild(printBtn);
-    } else {
-      printBtn.style.display = '';
-      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
-    }
-  } else if (printBtn) {
-    printBtn.style.display = 'none';
-  }
-  
+  const optionsCard = document.getElementById('options-card');
+  const oldBtn = document.getElementById('print-barcode-btn');
+  if (oldBtn) oldBtn.remove();
   if (!allitems[currentpage]) {
     container.innerHTML = '<p>No data for this page.</p>';
     return;
   }
+  let printBtnHtml = '';
+  if (barcodeQueue.length > 0) {
+    printBtnHtml = `<button onclick="printBarcodeQueue()" style="margin-bottom:12px;">Print Barcodes (${barcodeQueue.length})</button>`;
+  }
   let totalAdminProfit = 0;
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Bought</th><th>Profit Split</th><th>Admin Profit</th><th>Cosigner Name</th><th>Cosigner Email</th><th>Barcode ID</th><th>Actions</th></tr>';
+  let html = `<table><tr>
+    <th>Category</th>
+    <th>Item</th>
+    <th>Image</th>
+    <th>Price</th>
+    <th>Specials</th>
+    <th>Stock</th>
+    <th>On Hold</th>
+    <th>Bought</th>
+    <th>Profit Split</th>
+    <th>Admin Profit</th>
+    <th>Cosigner Name</th>
+    <th>Cosigner Email</th>
+    <th>Barcode ID</th>
+    <th>Actions</th>
+  </tr>`;
+
   for (const [category, items] of Object.entries(allitems[currentpage])) {
-    for (const [item, details] of Object.entries(items)) {
-      const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
-      const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
-      const isChecked = barcodeQueue.some(q => q.page === currentpage && q.category === category && q.item === item);
+    // Group items by generalName
+    const groups = {};
+    for (const [itemKey, details] of Object.entries(items)) {
+      const groupKey = details.generalName || null;
+      if (groupKey) {
+        if (!groups[groupKey]) groups[groupKey] = [];
+        groups[groupKey].push({ itemKey, details });
+      } else {
+        groups[itemKey] = [{ itemKey, details }];
+      }
+    }
 
-      const profitSplit = details.profitSplit || "50/50";
-      const price = Number(details.price) || 0;
-      const adminPercent = Number(profitSplit.split('/')[0]) || 50;
-      const adminProfit = ((price * adminPercent) / 100).toFixed(2);
-      totalAdminProfit += Number(adminProfit);
+    for (const [groupName, groupItems] of Object.entries(groups)) {
+      const isGrouped = groupItems.length > 1 || groupItems[0].details.generalName;
+      const groupId = `${category}-${groupName}`.replace(/\s+/g, '_');
 
-      html += `<tr>
-        <td>
-        <select onchange="changeCategory('${category}','${item}', this.value)">
-            ${Object.keys(allitems[currentpage]).map(cat =>
-            `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
-            ).join('')}
-            <option value="__new__">-- New Category --</option>
-        </select>
-        </td>
-        <td><input type="text" value="${item}" onchange="editItem('${category}','${item}', 'item', this.value)"></td>
-        <td>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${category}','${item}', this)">
-            ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
-          </div>
-        </td>
-        <td><input type="number" value="${details.price}" onchange="editItem('${category}','${item}', 'price', this.value)"></td>
-        <td>
-            <textarea rows="2" cols="18" onchange="editItem('${category}','${item}', 'specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
-        </td>
-        <td>
-          <input type="number" value="${details.stock ?? ''}" 
-            onchange="editItem('${category}','${item}', 'stock', this.value)" 
-            ${hasOnHoldProp ? 'disabled' : ''}>
-        </td>
-        <td>
-          ${
+      if (groupItems[0].details.generalName) {
+        // Title row for grouped items
+        html += `<tr style="background:#eaf6fb;">
+          <td colspan="14" style="font-weight:bold;">
+            <input type="text" value="${groupName}" style="font-weight:bold;font-size:16px;width:220px;" onchange="editGeneralName('${category}','${groupName}', this.value)">
+            <button id="toggleBtn-${groupId}" onclick="toggleGroupRows('${groupId}')">
+              ${expandedGroups[groupId] ? 'Hide Subcategories' : 'Show Subcategories'}
+            </button>
+          </td>
+        </tr>`;
+        // Subcategory rows (hidden by default)
+        groupItems.forEach(({ itemKey, details }, idx) => {
+          const profitSplit = details.profitSplit || "50/50";
+          const price = Number(details.price) || 0;
+          const adminPercent = Number(profitSplit.split('/')[0]) || 50;
+          const adminProfit = ((price * adminPercent) / 100).toFixed(2);
+          totalAdminProfit += Number(adminProfit);
+          const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
+          const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+          const isChecked = barcodeQueue.some(q => q.page === currentpage && q.category === category && q.item === itemKey);
+
+          html += `<tr class="group-row-${groupId}" style="background:#f0f8ff;display:${expandedGroups[groupId] ? '' : 'none'};">
+            <td>
+              <input type="text" value="${details.subcategory || ''}" onchange="editSubcategory('${category}','${itemKey}', this.value)">
+            </td>
+            <td>
+              <select onchange="changeCategory('${category}','${itemKey}', this.value)">
+                ${Object.keys(allitems[currentpage]).map(cat =>
+                  `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
+                ).join('')}
+                <option value="__new__">-- New Category --</option>
+              </select>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${category}','${itemKey}', this)">
+                ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
+              </div>
+            </td>
+            <td><input type="number" value="${details.price}" onchange="editItem('${category}','${itemKey}', 'price', this.value)"></td>
+            <td>
+              <textarea rows="2" cols="18" onchange="editItem('${category}','${itemKey}', 'specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
+            </td>
+            <td>
+              <input type="number" value="${details.stock ?? ''}" 
+                onchange="editItem('${category}','${itemKey}', 'stock', this.value)" 
+                ${hasOnHoldProp ? 'disabled' : ''}>
+            </td>
+            <td>
+              ${
+                typeof details.itemsOnHold === 'number'
+                  ? `<input type="number" min="0" value="${details.itemsOnHold}" 
+                      onchange="editItem('${category}','${itemKey}','itemsOnHold', this.value)">`
+                  : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
+                      onchange="editItem('${category}','${itemKey}','onhold', this.checked)" 
+                      ${hasStockProp ? 'disabled' : ''}>`
+              }
+            </td>
+            <td>
+              ${
+                typeof details.itemsBought === 'number'
+                  ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
+                        onchange="editItem('${category}','${itemKey}','itemsBought', this.value)">`
+                  : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
+                        onchange="editItem('${category}','${itemKey}','bought', this.checked)" 
+                        ${hasStockProp ? 'disabled' : ''}>`
+              }
+            </td>
+            <td>
+              <select onchange="editItem('${category}','${itemKey}','profitSplit', this.value)" class="profit-split-select">
+                ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+                  `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
+                ).join('')}
+              </select>
+            </td>
+            <td>${adminProfit}</td>
+            <td>${details.cosignerName || ''}</td>
+            <td>${details.cosignerEmail || ''}</td>
+            <td>${details.barcode}</td>
+            <td>
+              <button onclick="removeItem('${category}','${itemKey}')">Remove</button>
+              <label style="display:inline-flex;align-items:center;">
+                <input type="checkbox" onchange="toggleBarcodeQueue('${currentpage}','${category}','${itemKey}')" ${isChecked ? 'checked' : ''}>
+                Barcode
+              </label>
+            </td>
+          </tr>`;
+        });
+      } else {
+        // Normal item row (not grouped)
+        const { itemKey, details } = groupItems[0];
+        const profitSplit = details.profitSplit || "50/50";
+        const price = Number(details.price) || 0;
+        const adminPercent = Number(profitSplit.split('/')[0]) || 50;
+        const adminProfit = ((price * adminPercent) / 100).toFixed(2);
+        totalAdminProfit += Number(adminProfit);
+        const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
+        const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
+        const isChecked = barcodeQueue.some(q => q.page === currentpage && q.category === category && q.item === itemKey);
+
+        html += `<tr style="background:#ffffff;">
+          <td>
+            <select onchange="changeCategory('${category}','${itemKey}', this.value)">
+              ${Object.keys(allitems[currentpage]).map(cat =>
+                `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
+              ).join('')}
+              <option value="__new__">-- New Category --</option>
+            </select>
+          </td>
+          <td><input type="text" value="${itemKey}" onchange="editItem('${category}','${itemKey}', 'item', this.value)"></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${category}','${itemKey}', this)">
+              ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
+            </div>
+          </td>
+          <td><input type="number" value="${details.price}" onchange="editItem('${category}','${itemKey}', 'price', this.value)"></td>
+          <td>
+            <textarea rows="2" cols="18" onchange="editItem('${category}','${itemKey}', 'specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
+          </td>
+          <td>
+            <input type="number" value="${details.stock ?? ''}" 
+              onchange="editItem('${category}','${itemKey}', 'stock', this.value)" 
+              ${hasOnHoldProp ? 'disabled' : ''}>
+          </td>
+          <td>
+            ${
               typeof details.itemsOnHold === 'number'
                 ? `<input type="number" min="0" value="${details.itemsOnHold}" 
-                    onchange="editItem('${category}','${item}','itemsOnHold', this.value)">`
+                    onchange="editItem('${category}','${itemKey}','itemsOnHold', this.value)">`
                 : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
-                    onchange="editItem('${category}','${item}','onhold', this.checked)" 
+                    onchange="editItem('${category}','${itemKey}','onhold', this.checked)" 
                     ${hasStockProp ? 'disabled' : ''}>`
             }
-        </td>
-        <td>
-          ${
-            typeof details.itemsBought === 'number'
-              ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
-                    onchange="editItem('${category}','${item}','itemsBought', this.value)">`
-              : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
-                    onchange="editItem('${category}','${item}','bought', this.checked)" 
-                    ${hasStockProp ? 'disabled' : ''}>`
-          }
-        </td>
-        <td>
-          <select onchange="editItem('${category}','${item}','profitSplit', this.value)" class="profit-split-select">
-            ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
-              `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
-            ).join('')}
-          </select>
-        </td>
-        <td>${adminProfit}</td>
-        <td>${details.cosignerName || ''}</td>
-        <td>${details.cosignerEmail || ''}</td>
-        <td>${details.barcode}</td>
-        <td>
-          <button onclick="removeItem('${category}','${item}')">Remove</button>
-          <label style="display:inline-flex;align-items:center;">
-            <input type="checkbox" onchange="toggleBarcodeQueue('${currentpage}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
-            Barcode
-          </label>
-        </td>
-      </tr>`;
+          </td>
+          <td>
+            ${
+              typeof details.itemsBought === 'number'
+                ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
+                      onchange="editItem('${category}','${itemKey}','itemsBought', this.value)">`
+                : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
+                      onchange="editItem('${category}','${itemKey}','bought', this.checked)" 
+                      ${hasStockProp ? 'disabled' : ''}>`
+            }
+          </td>
+          <td>
+            <select onchange="editItem('${category}','${itemKey}','profitSplit', this.value)" class="profit-split-select">
+              ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+                `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
+              ).join('')}
+            </select>
+          </td>
+          <td>${adminProfit}</td>
+          <td>${details.cosignerName || ''}</td>
+          <td>${details.cosignerEmail || ''}</td>
+          <td>${details.barcode}</td>
+          <td>
+            <button onclick="removeItem('${category}','${itemKey}')">Remove</button>
+            <label style="display:inline-flex;align-items:center;">
+              <input type="checkbox" onchange="toggleBarcodeQueue('${currentpage}','${category}','${itemKey}')" ${isChecked ? 'checked' : ''}>
+              Barcode
+            </label>
+          </td>
+        </tr>`;
+      }
     }
   }
 
   html += '</table>';
-  container.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>` + html;
+  if (barcodeQueue.length > 0) {
+    const printBtn = document.createElement('button');
+    printBtn.id = 'print-barcode-btn';
+    printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+    printBtn.onclick = printBarcodeQueue;
+    optionsCard.appendChild(printBtn);
+  }
+  container.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>
+    <br>
+    ${html}
+  `;
 }
 
 window.editItem = function(category, item, field, value) {
@@ -527,6 +652,7 @@ function logoutToHub() {
 }
 
 function openAddItemOverlay() {
+  resetSubcategories();
   const overlay = document.getElementById('add-item-overlay');
   overlay.style.display = 'flex';
   setTimeout(() => {
@@ -538,6 +664,7 @@ function openAddItemOverlay() {
 }
 
 function closeAddItemOverlay() {
+  resetSubcategories();
   const overlay = document.getElementById('add-item-overlay');
   overlay.style.transform = 'translateY(-100vh)';
   setTimeout(() => {
@@ -600,7 +727,6 @@ window.submitNewAdminItem = async function(event) {
     category = document.getElementById('newItemCategoryInput').value.trim();
   }
   const item = document.getElementById('newItemName').value.trim();
-  //const img = document.getElementById('newItemImg').value.trim();
   const type = document.getElementById('newItemType').value;
   const price = Number(document.getElementById('newItemPrice').value);
   const specials = document.getElementById('newItemSpecials').value
@@ -609,10 +735,10 @@ window.submitNewAdminItem = async function(event) {
   const cosignerData = JSON.parse(document.getElementById('cosignerDropdown').value || '{}');
   const cosignerName = cosignerData.name || '';
   const cosignerEmail = cosignerData.email || '';
-  const barcode = Date.now().toString();
 
   if (!page || !category || !item) {
     document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
+    hideLoading();
     return false;
   }
 
@@ -620,12 +746,10 @@ window.submitNewAdminItem = async function(event) {
   if (!allitems[page][category]) allitems[page][category] = {};
 
   const file = document.getElementById('imageUpload')?.files[0];
-  let imageURL
-
+  let imageURL = '';
   if (file) {
     const formData = new FormData();
     formData.append('image', file);
-
     const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
       method: 'POST',
       body: formData
@@ -634,28 +758,55 @@ window.submitNewAdminItem = async function(event) {
     imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
   }
 
-  let newItem = {
-    img: imageURL || '',
-    price: price || 0,
-    single: (type === 'onhold'),
-    specials: specials,
-    cosignerName: cosignerName,
-    cosignerEmail: cosignerEmail,
-    profitSplit: profitSplit,
-    barcode: barcode
-  };
-  if (type === 'stock') {
-    newItem.stock = 1;
-    newItem.itemsOnHold = 0;
-    newItem.itemsBought = 0;
-  } else if (type === 'onhold') {
-    newItem.onhold = false;
-    newItem.bought = false;
+  // If subcategories exist, add multiple items
+  if (subcategories.length > 0) {
+    subcategories.forEach(subcategory => {
+      const barcode = Date.now().toString() + Math.floor(Math.random() * 1000000).toString();
+      let newItem = {
+        img: imageURL || '',
+        price: price || 0,
+        single: (type === 'onhold'),
+        specials: specials,
+        cosignerName: cosignerName,
+        cosignerEmail: cosignerEmail,
+        profitSplit: profitSplit,
+        barcode: barcode,
+        subcategory: subcategory,
+        generalName: item
+      };
+      if (type === 'stock') {
+        newItem.stock = 1;
+        newItem.itemsOnHold = 0;
+        newItem.itemsBought = 0;
+      } else if (type === 'onhold') {
+        newItem.onhold = false;
+        newItem.bought = false;
+      }
+      allitems[page][category][item + ' (' + subcategory + ')'] = newItem;
+    });
+  } else {
+    const barcode = Date.now().toString();
+    let newItem = {
+      img: imageURL || '',
+      price: price || 0,
+      single: (type === 'onhold'),
+      specials: specials,
+      cosignerName: cosignerName,
+      cosignerEmail: cosignerEmail,
+      profitSplit: profitSplit,
+      barcode: barcode
+      // no subcategory field
+    };
+    if (type === 'stock') {
+      newItem.stock = 1;
+      newItem.itemsOnHold = 0;
+      newItem.itemsBought = 0;
+    } else if (type === 'onhold') {
+      newItem.onhold = false;
+      newItem.bought = false;
+    }
+    allitems[page][category][item] = newItem;
   }
-
-  allitems[page][category][item] = newItem;
-
-  console.log(allitems)
 
   fetch(CLOUD_API_URL, {
     method: 'POST',
@@ -905,3 +1056,219 @@ window.uploadImageAndUpdate = async function(category, item, inputElement) {
   hideLoading();
 };
 
+let subcategories = [];
+
+window.addSubcategory = function() {
+  const input = document.getElementById('newSubcategoryInput');
+  const name = input.value.trim();
+  if (name && !subcategories.includes(name)) {
+    subcategories.push(name);
+    input.value = '';
+    renderSubcategoryList();
+  }
+};
+
+window.removeSubcategory = function(name) {
+  subcategories = subcategories.filter(sub => sub !== name);
+  renderSubcategoryList();
+};
+
+function renderSubcategoryList() {
+  const listDiv = document.getElementById('subcategoryList');
+  listDiv.innerHTML = subcategories.map(sub =>
+    `<span style="display:inline-block;background:#eee;padding:4px 8px;margin:2px;border-radius:4px;">
+      ${sub}
+      <button type="button" onclick="removeSubcategory('${sub}')"
+        style="margin-left:4px;background:#c00;color:#fff;border:none;border-radius:2px;cursor:pointer;">x</button>
+    </span>`
+  ).join('');
+}
+
+function resetSubcategories() {
+  subcategories = [];
+  renderSubcategoryList();
+}
+
+window.toggleGroupRows = function(groupId) {
+  expandedGroups[groupId] = !expandedGroups[groupId];
+  renderTable();
+};
+
+window.editGeneralName = function(category, oldGeneralName, newGeneralName) {
+  if (!newGeneralName.trim()) return;
+  const items = allitems[currentpage][category];
+  Object.entries(items).forEach(([key, details]) => {
+    if (details.generalName === oldGeneralName) {
+      const subcat = details.subcategory;
+      const newKey = newGeneralName + ' (' + subcat + ')';
+      details.generalName = newGeneralName;
+      items[newKey] = details;
+      delete items[key];
+    }
+  });
+  renderTable();
+};
+
+window.editSubcategory = function(category, itemKey, value) {
+  const items = allitems[currentpage][category];
+  const details = items[itemKey];
+  if (!details || !details.generalName) return;
+  const newKey = details.generalName + ' (' + value + ')';
+  details.subcategory = value;
+  items[newKey] = details;
+  delete items[itemKey];
+  renderTable();
+};
+
+async function populateCheckoutCosignerDropdown() {
+  const dropdown = document.getElementById('checkoutCosignerDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Cosigner --</option>';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    cosigners.forEach(c => {
+      const option = document.createElement('option');
+      option.value = JSON.stringify({ name: c.name, email: c.email });
+      option.textContent = `${c.name} (${c.email})`;
+      dropdown.appendChild(option);
+    });
+  } catch (err) {
+    dropdown.innerHTML = '<option value="">Error loading cosigners</option>';
+  }
+}
+
+let checkoutItems = JSON.parse(localStorage.getItem("adminCheckoutItems") || "[]");
+
+function saveCheckoutItems() {
+  localStorage.setItem("adminCheckoutItems", JSON.stringify(checkoutItems));
+}
+
+function addCheckoutItem(event) {
+  event.preventDefault();
+  const name = document.getElementById('checkoutName').value.trim();
+  const price = Number(document.getElementById('checkoutPrice').value);
+  const qty = Number(document.getElementById('checkoutQty').value);
+  const profitSplit = document.getElementById('checkoutProfitSplit').value;
+  const cosignerData = JSON.parse(document.getElementById('checkoutCosignerDropdown').value || '{}');
+  if (!name || !price || !qty || !cosignerData.email) {
+    document.getElementById('checkoutMsg').textContent = "Fill out all fields.";
+    return false;
+  }
+  checkoutItems.push({
+    name, price, qty, profitSplit,
+    cosignerName: cosignerData.name,
+    cosignerEmail: cosignerData.email
+  });
+  saveCheckoutItems();
+  renderCheckoutList();
+  document.getElementById('checkoutForm').reset();
+  document.getElementById('checkoutMsg').textContent = "";
+  return false;
+}
+
+function renderCheckoutList() {
+  const container = document.getElementById('checkoutList');
+  if (!checkoutItems.length) {
+    container.innerHTML = '<p>No items added.</p>';
+    return;
+  }
+  let html = `<table>
+    <tr>
+      <th>Name</th>
+      <th>Price</th>
+      <th>Quantity</th>
+      <th>Profit Split</th>
+      <th>Cosigner</th>
+      <th>Actions</th>
+    </tr>`;
+  checkoutItems.forEach((item, idx) => {
+    html += `<tr>
+      <td><input type="text" value="${item.name}" onchange="editCheckoutItem(${idx}, 'name', this.value)"></td>
+      <td><input type="number" value="${item.price}" onchange="editCheckoutItem(${idx}, 'price', this.value)"></td>
+      <td><input type="number" value="${item.qty}" min="1" onchange="editCheckoutItem(${idx}, 'qty', this.value)"></td>
+      <td>
+        <select onchange="editCheckoutItem(${idx}, 'profitSplit', this.value)">
+          ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+            `<option value="${opt}" ${item.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td>
+        <select onchange="editCheckoutItem(${idx}, 'cosigner', this.value)">
+          ${getCosignerOptions(item.cosignerName, item.cosignerEmail)}
+        </select>
+      </td>
+      <td>
+        <button onclick="removeCheckoutItem(${idx})">Remove</button>
+      </td>
+    </tr>`;
+  });
+  html += '</table>';
+  container.innerHTML = html;
+}
+
+function getCosignerOptions(selectedName, selectedEmail) {
+  let options = '<option value="">-- Select Cosigner --</option>';
+  const cosignerDropdown = document.getElementById('checkoutCosignerDropdown');
+  for (let i = 1; i < cosignerDropdown.options.length; i++) {
+    const val = cosignerDropdown.options[i].value;
+    const { name, email } = JSON.parse(val);
+    options += `<option value="${val}" ${name === selectedName && email === selectedEmail ? 'selected' : ''}>${name} (${email})</option>`;
+  }
+  return options;
+}
+
+function editCheckoutItem(idx, field, value) {
+  if (field === 'cosigner') {
+    const data = JSON.parse(value || '{}');
+    checkoutItems[idx].cosignerName = data.name;
+    checkoutItems[idx].cosignerEmail = data.email;
+  } else if (field === 'price' || field === 'qty') {
+    checkoutItems[idx][field] = Number(value);
+  } else {
+    checkoutItems[idx][field] = value;
+  }
+  saveCheckoutItems();
+  renderCheckoutList();
+}
+
+function removeCheckoutItem(idx) {
+  checkoutItems.splice(idx, 1);
+  saveCheckoutItems();
+  renderCheckoutList();
+}
+
+async function startAdminCheckout() {
+  if (!checkoutItems.length) {
+    document.getElementById('checkoutMsg').textContent = "Add items before checkout.";
+    return;
+  }
+  // Prepare items for Stripe
+  const cartItems = checkoutItems.map(item => ({
+    name: item.name,
+    price: Math.round(item.price * 100),
+    quantity: item.qty
+  }));
+  // Save to localStorage for return.js
+  localStorage.removeItem("pendingOrder");
+  localStorage.removeItem("completedCart");
+  localStorage.setItem("adminCheckoutCart", JSON.stringify({ items: checkoutItems }));
+
+  // Stripe checkout (similar to scanner.html)
+  const stripe = Stripe("pk_test_51RUqjwI71UXMKz4PWxaW4fEWQH6TtyqGKb2oC4odsVxJIWsetUL55eU9wos1KQJ1wxxiJgILTsr7fcuvvypP9ZAD00rWNs4Iip");
+  const fetchClientSecret = async () => {
+    const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: cartItems })
+    });
+    const { clientSecret } = await response.json();
+    return clientSecret;
+  };
+
+  const checkout = await stripe.initEmbeddedCheckout({
+    fetchClientSecret,
+  });
+
+  checkout.mount('#checkout');
+}
