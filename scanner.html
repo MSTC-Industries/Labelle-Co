@@ -164,7 +164,19 @@
   background-color: #c0392b;
 }
 
-
+/* Responsive orders table */
+@media (max-width: 600px) {
+  #orders table, #orders th, #orders td {
+    font-size: 13px;
+    padding: 6px;
+  }
+  #orders table {
+    min-width: 400px;
+    width: 100%;
+    display: block;
+    overflow-x: auto;
+  }
+}
   </style>
 </head>
 <body>
@@ -184,7 +196,11 @@
         <br>
         <button class="btn" onclick="clearScannedBarcodes()">Clear</button>
         <br>
+        <button class="btn" onclick="removeScannedItemsNoPay()">Remove From Inventory (for pickup orders)</button>
+        <br>
         <button class="btn" onclick="html5Qrcode.stop(); initialize()">Checkout</button>
+        <br>
+        <div id="orders" class="card" style="margin-bottom:20px;overflow-x:auto;"></div>
         <br>
          <div id="checkout" style="margin-top: 10px;">
             <!-- Checkout will insert the payment form here -->
@@ -395,6 +411,197 @@ async function initialize() {
   console.log(checkout)
 
   checkout.mount('#checkout');
+}
+
+async function loadOrders() {
+  const container = document.getElementById('orders');
+  container.innerHTML = 'Loading...';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/orders');
+    const orders = await res.json();
+    if (!orders.length) {
+      container.innerHTML = '<p>No orders yet.</p>';
+      return;
+    }
+    let html = '<table style="width:100%;min-width:400px;"><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Status</th><th>Actions</th></tr>';
+    for (const order of orders) {
+      // Calculate profits
+      let adminProfit = 0;
+      let cosignerProfits = {}; // { email: { name, profit } }
+      let itemsHtml = '';
+      for (const [itemName, qty] of Object.entries(order.items)) {
+        let found = false;
+        for (const page in allitems) {
+          for (const category in allitems[page]) {
+            if (allitems[page][category][itemName]) {
+              const itemObj = allitems[page][category][itemName];
+
+              itemsHtml += `${itemName} (${qty})<br>`;
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+        if (!found) {
+          itemsHtml += `${itemName} (${qty})<br>`;
+        }
+      }
+
+      html += `<tr>
+        <td>${order.name}</td>
+        <td>${order.phone}</td>
+        <td>${order.email}</td>
+        <td>${itemsHtml}</td>
+        <td>
+          ${order.orderType === 'buy' ? 'pickup' : order.orderType === 'hold' ? 'buying' : order.status}
+        </td>
+        <td>
+          <button onclick="cancelOrder(${order.id})">close order (after scanning)</button>
+        </td>
+      </tr>`;
+    }
+    html += '</table>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<p style="color:red;">Failed to load orders: ${err.message}</p>`;
+  }
+}
+
+// Cancel order function (copy from admin.js)
+async function cancelOrder(orderId) {
+  try {
+    let orders = await (await fetch('https://labelle-co-server.vercel.app/orders')).json();
+    let orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found.");
+    let order = orders[orderIndex];
+
+    let inventory = await (await fetch(CLOUD_API_URL)).json();
+
+    if (order.orderType === 'buy') {
+      for (const [itemName, qty] of Object.entries(order.items)) {
+        let found = false;
+        for (const page in inventory) {
+          for (const category in inventory[page]) {
+            if (inventory[page][category][itemName]) {
+              let item = inventory[page][category][itemName];
+              if ('stock' in item) {
+                item.stock = (item.stock || 0) + qty;
+                if ('itemsBought' in item) {
+                  item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
+                }
+              } else if ('bought' in item) {
+                item.bought = false;
+              }
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+      }
+    } else if (order.orderType === 'hold') {
+      for (const [itemName, qty] of Object.entries(order.items)) {
+        let found = false;
+        for (const page in inventory) {
+          for (const category in inventory[page]) {
+            if (inventory[page][category][itemName]) {
+              let item = inventory[page][category][itemName];
+              if ('stock' in item) {
+                item.stock = (item.stock || 0) + qty;
+                if ('itemsOnHold' in item) {
+                  item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
+                }
+              } else if ('onhold' in item) {
+                item.onhold = false;
+              }
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+      }
+    }
+
+    orders.splice(orderIndex, 1);
+
+    await fetch('https://labelle-co-server.vercel.app/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders)
+    });
+    await fetch(CLOUD_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inventory)
+    });
+
+    loadOrders();
+  } catch (err) {
+    alert("Failed to cancel order: " + err.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadOrders);
+
+async function removeScannedItemsNoPay() {
+  if (Object.keys(scannedItems).length === 0) {
+    alert("No scanned items to remove.");
+    return;
+  }
+  // Fetch latest inventory
+  let inventory = await (await fetch(CLOUD_API_URL)).json();
+
+  // Build a map of itemName → qty from scannedItems
+  const itemQtyMap = {};
+  for (const barcode in scannedItems) {
+    for (const [page, categories] of Object.entries(inventory)) {
+      for (const [category, items] of Object.entries(categories)) {
+        for (const [itemName, details] of Object.entries(items)) {
+          if (details.barcode === barcode) {
+            itemQtyMap[itemName] = (itemQtyMap[itemName] || 0) + scannedItems[barcode];
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Remove items using acceptOrder logic (default to 'buy' orderType)
+  for (const [itemName, qty] of Object.entries(itemQtyMap)) {
+    let found = false;
+    for (const page in inventory) {
+      for (const category in inventory[page]) {
+        if (inventory[page][category][itemName]) {
+          let item = inventory[page][category][itemName];
+          if ('stock' in item) {
+            item.stock = Math.max(0, (item.stock || 0) - qty);
+            // You can change 'buy' to 'hold' if needed for your workflow
+            if ('itemsBought' in item) {
+              item.itemsBought = (item.itemsBought || 0) + qty;
+            }
+          } else {
+            delete inventory[page][category][itemName];
+          }
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+  }
+
+  // Save updated inventory to the cloud
+  await fetch(CLOUD_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inventory)
+  });
+
+  // Clear scanned items
+  clearScannedBarcodes();
+  alert("Scanned items removed from inventory.");
 }
 
 </script>

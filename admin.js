@@ -452,7 +452,7 @@ function loadOrders() {
           <td>$${adminProfit.toFixed(2)}</td>
           <td>${cosignerProfitsHtml || '-'}</td>
           <td>
-            ${order.orderType === 'buy' ? 'Buying' : order.orderType === 'hold' ? 'On Hold' : order.status}
+            ${order.orderType === 'buy' ? 'pickup' : order.orderType === 'hold' ? 'buying' : order.status}
           </td>
           <td>
             <button onclick="acceptOrder(${order.id})">Accept</button>

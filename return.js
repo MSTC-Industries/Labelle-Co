@@ -24,9 +24,13 @@ async function initialize() {
 
         const pendingOrder = JSON.parse(pendingOrderStr);
 
-        // Fetch latest allitems from the cloud
-        let allitemsRes = await fetch('https://labelle-co-server.vercel.app/cloud');
+        // Fetch latest allitems and cosigners from the cloud
+        let [allitemsRes, cosignersRes] = await Promise.all([
+          fetch('https://labelle-co-server.vercel.app/cloud'),
+          fetch('https://labelle-co-server.vercel.app/cosigners')
+        ]);
         let allitems = await allitemsRes.json();
+        let cosigners = await cosignersRes.json();
 
         // Update bought/itemsBought in allitems
         for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
@@ -46,12 +50,44 @@ async function initialize() {
           }
         }
 
-        // Save updated allitems to the cloud
-        await fetch('https://labelle-co-server.vercel.app/cloud', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(allitems)
+        // Calculate profits for consigners
+        const emailToProfit = {};
+        for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
+          for (const page in allitems) {
+            for (const category in allitems[page]) {
+              const item = allitems[page][category][itemName];
+              if (item) {
+                const price = Number(item.price);
+                const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+                const cosignerPercent = Number(cosignerPercentStr);
+                const profit = price * cosignerPercent / 100 * quantity;
+                const email = item.cosignerEmail;
+                emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+              }
+            }
+          }
+        }
+
+        // Apply profits to consigners
+        cosigners.forEach(c => {
+          if (emailToProfit[c.email]) {
+            c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
+          }
         });
+
+        // Save updated allitems and cosigners to the cloud
+        await Promise.all([
+          fetch('https://labelle-co-server.vercel.app/cloud', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allitems)
+          }),
+          fetch('https://labelle-co-server.vercel.app/cosigners', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cosigners)
+          })
+        ]);
 
         // Submit the order using the same logic as index.js
         await submitOrder(pendingOrder);
@@ -69,7 +105,6 @@ async function initialize() {
         console.error("Order submission failed:", err);
       } finally {
         hideLoading();
-        
         document.getElementById('message').innerHTML = 'Thank You!';
         document.getElementById('details').innerHTML = `Your payment was successful.<br>
         We appreciate your order and will process it soon.`;
