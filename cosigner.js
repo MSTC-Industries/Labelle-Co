@@ -614,9 +614,32 @@ window.printBarcodeQueue = function() {
       <head>
         <title>Print Barcodes</title>
         <style>
-          body { font-family: sans-serif; }
-          .barcode-block { margin-bottom: 32px; text-align: center; }
-          .barcode-value { margin-top: 12px; font-size: 18px; font-family: monospace; }
+          body { font-family: sans-serif; margin:0; padding:0; }
+          .barcode-block {
+            width: 2in;
+            height: 1in;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            page-break-after: always;
+            margin: 0;
+            padding: 0;
+          }
+          .barcode-svg {
+            width: 1.8in;
+            height: 0.7in;
+            margin-top: 0.1in;
+          }
+          .barcode-value {
+            font-size: 14px;
+            font-family: monospace;
+            margin-top: 2px;
+            text-align: center;
+            max-width: 1.8in;
+            overflow: hidden;
+            white-space: nowrap;
+          }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
       </head>
@@ -642,8 +665,7 @@ window.printBarcodeQueue = function() {
                   format: "CODE128",
                   lineColor: "#000",
                   width: 2,
-                  height: 100,
-                  displayValue: true
+                  height: 50, // Adjust for best fit
                 });
               }
             });
@@ -655,7 +677,6 @@ window.printBarcodeQueue = function() {
   `);
   printWindow.document.close();
   printWindow.focus();
-  // Optionally clear the queue after printing
   barcodeQueue = [];
   setTimeout(renderTable, 1000);
 };
