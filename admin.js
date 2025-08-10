@@ -1276,7 +1276,7 @@ async function startAdminCheckout() {
   localStorage.setItem("adminCheckoutCart", JSON.stringify({ items: checkoutItems }));
 
   // Stripe checkout (similar to scanner.html)
-  const stripe = Stripe("pk_test_51RUqjwI71UXMKz4PWxaW4fEWQH6TtyqGKb2oC4odsVxJIWsetUL55eU9wos1KQJ1wxxiJgILTsr7fcuvvypP9ZAD00rWNs4Iip");
+  const stripe = Stripe("pk_test_51RUqjwI71UXMKz4PWxaW4fEWQH6TtyqGKb2oC4odsVxJIWsetUL55eU9wos1KQJ1wxxiJgILTsr7fcuvvypP9ZAD00rWNs4Iip"); //UPDATE
   const fetchClientSecret = async () => {
     const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {
       method: "POST",

@@ -230,6 +230,13 @@ async function pay(event, orderType) {
     }
   });
 
+  if (orderType === "hold" && cartItems.length > 3) {
+    document.getElementById("error-message").innerText =
+      "You can only place a hold on up to 3 different items per order.";
+    document.getElementById("error-message").style.color = "red";
+    return;
+  }
+
   if (failed) {
     document.getElementById("error-message").innerText =
       `Sorry, the item "${failedItem}" is already on hold, bought, or out of stock and cannot be ordered.`;
