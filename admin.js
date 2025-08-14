@@ -395,11 +395,11 @@ function loadOrders() {
         container.innerHTML = '<p>No orders yet.</p>';
         return;
       }
-      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Items</th><th>Admin Profit</th><th>Cosigner Profits</th><th>Status</th><th>Actions</th></tr>';
+      let html = '<table><tr><th>Name</th><th>Phone</th><th>Email</th><th>Date/Time</th><th>Items</th><th>Admin Profit</th><th>Cosigner Profits</th><th>Status</th><th>Actions</th></tr>';
       for (const order of orders) {
         // Calculate profits
         let adminProfit = 0;
-        let cosignerProfits = {}; // { email: { name, profit } }
+        let cosignerProfits = {};
         let itemsHtml = '';
         for (const [itemName, qty] of Object.entries(order.items)) {
           let found = false;
@@ -415,7 +415,6 @@ function loadOrders() {
                 const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
                 adminProfit += itemAdminProfit;
 
-                // Cosigner info
                 const cosignerEmail = itemObj.cosignerEmail || 'unknown';
                 const cosignerName = itemObj.cosignerName || 'unknown';
                 if (!cosignerProfits[cosignerEmail]) {
@@ -438,16 +437,23 @@ function loadOrders() {
           }
         }
 
-        // Cosigner profits summary
         let cosignerProfitsHtml = '';
         for (const [email, { name, profit }] of Object.entries(cosignerProfits)) {
           cosignerProfitsHtml += `${name} (${email}): $${profit.toFixed(2)}<br>`;
+        }
+
+        // Format date/time from order.id
+        let dateStr = '-';
+        if (order.id) {
+          const d = new Date(Number(order.id));
+          dateStr = d.toLocaleString();
         }
 
         html += `<tr>
           <td>${order.name}</td>
           <td>${order.phone}</td>
           <td>${order.email}</td>
+          <td>${dateStr}</td>
           <td>${itemsHtml}</td>
           <td>$${adminProfit.toFixed(2)}</td>
           <td>${cosignerProfitsHtml || '-'}</td>
