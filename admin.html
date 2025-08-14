@@ -428,8 +428,12 @@ table tr:hover {
 
         <div class="column">
           <!-- Right column fields -->
+          <label>Barcode (optional):
+            <input type="text" id="newItemBarcode" placeholder="Leave blank for auto-generated">
+          </label>
           <label>Profit Split:
             <select id="newItemProfitSplit">
+              <option value="100/0">100/0 (No Cosigner)</option>
               <option value="90/10">90/10</option>
               <option value="80/20">80/20</option>
               <option value="70/30">70/30</option>
@@ -441,7 +445,7 @@ table tr:hover {
               <option value="10/90">10/90</option>
             </select>
           </label>
-          <select id="cosignerDropdown" required></select>
+          <select id="cosignerDropdown"><option value="">-- No Cosigner --</option></select>
           <button type="submit" class="btn">Add Item</button>
           <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
           <div id="addItemMsg" style="color:red;margin-top:8px;"></div>

@@ -732,9 +732,15 @@ window.submitNewAdminItem = async function(event) {
   const specials = document.getElementById('newItemSpecials').value
     .split('\n').map(s => s.trim()).filter(s => s.length > 0);
   const profitSplit = document.getElementById('newItemProfitSplit').value;
-  const cosignerData = JSON.parse(document.getElementById('cosignerDropdown').value || '{}');
-  const cosignerName = cosignerData.name || '';
-  const cosignerEmail = cosignerData.email || '';
+  const barcodeInput = document.getElementById('newItemBarcode').value.trim();
+  const cosignerValue = document.getElementById('cosignerDropdown').value;
+  let cosignerName = '';
+  let cosignerEmail = '';
+  if (cosignerValue) {
+    const cosignerData = JSON.parse(cosignerValue);
+    cosignerName = cosignerData.name || '';
+    cosignerEmail = cosignerData.email || '';
+  }
 
   if (!page || !category || !item) {
     document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
@@ -758,10 +764,12 @@ window.submitNewAdminItem = async function(event) {
     imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
   }
 
+  // Barcode logic
+  const barcode = barcodeInput || (Date.now().toString() + Math.floor(Math.random() * 1000000).toString());
+
   // If subcategories exist, add multiple items
   if (subcategories.length > 0) {
     subcategories.forEach(subcategory => {
-      const barcode = Date.now().toString() + Math.floor(Math.random() * 1000000).toString();
       let newItem = {
         img: imageURL || '',
         price: price || 0,
@@ -769,7 +777,7 @@ window.submitNewAdminItem = async function(event) {
         specials: specials,
         cosignerName: cosignerName,
         cosignerEmail: cosignerEmail,
-        profitSplit: profitSplit,
+        profitSplit: cosignerValue ? profitSplit : "100/0",
         barcode: barcode,
         subcategory: subcategory,
         generalName: item
@@ -785,7 +793,6 @@ window.submitNewAdminItem = async function(event) {
       allitems[page][category][item + ' (' + subcategory + ')'] = newItem;
     });
   } else {
-    const barcode = Date.now().toString();
     let newItem = {
       img: imageURL || '',
       price: price || 0,
@@ -793,9 +800,8 @@ window.submitNewAdminItem = async function(event) {
       specials: specials,
       cosignerName: cosignerName,
       cosignerEmail: cosignerEmail,
-      profitSplit: profitSplit,
+      profitSplit: cosignerValue ? profitSplit : "100/0",
       barcode: barcode
-      // no subcategory field
     };
     if (type === 'stock') {
       newItem.stock = 1;
