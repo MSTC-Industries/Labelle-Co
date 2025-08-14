@@ -257,7 +257,7 @@ async function pay(event, orderType) {
     });
 
     document.getElementById("error-message").innerText =
-      `Thank you for your order, ${order.name}! Your order will be processed shortly.`;
+      `Thank you for your order, ${order.name}! Your order will be processed shortly. Orders for holds expire in 24 hours.`;
     document.getElementById("error-message").style.color = "green";
     document.getElementById("cartItems").innerHTML = "";
     totalprice = 0;
