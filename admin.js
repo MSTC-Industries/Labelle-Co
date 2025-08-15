@@ -16,10 +16,14 @@ function showSection(section) {
   document.getElementById('inventory-section').style.display = (section === 'inventory') ? '' : 'none';
   document.getElementById('cosigners-section').style.display = (section === 'cosigners') ? '' : 'none';
   document.getElementById('checkout-section').style.display = (section === 'checkout') ? '' : 'none';
+  document.getElementById('analytics-section').style.display = (section === 'analytics') ? '' : 'none';
   if (section === 'cosigners') renderCosigners();
   if (section === 'checkout') {
     populateCheckoutCosignerDropdown();
     renderCheckoutList();
+  }
+  if (section === 'analytics') {
+    loadAnalytics();
   }
 }
 
@@ -210,7 +214,7 @@ function renderTable() {
             </td>
             <td>
               <select onchange="editItem('${category}','${itemKey}','profitSplit', this.value)" class="profit-split-select">
-                ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+                ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
                   `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
                 ).join('')}
               </select>
@@ -287,7 +291,7 @@ function renderTable() {
           </td>
           <td>
             <select onchange="editItem('${category}','${itemKey}','profitSplit', this.value)" class="profit-split-select">
-              ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+              ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
                 `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
               ).join('')}
             </select>
@@ -316,7 +320,7 @@ function renderTable() {
     printBtn.onclick = printBarcodeQueue;
     optionsCard.appendChild(printBtn);
   }
-  container.innerHTML = `<strong>Total Admin Profit: $${totalAdminProfit.toFixed(2)}</strong>
+  container.innerHTML = `<strong>Total Admin Value: $${totalAdminProfit.toFixed(2)}</strong>
     <br>
     ${html}
   `;
@@ -458,10 +462,9 @@ function loadOrders() {
           <td>$${adminProfit.toFixed(2)}</td>
           <td>${cosignerProfitsHtml || '-'}</td>
           <td>
-            ${order.orderType === 'buy' ? 'pickup' : order.orderType === 'hold' ? 'buying' : order.status}
+            ${order.orderType === 'buy' ? 'bought' : order.orderType === 'hold' ? 'on hold' : order.status}
           </td>
           <td>
-            <button onclick="acceptOrder(${order.id})">Accept</button>
             <button onclick="cancelOrder(${order.id})">Cancel</button>
           </td>
         </tr>`;
@@ -1181,12 +1184,14 @@ function addCheckoutItem(event) {
   const name = document.getElementById('checkoutName').value.trim();
   const price = Number(document.getElementById('checkoutPrice').value);
   const qty = Number(document.getElementById('checkoutQty').value);
-  const profitSplit = document.getElementById('checkoutProfitSplit').value;
+  let profitSplit = document.getElementById('checkoutProfitSplit').value;
   const cosignerData = JSON.parse(document.getElementById('checkoutCosignerDropdown').value || '{}');
-  if (!name || !price || !qty || !cosignerData.email) {
+  if (!name || !price || !qty) {
     document.getElementById('checkoutMsg').textContent = "Fill out all fields.";
     return false;
   }
+  // If no cosigner, force profitSplit to 100/0
+  if (!cosignerData.email) profitSplit = "100/0";
   checkoutItems.push({
     name, price, qty, profitSplit,
     cosignerName: cosignerData.name,
@@ -1221,7 +1226,7 @@ function renderCheckoutList() {
       <td><input type="number" value="${item.qty}" min="1" onchange="editCheckoutItem(${idx}, 'qty', this.value)"></td>
       <td>
         <select onchange="editCheckoutItem(${idx}, 'profitSplit', this.value)">
-          ${["90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+          ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
             `<option value="${opt}" ${item.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
           ).join('')}
         </select>
@@ -1241,11 +1246,13 @@ function renderCheckoutList() {
 }
 
 function getCosignerOptions(selectedName, selectedEmail) {
+  console.log("Generating cosigner options for:", selectedName, selectedEmail);
   let options = '<option value="">-- Select Cosigner --</option>';
   const cosignerDropdown = document.getElementById('checkoutCosignerDropdown');
   for (let i = 1; i < cosignerDropdown.options.length; i++) {
     const val = cosignerDropdown.options[i].value;
     const { name, email } = JSON.parse(val);
+    console.log(email)
     options += `<option value="${val}" ${name === selectedName && email === selectedEmail ? 'selected' : ''}>${name} (${email})</option>`;
   }
   return options;
@@ -1304,4 +1311,109 @@ async function startAdminCheckout() {
   });
 
   checkout.mount('#checkout');
+}
+
+let analyticsData = null;
+
+async function loadAnalytics() {
+  document.getElementById('analyticsSummary').innerHTML = 'Loading...';
+  document.getElementById('analyticsItemsSold').innerHTML = '';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
+    analyticsData = await res.json();
+    populateAnalyticsMonthDropdown();
+    renderAnalytics();
+  } catch (err) {
+    document.getElementById('analyticsSummary').innerHTML = `<span style="color:red;">Failed to load analytics: ${err.message}</span>`;
+  }
+}
+
+function populateAnalyticsMonthDropdown() {
+  const select = document.getElementById('analyticsMonthSelect');
+  select.innerHTML = '<option value="all">All Time</option>';
+  if (analyticsData && analyticsData.months) {
+    Object.keys(analyticsData.months).forEach(monthKey => {
+      select.innerHTML += `<option value="${monthKey}">${monthKey}</option>`;
+    });
+  }
+}
+
+function renderAnalytics() {
+  if (!analyticsData) return;
+  const select = document.getElementById('analyticsMonthSelect');
+  const selected = select.value;
+  let summary, itemsSold;
+  if (selected === 'all') {
+    // Combine all months
+    let totalRevenue = analyticsData.revenue || 0;
+    let totalAdminProfit = 0;
+    let cosignerProfits = {};
+    let allItemsSold = {};
+    for (const month of Object.values(analyticsData.months || {})) {
+      totalAdminProfit += month.adminProfit || 0;
+      for (const [email, profit] of Object.entries(month.cosignerProfits || {})) {
+        cosignerProfits[email] = (cosignerProfits[email] || 0) + profit;
+      }
+      for (const [itemName, itemData] of Object.entries(month.itemsSold || {})) {
+        if (!allItemsSold[itemName]) {
+          allItemsSold[itemName] = { ...itemData };
+        } else {
+          allItemsSold[itemName].quantity += itemData.quantity || 0;
+          allItemsSold[itemName].price += itemData.price || 0;
+          allItemsSold[itemName].date = Math.max(allItemsSold[itemName].date, itemData.date);
+        }
+        // Always keep cosigner info from last sale
+        allItemsSold[itemName].cosignerName = itemData.cosignerName || '';
+        allItemsSold[itemName].cosignerEmail = itemData.cosignerEmail || '';
+      }
+    }
+    summary = {
+      revenue: totalRevenue,
+      adminProfit: totalAdminProfit,
+      cosignerProfits,
+    };
+    itemsSold = allItemsSold;
+  } else {
+    const month = analyticsData.months[selected] || {};
+    summary = {
+      revenue: month.totalProfit || 0,
+      adminProfit: month.adminProfit || 0,
+      cosignerProfits: month.cosignerProfits || {},
+    };
+    itemsSold = month.itemsSold || {};
+  }
+
+  // Render summary
+  let html = `<strong>Total Revenue:</strong> $${(summary.revenue || 0).toFixed(2)}<br>
+    <strong>Admin Profit:</strong> $${(summary.adminProfit || 0).toFixed(2)}<br>
+    <strong>Cosigner Profits:</strong><br>`;
+  if (Object.keys(summary.cosignerProfits).length === 0) {
+    html += '<span style="margin-left:16px;">None</span>';
+  } else {
+    for (const [email, profit] of Object.entries(summary.cosignerProfits)) {
+      html += `<span style="margin-left:16px;">${email}: $${profit.toFixed(2)}</span><br>`;
+    }
+  }
+  document.getElementById('analyticsSummary').innerHTML = html;
+
+  // Render items sold
+  let itemsHtml = `<table>
+    <tr>
+      <th>Item Name</th>
+      <th>Quantity Sold</th>
+      <th>Total Price</th>
+      <th>Date Sold</th>
+      <th>Consigner</th>
+    </tr>`;
+  for (const [itemName, itemData] of Object.entries(itemsSold)) {
+    itemsHtml += `<tr>
+      <td>${itemName}</td>
+      <td>${itemData.quantity || 0}</td>
+      <td>$${(itemData.price || 0).toFixed(2)}</td>
+      <td>${itemData.date ? new Date(itemData.date).toLocaleString() : '-'}</td>
+      <td>${itemData.cosignerName || ''} (${itemData.cosignerEmail || ''})</td>
+    </tr>`;
+  }
+  itemsHtml += '</table>';
+  document.getElementById('analyticsItemsSold').innerHTML = itemsHtml;
 }

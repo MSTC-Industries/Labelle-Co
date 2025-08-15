@@ -1,0 +1,465 @@
+const express = require('express');
+const nodemailer = require('nodemailer');
+
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+const FormData = require('form-data');
+
+const app = express();
+app.use(express.json());
+
+//update all these
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
+const ADMIN_PASSWORD = 'password';
+const adminURL = "https://mstc-industries.github.io/Labelle-Co/admin.html";
+const ownerEmail = 'mstc.industries.official@gmail.com';
+const YOUR_DOMAIN = 'http://127.0.0.1:3000';
+const stripe = require('stripe')('sk_test_51RUqjwI71UXMKz4PmfNcNYoW5Ui6wxwhpVciop00STAMnzNPvMHRIZfcfX5KNdkCcHDf8g2506lY6tC3hEe9hLpB00DFPvqjV1');
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.post('/check-admin-password', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+app.get('/cloud', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.type('json').send(data);
+  } catch (err) {
+    res.status(500).send('Proxy GET error: ' + err.message);
+  }
+});
+
+app.post('/cloud', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST error: ' + err.message);
+  }
+});
+
+app.get('/orders', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=orders');
+    let data = await response.text();
+    let orders = [];
+    try { orders = JSON.parse(data); } catch { orders = []; }
+    orders = await cleanupAndRestoreOrders(orders);
+    res.type('json').send(JSON.stringify(orders));
+  } catch (err) {
+    res.status(500).send('Proxy GET orders error: ' + err.message);
+  }
+});
+
+app.post('/orders', async (req, res) => {
+  try {
+    let orders = req.body;
+    orders = await cleanupAndRestoreOrders(orders);
+    const response = await fetch(APPS_SCRIPT_URL + '?type=orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders)
+    });
+    const data = await response.text();
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST orders error: ' + err.message);
+  }
+});
+
+app.post('/notify-owner', async (req, res) => {
+  const order = req.body;
+
+  const itemsList = Object.entries(order.items)
+    .map(([item, qty]) => `- ${item}: ${qty}`)
+    .join('\n');
+
+  const emailBody = `
+New Order Received!
+
+Name: ${order.name}
+Phone: ${order.phone || 'N/A'}
+Email: ${order.email || 'N/A'}
+
+Items:
+${itemsList}
+
+-------------------------
+Check the admin panel for more details.
+${adminURL}`;
+
+
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'mstc.industries.official@gmail.com',
+      pass: 'uvpfeqssibtxxgdq'
+    }
+  });
+
+  let mailOptions = {
+    from: 'mstc.industries.official@gmail.com',
+    to: ownerEmail,
+    subject: `New Order from ${order.name} for LabelleCo`,
+    text: emailBody
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('Notification sent!');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to send email');
+  }
+});
+
+
+async function loadCosigners() {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=cosigner');
+    if (!response.ok) throw new Error('Failed to load cosigners');
+    return await response.json();
+  } catch (err) {
+    return [];
+  }
+}
+
+async function saveCosigners(cosigners) {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=cosigner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+    if (!response.ok) throw new Error('Failed to save cosigners');
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+app.post('/cosigner-create', async (req, res) => {
+  const { email, password, name } = req.body;
+  if (!email || !password || !name) return res.status(400).send('Missing fields');
+  let cosigners = await loadCosigners();
+  if (cosigners.find(c => c.email === email)) return res.status(409).send('Email already exists');
+  cosigners.push({ email, password, name });
+  await saveCosigners(cosigners);
+  res.status(200).send('Account created');
+});
+
+app.post('/cosigner-login', async (req, res) => {
+  const { email, password } = req.body;
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email && c.password === password);
+  if (user) {
+    res.status(200).send('Login successful');
+  } else {
+    res.status(401).send('Invalid credentials');
+  }
+});
+
+app.get('/cosigner-info', async (req, res) => {
+  const email = req.query.email;
+  if (!email) return res.status(400).send('Missing email');
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email);
+  if (user) {
+    res.json({ name: user.name, email: user.email });
+  } else {
+    res.status(404).send('Not found');
+  }
+});
+
+app.get('/', (req, res) => {
+  res.send('Hello from backend!');
+});
+
+app.post('/create-checkout-session', async (req, res) => {
+  const items = req.body.items;
+  const line_items = items.map(item => ({
+    price_data: {
+      currency: 'usd',
+      product_data: { name: item.name },
+      unit_amount: item.price,
+    },
+    quantity: item.quantity,
+  }));
+
+  const session = await stripe.checkout.sessions.create({
+    ui_mode: 'embedded',
+    line_items,
+    mode: 'payment',
+    return_url: `${YOUR_DOMAIN}/return.html?session_id={CHECKOUT_SESSION_ID}`,
+  });
+
+  res.send({ clientSecret: session.client_secret });
+});
+
+app.get('/session-status', async (req, res) => {
+  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+
+  res.send({
+    status: session.status,
+    customer_email: session.customer_details.email
+  });
+});
+
+app.get('/cosigners', async (req, res) => {
+  const cosigners = await loadCosigners();
+  res.json(cosigners);
+});
+
+app.post('/cosigners', async (req, res) => {
+  const updated = req.body;
+  await saveCosigners(updated);
+  res.json({ message: 'Cosigners updated.' });
+});
+
+app.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    console.log('File received:', req.file);
+
+    if (!req.file) {
+      console.error('No image uploaded');
+      return res.status(400).json({ error: 'Missing image file' });
+    }
+
+    const form = new FormData();
+    form.append('image', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    const base64 = req.file.buffer.toString('base64');
+    const response = await fetch(APPS_SCRIPT_URL + '?type=uploadImage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64, mimeType: req.file.mimetype, name: req.file.originalname })
+    });
+
+    const text = await response.text();
+    console.log('Apps Script response:', text);
+
+    try {
+      const data = JSON.parse(text);
+      res.json(data);
+    } catch (jsonErr) {
+      res.status(500).json({ error: 'Invalid JSON from Apps Script', details: text });
+    }
+  } catch (err) {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'Proxy image upload error', details: err.message });
+  }
+});
+
+async function cleanupAndRestoreOrders(orders) {
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let inventory = await (await fetch(APPS_SCRIPT_URL)).json(); // Load inventory
+
+  // Filter out expired orders and restore inventory
+  const validOrders = [];
+  for (const order of orders) {
+    if (now - (order.id || 0) < ONE_DAY) {
+      validOrders.push(order);
+    } else {
+      // Restore inventory for expired order
+      if (order.orderType === 'buy') {
+        for (const [itemName, qty] of Object.entries(order.items)) {
+          let found = false;
+          for (const page in inventory) {
+            for (const category in inventory[page]) {
+              if (inventory[page][category][itemName]) {
+                let item = inventory[page][category][itemName];
+                if ('stock' in item) {
+                  item.stock = (item.stock || 0) + qty;
+                  if ('itemsBought' in item) {
+                    item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
+                  }
+                } else if ('bought' in item) {
+                  item.bought = false;
+                }
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+        }
+      } else if (order.orderType === 'hold') {
+        for (const [itemName, qty] of Object.entries(order.items)) {
+          let found = false;
+          for (const page in inventory) {
+            for (const category in inventory[page]) {
+              if (inventory[page][category][itemName]) {
+                let item = inventory[page][category][itemName];
+                if ('stock' in item) {
+                  item.stock = (item.stock || 0) + qty;
+                  if ('itemsOnHold' in item) {
+                    item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
+                  }
+                } else if ('onhold' in item) {
+                  item.onhold = false;
+                }
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+        }
+      }
+    }
+  }
+
+  // Save updated inventory
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inventory)
+  });
+
+  return validOrders;
+}
+
+async function updateAnalytics(order, allitems) {
+  // Fetch current analytics
+  const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+  let analytics = {};
+  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, started: 0, months: {} }; }
+
+  // Get current month/year key
+  const now = new Date(order.id || Date.now());
+  const monthKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
+  if (!analytics.months[monthKey]) {
+    analytics.months[monthKey] = {
+      totalProfit: 0.0,
+      adminProfit: 0.0,
+      cosignerProfits: {},
+      itemsSold: {}
+    };
+  }
+
+  let totalProfit = 0.0;
+  let adminProfit = 0.0;
+  let cosignerProfits = {};
+  let itemsSold = analytics.months[monthKey].itemsSold;
+
+  for (const [itemName, qty] of Object.entries(order.items)) {
+    let itemObj = null;
+    for (const page in allitems) {
+      for (const category in allitems[page]) {
+        if (allitems[page][category][itemName]) {
+          itemObj = allitems[page][category][itemName];
+          break;
+        }
+      }
+      if (itemObj) break;
+    }
+    if (!itemObj) continue;
+
+    const price = Number(itemObj.price) || 0;
+    const profitSplit = (itemObj.profitSplit || "50/50").split('/');
+    const adminPercent = Number(profitSplit[0]) || 50;
+    const cosignerPercent = Number(profitSplit[1]) || 50;
+    const itemAdminProfit = (price * adminPercent / 100) * qty;
+    const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
+    totalProfit += price * qty;
+    adminProfit += itemAdminProfit;
+
+    // Cosigner profit
+    const cosignerEmail = itemObj.cosignerEmail;
+    if (cosignerEmail) { // Only add if cosignerEmail exists
+      cosignerProfits[cosignerEmail] = (cosignerProfits[cosignerEmail] || 0) + itemCosignerProfit;
+    }
+
+    // Items sold
+    if (!itemsSold[itemName]) {
+      itemsSold[itemName] = { quantity: 0, price: 0.0, date: order.id || Date.now(), cosignerEmail: cosignerEmail || '' };
+    }
+    itemsSold[itemName].quantity += qty;
+    itemsSold[itemName].price += price * qty;
+    itemsSold[itemName].date = order.id || Date.now();
+    itemsSold[itemName].cosignerEmail = cosignerEmail || '';
+  }
+
+  // Update analytics object
+  analytics.revenue = (analytics.revenue || 0) + totalProfit;
+  analytics.months[monthKey].totalProfit += totalProfit;
+  analytics.months[monthKey].adminProfit += adminProfit;
+  for (const [email, profit] of Object.entries(cosignerProfits)) {
+    analytics.months[monthKey].cosignerProfits[email] = (analytics.months[monthKey].cosignerProfits[email] || 0) + profit;
+  }
+  analytics.months[monthKey].itemsSold = itemsSold;
+
+  // Save analytics back to Apps Script
+  await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(analytics)
+  });
+}
+
+app.post('/update-analytics', async (req, res) => {
+  const { order, allitems } = req.body;
+  if (!order || !allitems) return res.status(400).send('Missing order or allitems');
+  try {
+    await updateAnalytics(order, allitems);
+    res.status(200).send('Analytics updated');
+  } catch (err) {
+    res.status(500).send('Failed to update analytics');
+  }
+});
+
+app.post('/analytics', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST analytics error: ' + err.message);
+  }
+});
+
+app.get('/get-analytics', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    const data = await response.text();
+    res.type('json').send(data);
+  } catch (err) {
+    res.status(500).send('Proxy GET analytics error: ' + err.message);
+  }
+});
+
+module.exports = app;
+
+app.listen(3000, () => console.log('Proxy running at http://localhost:3000'));

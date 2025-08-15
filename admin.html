@@ -283,6 +283,7 @@ table tr:hover {
     <a href="#" onclick="showSection('inventory')"><i class="fas fa-warehouse"></i> Inventory</a>
     <a href="#" onclick="showSection('cosigners')"><i class="fas fa-users"></i> Cosigners</a>
     <a href="#" onclick="showSection('checkout')"><i class="fas fa-credit-card"></i> Checkout</a>
+    <a href="#" onclick="showSection('analytics')"><i class="fas fa-chart-bar"></i> Analytics</a>
     <a href="#" onclick="logoutToHub()"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 
@@ -355,6 +356,7 @@ table tr:hover {
                 </label>
                 <label>Profit Split:
                   <select style="margin-bottom: 10px;" id="checkoutProfitSplit">
+                    <option value="100/0">100/0 (No Cosigner)</option>
                     <option value="90/10">90/10</option>
                     <option value="80/20">80/20</option>
                     <option value="70/30">70/30</option>
@@ -367,7 +369,7 @@ table tr:hover {
                   </select>
                 </label>
                 <label>Cosigner:
-                  <select style="margin-bottom: 10px;" id="checkoutCosignerDropdown" required></select>
+                  <select style="margin-bottom: 10px;" id="checkoutCosignerDropdown"></select>
                 </label>
               </div>
               <div class="column">
@@ -379,6 +381,17 @@ table tr:hover {
           </form>
         </div>
         <div id="checkout" class="card" style="max-width:600px;margin-bottom:30px;"></div>
+      </div>
+    </div>
+    <div id="analytics-section" style="display:none;">
+      <div class="card">
+        <h2>Analytics</h2>
+        <label for="analyticsMonthSelect">Select Month:</label>
+        <select id="analyticsMonthSelect" onchange="renderAnalytics()">
+          <option value="all">All Time</option>
+        </select>
+        <div id="analyticsSummary" style="margin-top:24px;"></div>
+        <div id="analyticsItemsSold" style="margin-top:24px;"></div>
       </div>
     </div>
   </div>

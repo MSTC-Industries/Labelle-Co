@@ -32,6 +32,15 @@ async function initialize() {
         let allitems = await allitemsRes.json();
         let cosigners = await cosignersRes.json();
 
+        await fetch('https://labelle-co-server.vercel.app/update-analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order: pendingOrder,
+            allitems: allitems
+          })
+        });
+
         // Update bought/itemsBought in allitems
         for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
           outer: for (const page in allitems) {
@@ -143,6 +152,15 @@ async function initialize() {
           }
         }
 
+        await fetch('https://labelle-co-server.vercel.app/update-analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order: completedCart,
+            allitems: allitems
+          })
+        });
+
         // Mutate inventory
         for (const [itemName, qty] of Object.entries(completedCart.items)) {
           let found = false;
@@ -201,7 +219,7 @@ async function initialize() {
         document.getElementById('exit').style.display = 'block';
       }
     } else if (adminCheckoutCartStr) {
-      returntype = "admin.html"
+      returntype = "admin.html";
       try {
         showLoading();
         const adminCheckoutCart = JSON.parse(adminCheckoutCartStr);
@@ -212,13 +230,26 @@ async function initialize() {
 
         // Calculate profits for consigners
         const emailToProfit = {};
+        let totalProfit = 0;
+        let adminProfit = 0;
+        const now = Date.now();
+        const monthKey = `${new Date(now).getMonth() + 1}-${new Date(now).getFullYear()}`;
+        let cosignerProfits = {};
+
         for (const item of adminCheckoutCart.items) {
           const price = Number(item.price);
-          const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+          const [adminPercentStr, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+          const adminPercent = Number(adminPercentStr);
           const cosignerPercent = Number(cosignerPercentStr);
           const profit = price * cosignerPercent / 100 * item.qty;
+          const adminCut = price * adminPercent / 100 * item.qty;
+          totalProfit += price * item.qty;
+          adminProfit += adminCut;
           const email = item.cosignerEmail;
-          emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+          if (email) { // Only add if cosignerEmail exists
+            emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+            cosignerProfits[email] = (cosignerProfits[email] || 0) + profit;
+          }
         }
 
         // Apply profits to consigners
@@ -233,6 +264,49 @@ async function initialize() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(cosigners)
+        });
+
+        // Update analytics
+        // Fetch current analytics
+        const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
+        let analyticsRes = await res.json();
+        let analytics = {};
+        try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, started: 0, months: {} }; }
+        if (!analytics.months) analytics.months = {};
+        if (!analytics.months[monthKey]) {
+          analytics.months[monthKey] = {
+            totalProfit: 0.0,
+            adminProfit: 0.0,
+            cosignerProfits: {},
+            itemsSold: {}
+          };
+        }
+        analytics.revenue = (analytics.revenue || 0) + totalProfit;
+        analytics.months[monthKey].totalProfit += totalProfit;
+        analytics.months[monthKey].adminProfit += adminProfit;
+        for (const [email, profit] of Object.entries(cosignerProfits)) {
+          analytics.months[monthKey].cosignerProfits[email] = (analytics.months[monthKey].cosignerProfits[email] || 0) + profit;
+        }
+        // Add items sold
+        for (const item of adminCheckoutCart.items) {
+          if (!analytics.months[monthKey].itemsSold[item.name]) {
+            analytics.months[monthKey].itemsSold[item.name] = {
+              quantity: 0,
+              price: 0.0,
+              date: now,
+              cosignerEmail: item.cosignerEmail || ''
+            };
+          }
+          analytics.months[monthKey].itemsSold[item.name].quantity += item.qty;
+          analytics.months[monthKey].itemsSold[item.name].price += Number(item.price) * item.qty;
+          analytics.months[monthKey].itemsSold[item.name].date = now;
+          analytics.months[monthKey].itemsSold[item.name].cosignerEmail = item.cosignerEmail || '';
+        }
+        // Save analytics
+        await fetch('https://labelle-co-server.vercel.app/analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(analytics)
         });
 
         // Clear localStorage

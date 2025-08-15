@@ -265,7 +265,7 @@ async function renderTable() {
     optionsCard.appendChild(printBtn);
   }
   container.innerHTML = `
-    <strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>
+    <strong>Total Cosigner Value: $${totalCosignerProfit.toFixed(2)}</strong>
     <br>
     <strong>Unpaid (Owed by Admin): $${owed.toFixed(2)}</strong>
     <br>
