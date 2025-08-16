@@ -271,7 +271,7 @@ async function initialize() {
         const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
         let analyticsRes = await res.json();
         let analytics = {};
-        try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, started: 0, months: {} }; }
+        try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: [], months: {} }; }
         if (!analytics.months) analytics.months = {};
         if (!analytics.months[monthKey]) {
           analytics.months[monthKey] = {

@@ -353,6 +353,16 @@ async function submitOrder(newOrder) {
     newOrder.id = Date.now();
     newOrder.status = 'pending';
     orders.push(newOrder);
+
+    await fetch('https://labelle-co-server.vercel.app/update-analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order: newOrder,
+        allitems: allitems
+      })
+    });
+
     await fetch('https://labelle-co-server.vercel.app/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

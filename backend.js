@@ -350,71 +350,79 @@ async function updateAnalytics(order, allitems) {
   // Fetch current analytics
   const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
   let analytics = {};
-  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, started: 0, months: {} }; }
+  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: [], months: {} }; }
 
-  // Get current month/year key
-  const now = new Date(order.id || Date.now());
-  const monthKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
-  if (!analytics.months[monthKey]) {
-    analytics.months[monthKey] = {
-      totalProfit: 0.0,
-      adminProfit: 0.0,
-      cosignerProfits: {},
-      itemsSold: {}
-    };
+  if (!Array.isArray(analytics.customers)) analytics.customers = [];
+  const customerEmail = order.email || '';
+  if (customerEmail && !analytics.customers.includes(customerEmail)) {
+    analytics.customers.push(customerEmail);
   }
 
-  let totalProfit = 0.0;
-  let adminProfit = 0.0;
-  let cosignerProfits = {};
-  let itemsSold = analytics.months[monthKey].itemsSold;
+  if (analytics.orderType === 'buy') {
+    // Get current month/year key
+    const now = new Date(order.id || Date.now());
+    const monthKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
+    if (!analytics.months[monthKey]) {
+      analytics.months[monthKey] = {
+        totalProfit: 0.0,
+        adminProfit: 0.0,
+        cosignerProfits: {},
+        itemsSold: {}
+      };
+    }
 
-  for (const [itemName, qty] of Object.entries(order.items)) {
-    let itemObj = null;
-    for (const page in allitems) {
-      for (const category in allitems[page]) {
-        if (allitems[page][category][itemName]) {
-          itemObj = allitems[page][category][itemName];
-          break;
+    let totalProfit = 0.0;
+    let adminProfit = 0.0;
+    let cosignerProfits = {};
+    let itemsSold = analytics.months[monthKey].itemsSold;
+
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      let itemObj = null;
+      for (const page in allitems) {
+        for (const category in allitems[page]) {
+          if (allitems[page][category][itemName]) {
+            itemObj = allitems[page][category][itemName];
+            break;
+          }
         }
+        if (itemObj) break;
       }
-      if (itemObj) break;
-    }
-    if (!itemObj) continue;
+      if (!itemObj) continue;
 
-    const price = Number(itemObj.price) || 0;
-    const profitSplit = (itemObj.profitSplit || "50/50").split('/');
-    const adminPercent = Number(profitSplit[0]) || 50;
-    const cosignerPercent = Number(profitSplit[1]) || 50;
-    const itemAdminProfit = (price * adminPercent / 100) * qty;
-    const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
-    totalProfit += price * qty;
-    adminProfit += itemAdminProfit;
+      const price = Number(itemObj.price) || 0;
+      const profitSplit = (itemObj.profitSplit || "50/50").split('/');
+      const adminPercent = Number(profitSplit[0]) || 50;
+      const cosignerPercent = Number(profitSplit[1]) || 50;
+      const itemAdminProfit = (price * adminPercent / 100) * qty;
+      const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
+      totalProfit += price * qty;
+      adminProfit += itemAdminProfit;
 
-    // Cosigner profit
-    const cosignerEmail = itemObj.cosignerEmail;
-    if (cosignerEmail) { // Only add if cosignerEmail exists
-      cosignerProfits[cosignerEmail] = (cosignerProfits[cosignerEmail] || 0) + itemCosignerProfit;
+      // Cosigner profit
+      const cosignerEmail = itemObj.cosignerEmail;
+      if (cosignerEmail) { // Only add if cosignerEmail exists
+        cosignerProfits[cosignerEmail] = (cosignerProfits[cosignerEmail] || 0) + itemCosignerProfit;
+      }
+
+      // Items sold
+      if (!itemsSold[itemName]) {
+        itemsSold[itemName] = { quantity: 0, price: 0.0, date: order.id || Date.now(), cosignerEmail: cosignerEmail || '' };
+      }
+      itemsSold[itemName].quantity += qty;
+      itemsSold[itemName].price += price * qty;
+      itemsSold[itemName].date = order.id || Date.now();
+      itemsSold[itemName].cosignerEmail = cosignerEmail || '';
     }
 
-    // Items sold
-    if (!itemsSold[itemName]) {
-      itemsSold[itemName] = { quantity: 0, price: 0.0, date: order.id || Date.now(), cosignerEmail: cosignerEmail || '' };
+    // Update analytics object
+    analytics.revenue = (analytics.revenue || 0) + totalProfit;
+    analytics.months[monthKey].totalProfit += totalProfit;
+    analytics.months[monthKey].adminProfit += adminProfit;
+    for (const [email, profit] of Object.entries(cosignerProfits)) {
+      analytics.months[monthKey].cosignerProfits[email] = (analytics.months[monthKey].cosignerProfits[email] || 0) + profit;
     }
-    itemsSold[itemName].quantity += qty;
-    itemsSold[itemName].price += price * qty;
-    itemsSold[itemName].date = order.id || Date.now();
-    itemsSold[itemName].cosignerEmail = cosignerEmail || '';
+    analytics.months[monthKey].itemsSold = itemsSold;
   }
-
-  // Update analytics object
-  analytics.revenue = (analytics.revenue || 0) + totalProfit;
-  analytics.months[monthKey].totalProfit += totalProfit;
-  analytics.months[monthKey].adminProfit += adminProfit;
-  for (const [email, profit] of Object.entries(cosignerProfits)) {
-    analytics.months[monthKey].cosignerProfits[email] = (analytics.months[monthKey].cosignerProfits[email] || 0) + profit;
-  }
-  analytics.months[monthKey].itemsSold = itemsSold;
 
   // Save analytics back to Apps Script
   await fetch(APPS_SCRIPT_URL + '?type=analytics', {

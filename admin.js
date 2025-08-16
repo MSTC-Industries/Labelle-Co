@@ -17,6 +17,7 @@ function showSection(section) {
   document.getElementById('cosigners-section').style.display = (section === 'cosigners') ? '' : 'none';
   document.getElementById('checkout-section').style.display = (section === 'checkout') ? '' : 'none';
   document.getElementById('analytics-section').style.display = (section === 'analytics') ? '' : 'none';
+  document.getElementById('email-section').style.display = (section === 'email') ? '' : 'none';
   if (section === 'cosigners') renderCosigners();
   if (section === 'checkout') {
     populateCheckoutCosignerDropdown();
@@ -1416,4 +1417,45 @@ function renderAnalytics() {
   }
   itemsHtml += '</table>';
   document.getElementById('analyticsItemsSold').innerHTML = itemsHtml;
+}
+
+async function sendBulkEmail() {
+  const statusDiv = document.getElementById('emailStatus');
+  statusDiv.textContent = '';
+  const title = document.getElementById('emailTitle').value.trim();
+  const bodyHtml = document.getElementById('emailBody').innerHTML.trim();
+  if (!title || !bodyHtml) {
+    statusDiv.textContent = "Please enter both a title and body.";
+    return;
+  }
+  statusDiv.textContent = "Loading customer list...";
+  try {
+    // Get customers from analytics
+    const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
+    const analytics = await res.json();
+    const customers = Array.isArray(analytics.customers) ? analytics.customers : [];
+    if (customers.length === 0) {
+      statusDiv.textContent = "No customers found in analytics.";
+      return;
+    }
+    statusDiv.textContent = "Sending emails...";
+    const sendRes = await fetch('https://labelle-co-server.vercel.app/send-bulk-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject: title,
+        html: bodyHtml,
+        recipients: customers
+      })
+    });
+    if (sendRes.ok) {
+      statusDiv.style.color = "green";
+      statusDiv.textContent = "Emails sent successfully!";
+    } else {
+      const err = await sendRes.text();
+      statusDiv.textContent = "Error sending emails: " + err;
+    }
+  } catch (err) {
+    statusDiv.textContent = "Error: " + err.message;
+  }
 }
