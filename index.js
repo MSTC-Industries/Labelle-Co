@@ -444,6 +444,7 @@ function showLoadingError(message) {
   document.getElementById('loading-error-close').style.display = '';
   overlay.style.display = 'flex';
   overlay.classList.add('active');
+  alert(message);
 }
 
 function hideLoadingError() {

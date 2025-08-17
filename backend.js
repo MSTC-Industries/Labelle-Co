@@ -350,15 +350,20 @@ async function updateAnalytics(order, allitems) {
   // Fetch current analytics
   const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
   let analytics = {};
-  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: [], months: {} }; }
+  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: {}, months: {} }; }
 
-  if (!Array.isArray(analytics.customers)) analytics.customers = [];
+  if (!analytics.customers || typeof analytics.customers !== 'object') analytics.customers = {};
   const customerEmail = order.email || '';
-  if (customerEmail && !analytics.customers.includes(customerEmail)) {
-    analytics.customers.push(customerEmail);
+  const customerName = order.name || '';
+  const customerPhone = order.phone || '';
+  if (customerEmail) {
+    analytics.customers[customerEmail] = {
+      name: customerName,
+      phone: customerPhone
+    };
   }
 
-  if (analytics.orderType === 'buy') {
+  if (!analytics.orderType === 'hold') {
     // Get current month/year key
     const now = new Date(order.id || Date.now());
     const monthKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
@@ -412,6 +417,8 @@ async function updateAnalytics(order, allitems) {
       itemsSold[itemName].price += price * qty;
       itemsSold[itemName].date = order.id || Date.now();
       itemsSold[itemName].cosignerEmail = cosignerEmail || '';
+
+      await notifyCosignerOrAdmin(itemObj, qty);
     }
 
     // Update analytics object
@@ -466,6 +473,103 @@ app.get('/get-analytics', async (req, res) => {
   } catch (err) {
     res.status(500).send('Proxy GET analytics error: ' + err.message);
   }
+});
+
+app.post('/send-bulk-email', async (req, res) => {
+  const { subject, html, recipients } = req.body;
+  if (!subject || !html || !Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).send('Missing subject, html, or recipients');
+  }
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'mstc.industries.official@gmail.com',
+      pass: 'uvpfeqssibtxxgdq' // Use your app password
+    }
+  });
+  let errors = [];
+  for (const email of recipients) {
+    let mailOptions = {
+      from: ownerEmail,
+      to: email,
+      subject,
+      html
+    };
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (err) {
+      errors.push(email + ': ' + err.message);
+    }
+  }
+  if (errors.length === 0) {
+    res.status(200).send('All emails sent!');
+  } else {
+    res.status(500).send('Some errors: ' + errors.join('; '));
+  }
+});
+
+async function notifyCosignerOrAdmin(item, qty) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: 'mstc.industries.official@gmail.com', pass: 'uvpfeqssibtxxgdq' }
+  });
+  const recipient = item.cosignerEmail && item.cosignerEmail !== '' ? item.cosignerEmail : ownerEmail;
+  const subject = `Item Sold: ${item.generalName || item.name}`;
+  const body = `
+    <p>Item <b>${item.generalName || item.name}</b> was sold.</p>
+    <p>Quantity: ${qty}</p>
+    <p>Price: ${item.price}</p>
+    <p>Profit Split: ${item.profitSplit}</p>
+    <p>Consignor: ${item.cosignerName || 'N/A'} (${item.cosignerEmail || 'N/A'})</p>
+  `;
+  await transporter.sendMail({ from: ownerEmail, to: recipient, subject, html: body });
+}
+
+app.post('/cosigner-add-item-email', async (req, res) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: 'mstc.industries.official@gmail.com', pass: 'uvpfeqssibtxxgdq' }
+  });
+  const subject = `Cosigner Added Item: ${req.body.itemName}`;
+  const body = `
+    <p>Cosigner <b>${req.body.cosignerName}</b> (${req.body.cosignerEmail}) added item <b>${req.body.itemName}</b>.</p>
+  `;
+  await transporter.sendMail({ from: 'mstc.industries.official@gmail.com', to: ownerEmail, subject, html: body });
+  res.status(200).send('Item added and admin notified.');
+});
+
+app.post('/admin-change-password', async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (oldPassword !== ADMIN_PASSWORD) return res.status(401).send('Incorrect password');
+  ADMIN_PASSWORD = newPassword;
+  res.send('Password updated');
+});
+
+app.post('/cosigner-change-password', async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email && c.password === oldPassword);
+  if (!user) return res.status(401).send('Incorrect credentials');
+  user.password = newPassword;
+  await saveCosigners(cosigners);
+  res.send('Password updated');
+});
+
+app.get('/cosigner-analytics', async (req, res) => {
+  const { email } = req.query;
+  const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+  const analytics = await analyticsRes.json();
+  let totalProfit = 0;
+  let itemsSold = [];
+  for (const month of Object.values(analytics.months || {})) {
+    totalProfit += month.cosignerProfits[email] || 0;
+    for (const [itemName, itemData] of Object.entries(month.itemsSold || {})) {
+      if (itemData.cosignerEmail === email) {
+        itemsSold.push({ itemName, ...itemData });
+      }
+    }
+  }
+  res.json({ totalProfit, itemsSold });
 });
 
 module.exports = app;

@@ -281,9 +281,10 @@ table tr:hover {
     <h2 style="text-align:center;">Labelle-Co</h2>
     <a href="#" onclick="showSection('orders')"><i class="fas fa-box"></i> Orders</a>
     <a href="#" onclick="showSection('inventory')"><i class="fas fa-warehouse"></i> Inventory</a>
-    <a href="#" onclick="showSection('cosigners')"><i class="fas fa-users"></i> Cosigners</a>
+    <a href="#" onclick="showSection('cosigners')"><i class="fas fa-users"></i> Consignors</a>
     <a href="#" onclick="showSection('checkout')"><i class="fas fa-credit-card"></i> Checkout</a>
     <a href="#" onclick="showSection('analytics')"><i class="fas fa-chart-bar"></i> Analytics</a>
+    <a href="#" onclick="showSection('admin-password-change')"><i class="fas fa-key"></i> Change Password</a>
     <a href="#" onclick="showSection('email')"><i class="fas fa-envelope"></i> Send Email</a>
     <a href="#" onclick="logoutToHub()"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
@@ -328,7 +329,7 @@ table tr:hover {
 
     <div id="cosigners-section" style="display:none;">
       <div class="card">
-        <h2>Cosigners</h2>
+        <h2>Consignors</h2>
         <p>View cosigners here.</p>
       </div>
       <br>
@@ -357,7 +358,7 @@ table tr:hover {
                 </label>
                 <label>Profit Split:
                   <select style="margin-bottom: 10px;" id="checkoutProfitSplit">
-                    <option value="100/0">100/0 (No Cosigner)</option>
+                    <option value="100/0">100/0 (No Consignor)</option>
                     <option value="90/10">90/10</option>
                     <option value="80/20">80/20</option>
                     <option value="70/30">70/30</option>
@@ -369,8 +370,8 @@ table tr:hover {
                     <option value="10/90">10/90</option>
                   </select>
                 </label>
-                <label>Cosigner:
-                  <select style="margin-bottom: 10px;" id="checkoutCosignerDropdown"></select>
+                <label>Consignor:
+                  <select style="margin-bottom: 10px;" id="checkoutConsignorDropdown"></select>
                 </label>
               </div>
               <div class="column">
@@ -394,6 +395,10 @@ table tr:hover {
         <div id="analyticsSummary" style="margin-top:24px;"></div>
         <div id="analyticsItemsSold" style="margin-top:24px;"></div>
       </div>
+      <div class="card">
+        <h2>All Customers</h2>
+        <div id="customersTable"></div>
+      </div>
     </div>
     <div id="email-section" style="display:none;">
       <div class="card">
@@ -407,9 +412,21 @@ table tr:hover {
         <div id="emailStatus" style="margin-top:12px;color:#c00;"></div>
       </div>
     </div>
+    <div id="admin-password-change-section" style="display:none;">
+      <div class="card">
+        <h2>Change Admin Password</h2>
+        <input type="password" id="adminOldPassword" placeholder="Current password">
+        <br>
+        <input type="password" id="adminNewPassword" placeholder="New password">
+        <br>
+        <button class="btn" onclick="changeAdminPassword()">Change Password</button>
+        <div id="adminPasswordChangeMsg"></div>
+      </div>
+    </div>
   </div>
   
   <script src="admin.js"></script>
+  <script src="admin-checkout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://js.stripe.com/basil/stripe.js"></script>
 
@@ -459,7 +476,7 @@ table tr:hover {
           </label>
           <label>Profit Split:
             <select id="newItemProfitSplit">
-              <option value="100/0">100/0 (No Cosigner)</option>
+              <option value="100/0">100/0 (No Consignor)</option>
               <option value="90/10">90/10</option>
               <option value="80/20">80/20</option>
               <option value="70/30">70/30</option>
@@ -471,7 +488,7 @@ table tr:hover {
               <option value="10/90">10/90</option>
             </select>
           </label>
-          <select id="cosignerDropdown"><option value="">-- No Cosigner --</option></select>
+          <select id="cosignerDropdown"><option value="">-- No Consignor --</option></select>
           <button type="submit" class="btn">Add Item</button>
           <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
           <div id="addItemMsg" style="color:red;margin-top:8px;"></div>

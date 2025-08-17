@@ -7,10 +7,11 @@ let cosignerName = '';
 let barcodeQueue = [];
 let expandedGroups = {};
 
-fetchCosignerInfo();
+fetchConsignorInfo();
 loadInventory();
+showSection('inventory');
 
-async function fetchCosignerInfo() {
+async function fetchConsignorInfo() {
   if (!cosignerEmail) return;
   showLoading();
   try {
@@ -44,6 +45,15 @@ function loadInventory() {
     .catch(err => showLoadingError(err.message))
 }
 
+function showSection(section) {
+  document.getElementById('inventory-section').style.display = (section === 'inventory') ? '' : 'none';
+  document.getElementById('analytics-section').style.display = (section === 'analytics') ? '' : 'none';
+  document.getElementById('password-change-section').style.display = (section === 'password-change') ? '' : 'none';
+  if (section === 'analytics') {
+    loadCosignerAnalytics();
+  }
+}
+
 async function renderTable() {
   const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
   const cosigners = await res.json();
@@ -53,7 +63,7 @@ async function renderTable() {
   const optionsCard = document.getElementById('options-card');
   const oldBtn = document.getElementById('print-barcode-btn');
   if (oldBtn) oldBtn.remove();
-  let totalCosignerProfit = 0;
+  let totalConsignorProfit = 0;
   let printBtnHtml = '';
   if (barcodeQueue.length > 0) {
     printBtnHtml = `<button onclick="printBarcodeQueue()" style="margin-bottom:12px;">Print Barcodes (${barcodeQueue.length})</button>`;
@@ -69,7 +79,7 @@ async function renderTable() {
       <th>On Hold</th>
       <th>Bought</th>
       <th>Profit Split</th>
-      <th>Cosigner Profit</th>
+      <th>Consignor Profit</th>
       <th>Barcode ID</th>
       <th>Actions</th>
     </tr>`;
@@ -118,7 +128,7 @@ async function renderTable() {
             const price = Number(details.price) || 0;
             const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
             const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
-            totalCosignerProfit += Number(cosignerProfit);
+            totalConsignorProfit += Number(cosignerProfit);
             const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
             const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
             const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === itemKey);
@@ -189,7 +199,7 @@ async function renderTable() {
           const price = Number(details.price) || 0;
           const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
           const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
-          totalCosignerProfit += Number(cosignerProfit);
+          totalConsignorProfit += Number(cosignerProfit);
           const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
           const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
           const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === itemKey);
@@ -265,7 +275,7 @@ async function renderTable() {
     optionsCard.appendChild(printBtn);
   }
   container.innerHTML = `
-    <strong>Total Cosigner Value: $${totalCosignerProfit.toFixed(2)}</strong>
+    <strong>Total Consignor Value: $${totalConsignorProfit.toFixed(2)}</strong>
     <br>
     <strong>Unpaid (Owed by Admin): $${owed.toFixed(2)}</strong>
     <br>
@@ -481,6 +491,16 @@ window.submitNewItem = async function(event) {
         newItem.bought = false;
       }
       allitems[page][category][item + ' (' + subcategory + ')'] = newItem;
+
+      fetch('https://labelle-co-server.vercel.app/cosigner-add-item-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemName: item + ' (' + subcategory + ')',
+          cosignerName: cosignerName,
+          cosignerEmail: cosignerEmail
+        })
+      });
     });
   } else {
     const barcode = Date.now().toString();
@@ -504,8 +524,17 @@ window.submitNewItem = async function(event) {
       newItem.bought = false;
     }
     allitems[page][category][item] = newItem;
-  }
 
+    fetch('https://labelle-co-server.vercel.app/cosigner-add-item-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        itemName: item,
+        cosignerName: cosignerName,
+        cosignerEmail: cosignerEmail
+      })
+    });
+  }
   fetch(CLOUD_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -590,6 +619,7 @@ function showLoadingError(message) {
   document.getElementById('loading-error-close').style.display = '';
   overlay.style.display = 'flex';
   overlay.classList.add('active');
+  alert(message);
 }
 
 function hideLoadingError() {
@@ -744,4 +774,35 @@ function renderSubcategoryList() {
 function resetSubcategories() {
   subcategories = [];
   renderSubcategoryList();
+}
+
+async function changeCosignerPassword() {
+  const email = cosignerEmail; // Set this from login/session
+  const oldPassword = document.getElementById('cosignerOldPassword').value;
+  const newPassword = document.getElementById('cosignerNewPassword').value;
+  const msg = document.getElementById('cosignerPasswordChangeMsg');
+  msg.textContent = "Processing...";
+  const res = await fetch('https://labelle-co-server.vercel.app/cosigner-change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, oldPassword, newPassword })
+  });
+  msg.textContent = await res.text();
+}
+
+async function loadCosignerAnalytics() {
+  const res = await fetch(`https://labelle-co-server.vercel.app/cosigner-analytics?email=${encodeURIComponent(cosignerEmail)}`);
+  const { totalProfit, itemsSold } = await res.json();
+  document.getElementById('cosignerAnalyticsSummary').innerHTML = `<strong>Total Profit:</strong> $${totalProfit.toFixed(2)}`;
+  let html = `<table><tr><th>Item Name</th><th>Quantity</th><th>Price</th><th>Date</th></tr>`;
+  for (const item of itemsSold) {
+    html += `<tr>
+      <td>${item.itemName}</td>
+      <td>${item.quantity}</td>
+      <td>$${item.price.toFixed(2)}</td>
+      <td>${item.date ? new Date(item.date).toLocaleString() : '-'}</td>
+    </tr>`;
+  }
+  html += '</table>';
+  document.getElementById('cosignerAnalyticsItemsSold').innerHTML = html;
 }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cosigner Inventory</title>
+  <title>Consignor Inventory</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap" rel="stylesheet">
   <style>
@@ -264,19 +264,40 @@ table tr:hover {
 <body>
   <div id="sidebar">
     <h2 style="text-align:center;">Labelle-Co</h2>
+    <a href="#" onclick="showSection('inventory')"><i class="fas fa-boxes"></i> Inventory</a>
+    <a href="#" onclick="showSection('password-change')"><i class="fas fa-key"></i> Change Password</a>
+    <a href="#" onclick="showSection('analytics')"><i class="fas fa-chart-bar"></i> Analytics</a>
     <a href="#" onclick="logoutToHub()"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 
   <div id="main-content">
-    <div class="card" id="options-card">
-      <h2><span id="cosignerName"></span>'s Inventory</h2>
-      <p>Use this page to manage the inventory. You can add, edit, and delete items.</p>
-      <button class="btn" onclick="openAddItemOverlay()">Add New Item</button>
-      <button class="btn" onclick="saveAll()">Save All Changes</button>
-      <button class="btn" onclick="loadInventory()">Reload Inventory</button>
+    <div id="inventory-section" style="display:none;">
+      <div class="card" id="options-card">
+        <h2><span id="cosignerName"></span>'s Inventory</h2>
+        <p>Use this page to manage the inventory. You can add, edit, and delete items.</p>
+        <button class="btn" onclick="openAddItemOverlay()">Add New Item</button>
+        <button class="btn" onclick="saveAll()">Save All Changes</button>
+        <button class="btn" onclick="loadInventory()">Reload Inventory</button>
+      </div>
+      <br>
+      <div id="inventory" class="card"></div>
     </div>
-    <br>
-    <div id="inventory" class="card"></div>
+    <div id="password-change-section" style="display:none;">
+      <div class="card">
+        <h2>Change Your Password</h2>
+        <input type="password" id="cosignerOldPassword" placeholder="Current password">
+        <input type="password" id="cosignerNewPassword" placeholder="New password">
+        <button class="btn" onclick="changeCosignerPassword()">Change Password</button>
+        <div id="cosignerPasswordChangeMsg"></div>
+      </div>
+    </div>
+    <div id="analytics-section" style="display:none;">
+      <div class="card">
+        <h2>Your Analytics</h2>
+        <div id="cosignerAnalyticsSummary"></div>
+        <div id="cosignerAnalyticsItemsSold"></div>
+      </div>
+    </div>
   </div>
 
   <script src="cosigner.js"></script>
