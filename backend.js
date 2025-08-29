@@ -11,6 +11,7 @@ app.use(express.json());
 //update all these
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
 const ADMIN_PASSWORD = 'password';
+const HUB_PASSWORD = 'password';
 const adminURL = "https://mstc-industries.github.io/Labelle-Co/admin.html";
 const ownerEmail = 'mstc.industries.official@gmail.com';
 const YOUR_DOMAIN = 'http://127.0.0.1:3000';
@@ -25,6 +26,16 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.post('/check-hub-password', (req, res) => {
+  const { password } = req.body;
+  if (password === HUB_PASSWORD) {
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(401);
+  }
+});
+
 
 app.post('/check-admin-password', (req, res) => {
     const { password } = req.body;
@@ -350,7 +361,7 @@ async function updateAnalytics(order, allitems) {
   // Fetch current analytics
   const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
   let analytics = {};
-  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: {}, months: {} }; }
+  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: {}, "registerAmount": 0, "registerOpened": false, months: {} }; }
 
   if (!analytics.customers || typeof analytics.customers !== 'object') analytics.customers = {};
   const customerEmail = order.email || '';
@@ -570,6 +581,81 @@ app.get('/cosigner-analytics', async (req, res) => {
     }
   }
   res.json({ totalProfit, itemsSold });
+});
+
+// Get current register state
+app.get('/get-register', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    if (analytics.registerAmount === undefined) analytics.registerAmount = 0;
+    if (analytics.registerOpened === undefined) analytics.registerOpened = false;
+    res.json({
+      registerAmount: analytics.registerAmount,
+      registerOpened: analytics.registerOpened
+    });
+  } catch (err) {
+    res.status(500).send('Failed to load register data');
+  }
+});
+
+// Toggle register open/close (password required)
+app.post('/toggle-register', async (req, res) => {
+  const { password } = req.body;
+  if (password !== ADMIN_PASSWORD) return res.status(401).send('Invalid password');
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    analytics.registerOpened = !analytics.registerOpened;
+    await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(analytics)
+    });
+    res.json({ registerOpened: analytics.registerOpened });
+  } catch {
+    res.status(500).send('Error toggling register');
+  }
+});
+
+// Add money
+app.post('/add-money', async (req, res) => {
+  const { amount } = req.body;
+  if (typeof amount !== 'number' || amount < 0) return res.status(400).send('Invalid amount');
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    analytics.registerAmount = (analytics.registerAmount || 0) + amount;
+    await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(analytics)
+    });
+    res.sendStatus(200);
+  } catch {
+    res.status(500).send('Error adding money');
+  }
+});
+
+// Remove money
+app.post('/remove-money', async (req, res) => {
+  const { amount } = req.body;
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    if (typeof amount !== 'number' || amount < 0 || amount > analytics.registerAmount) {
+      return res.status(400).send('Invalid amount');
+    }
+    analytics.registerAmount -= amount;
+    await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(analytics)
+    });
+    res.sendStatus(200);
+  } catch {
+    res.status(500).send('Error removing money');
+  }
 });
 
 module.exports = app;

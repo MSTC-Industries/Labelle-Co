@@ -1,575 +1,775 @@
-const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
-const COSIGNER_INFO_URL = 'https://labelle-co-server.vercel.app/cosigner-info';
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Labelle-Co Admin Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #2c3e50;
+      color: white;
+      height: 100vh;
+      padding-top: 20px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      color: white;
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      background-color: #34495e;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      background-color: #ecf0f1;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2 style="text-align:center;">Labelle-Co</h2>
+    <a href="admin.html"><i class="fas fa-user-shield"></i> Admin Page</a>
+    <a href="cosigner-login.html"><i class="fas fa-sign-in-alt"></i> Consignor Login</a>
+    <a href="cosigner-create.html"><i class="fas fa-user-plus"></i> Create Account</a>
+    <a href="scanner.html"><i class="fas fa-barcode"></i> Scanner</a>
+    <a href="admin-checkout.html"><i class="fas fa-credit-card"></i> Admin Checkout</a>
+    <a href="register.html"><i class="fas fa-cash-register"></i> Register</a>
+  </div>
+  <div class="main">
+    <div class="card">
+      <h3>Welcome to the Admin Hub</h3>
+      <p>Use the sidebar to navigate through the system.</p>
+    </div>
+  </div>
+</body>
+</html>
+function goToAdmin() {
+      window.location.href = "admin.html";
+    }
 
-let allitems = {};
-let cosignerEmail = localStorage.getItem('cosignerEmail');
-let cosignerName = '';
-let barcodeQueue = [];
+async function cosignerLogin(event) {
+  event.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  msg.textContent = "Logging in...";
+  const res = await fetch('https://labelle-co-server.vercel.app/cosigner-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  if (res.ok) {
+    // Save cosigner info for later use
+    localStorage.setItem('cosignerEmail', email);
+    // Optionally, fetch cosigner name from backend if needed
+    window.location.href = "cosigner.html";
+  } else {
+    msg.textContent = "Login failed. Please check your credentials.";
+  }
+  return false;
+}
 
-fetchCosignerInfo();
-loadInventory();
+async function cosignerCreate(event) {
+  event.preventDefault();
+  const email = document.getElementById('createEmail').value;
+  const password = document.getElementById('createPassword').value;
+  const name = document.getElementById('createName').value;
+  const owedProfit = 0.0;
+  const msg = document.getElementById('createMsg');
+  msg.textContent = "Creating account...";
+  const res = await fetch('https://labelle-co-server.vercel.app/cosigner-create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name, owedProfit })
+  });
+  if (res.ok) {
+    // Save cosigner info for later use
+    localStorage.setItem('cosignerEmail', email);
+    localStorage.setItem('cosignerName', name);
+    window.location.href = "cosigner.html";
+  } else if (res.status === 409) {
+    msg.textContent = "That email is already registered. Please use another.";
+  } else {
+    msg.textContent = "Account creation failed.";
+  }
+  return false;
+}
+#backend
+const express = require('express');
+const nodemailer = require('nodemailer');
 
-async function fetchCosignerInfo() {
-  if (!cosignerEmail) return;
-  showLoading();
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+const FormData = require('form-data');
+
+const app = express();
+app.use(express.json());
+
+//update all these
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
+const ADMIN_PASSWORD = 'password';
+const adminURL = "https://mstc-industries.github.io/Labelle-Co/admin.html";
+const ownerEmail = 'mstc.industries.official@gmail.com';
+const YOUR_DOMAIN = 'http://127.0.0.1:3000';
+const stripe = require('stripe')('sk_test_51RUqjwI71UXMKz4PmfNcNYoW5Ui6wxwhpVciop00STAMnzNPvMHRIZfcfX5KNdkCcHDf8g2506lY6tC3hEe9hLpB00DFPvqjV1');
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.post('/check-admin-password', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+app.get('/cloud', async (req, res) => {
   try {
-    const res = await fetch(`${COSIGNER_INFO_URL}?email=${encodeURIComponent(cosignerEmail)}`);
-    if (res.ok) {
-      const data = await res.json();
-      cosignerName = data.name;
-      document.getElementById('cosignerName').textContent = data.name;
-    } else {
-      document.getElementById('cosignerName').textContent = '';
-      showLoadingError("Could not fetch cosigner info.");
-    }
-
-    hideLoading();
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.type('json').send(data);
   } catch (err) {
-    showLoadingError("Network error: " + err.message);
+    res.status(500).send('Proxy GET error: ' + err.message);
+  }
+});
+
+app.post('/cloud', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST error: ' + err.message);
+  }
+});
+
+app.get('/orders', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=orders');
+    let data = await response.text();
+    let orders = [];
+    try { orders = JSON.parse(data); } catch { orders = []; }
+    orders = await cleanupAndRestoreOrders(orders);
+    res.type('json').send(JSON.stringify(orders));
+  } catch (err) {
+    res.status(500).send('Proxy GET orders error: ' + err.message);
+  }
+});
+
+app.post('/orders', async (req, res) => {
+  try {
+    let orders = req.body;
+    orders = await cleanupAndRestoreOrders(orders);
+    const response = await fetch(APPS_SCRIPT_URL + '?type=orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orders)
+    });
+    const data = await response.text();
+    res.send(data);
+  } catch (err) {
+    res.status(500).send('Proxy POST orders error: ' + err.message);
+  }
+});
+
+app.post('/notify-owner', async (req, res) => {
+  const order = req.body;
+
+  const itemsList = Object.entries(order.items)
+    .map(([item, qty]) => `- ${item}: ${qty}`)
+    .join('\n');
+
+  const emailBody = `
+New Order Received!
+
+Name: ${order.name}
+Phone: ${order.phone || 'N/A'}
+Email: ${order.email || 'N/A'}
+
+Items:
+${itemsList}
+
+-------------------------
+Check the admin panel for more details.
+${adminURL}`;
+
+
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'mstc.industries.official@gmail.com',
+      pass: 'uvpfeqssibtxxgdq'
+    }
+  });
+
+  let mailOptions = {
+    from: 'mstc.industries.official@gmail.com',
+    to: ownerEmail,
+    subject: `New Order from ${order.name} for LabelleCo`,
+    text: emailBody
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('Notification sent!');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to send email');
+  }
+});
+
+
+async function loadCosigners() {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=cosigner');
+    if (!response.ok) throw new Error('Failed to load cosigners');
+    return await response.json();
+  } catch (err) {
+    return [];
   }
 }
 
-// Load inventory and filter for this cosigner
-function loadInventory() {
-  showLoading();
-  fetch(CLOUD_API_URL)
-    .then(res => res.json())
-    .then(data => {
-      allitems = data;
-      renderTable();
-      updatePageDropdown();
-      hideLoading();
-    })
-    .catch(err => showLoadingError(err.message))
+async function saveCosigners(cosigners) {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=cosigner', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+    if (!response.ok) throw new Error('Failed to save cosigners');
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
 
-async function renderTable() {
-  const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
-  const cosigners = await res.json();
+app.post('/cosigner-create', async (req, res) => {
+  const { email, password, name } = req.body;
+  if (!email || !password || !name) return res.status(400).send('Missing fields');
+  let cosigners = await loadCosigners();
+  if (cosigners.find(c => c.email === email)) return res.status(409).send('Email already exists');
+  cosigners.push({ email, password, name });
+  await saveCosigners(cosigners);
+  res.status(200).send('Account created');
+});
 
-  const me = cosigners.find(c => c.email === cosignerEmail);
+app.post('/cosigner-login', async (req, res) => {
+  const { email, password } = req.body;
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email && c.password === password);
+  if (user) {
+    res.status(200).send('Login successful');
+  } else {
+    res.status(401).send('Invalid credentials');
+  }
+});
 
-  const container = document.getElementById('inventory');
-  
-  // Show/hide Print Barcodes button
-  let printBtn = document.getElementById('printBarcodesBtn');
-  if (barcodeQueue.length > 0) {
-    if (!printBtn) {
-      printBtn = document.createElement('button');
-      printBtn.id = 'printBarcodesBtn';
-      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
-      printBtn.className = 'btn';
-      printBtn.style.marginBottom = '10px';
-      printBtn.onclick = printBarcodeQueue;
-      document.getElementById('options-card').appendChild(printBtn);
+app.get('/cosigner-info', async (req, res) => {
+  const email = req.query.email;
+  if (!email) return res.status(400).send('Missing email');
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email);
+  if (user) {
+    res.json({ name: user.name, email: user.email });
+  } else {
+    res.status(404).send('Not found');
+  }
+});
+
+app.get('/', (req, res) => {
+  res.send('Hello from backend!');
+});
+
+app.post('/create-checkout-session', async (req, res) => {
+  const items = req.body.items;
+  const line_items = items.map(item => ({
+    price_data: {
+      currency: 'usd',
+      product_data: { name: item.name },
+      unit_amount: item.price,
+    },
+    quantity: item.quantity,
+  }));
+
+  const session = await stripe.checkout.sessions.create({
+    ui_mode: 'embedded',
+    line_items,
+    mode: 'payment',
+    return_url: `${YOUR_DOMAIN}/return.html?session_id={CHECKOUT_SESSION_ID}`,
+  });
+
+  res.send({ clientSecret: session.client_secret });
+});
+
+app.get('/session-status', async (req, res) => {
+  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+
+  res.send({
+    status: session.status,
+    customer_email: session.customer_details.email
+  });
+});
+
+app.get('/cosigners', async (req, res) => {
+  const cosigners = await loadCosigners();
+  res.json(cosigners);
+});
+
+app.post('/cosigners', async (req, res) => {
+  const updated = req.body;
+  await saveCosigners(updated);
+  res.json({ message: 'Cosigners updated.' });
+});
+
+app.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    console.log('File received:', req.file);
+
+    if (!req.file) {
+      console.error('No image uploaded');
+      return res.status(400).json({ error: 'Missing image file' });
+    }
+
+    const form = new FormData();
+    form.append('image', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
+
+    const base64 = req.file.buffer.toString('base64');
+    const response = await fetch(APPS_SCRIPT_URL + '?type=uploadImage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64, mimeType: req.file.mimetype, name: req.file.originalname })
+    });
+
+    const text = await response.text();
+    console.log('Apps Script response:', text);
+
+    try {
+      const data = JSON.parse(text);
+      res.json(data);
+    } catch (jsonErr) {
+      res.status(500).json({ error: 'Invalid JSON from Apps Script', details: text });
+    }
+  } catch (err) {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'Proxy image upload error', details: err.message });
+  }
+});
+
+async function cleanupAndRestoreOrders(orders) {
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let inventory = await (await fetch(APPS_SCRIPT_URL)).json(); // Load inventory
+
+  // Filter out expired orders and restore inventory
+  const validOrders = [];
+  for (const order of orders) {
+    if (now - (order.id || 0) < ONE_DAY) {
+      validOrders.push(order);
     } else {
-      printBtn.style.display = '';
-      printBtn.textContent = `Print Barcodes (${barcodeQueue.length})`;
-    }
-  } else if (printBtn) {
-    printBtn.style.display = 'none';
-  }
-  
-  let html = '<table><tr><th>Category</th><th>Item</th><th>Image</th><th>Price</th><th>Specials</th><th>Stock</th><th>On Hold</th><th>Bought</th><th>Profit Split</th><th>Cosigner Profit</th><th>Barcode ID</th><th>Actions</th></tr>';
-  // Gather all categories for dropdown
-  let allCategories = new Set();
-  for (const categories of Object.values(allitems)) {
-    for (const category of Object.keys(categories)) {
-      allCategories.add(category);
-    }
-  }
-  let totalCosignerProfit = 0;
-  for (const [page, categories] of Object.entries(allitems)) {
-    for (const [category, items] of Object.entries(categories)) {
-      for (const [item, details] of Object.entries(items)) {
-        if (details.cosignerEmail === cosignerEmail) {
-          const hasStockProp = Object.prototype.hasOwnProperty.call(details, 'stock');
-          const hasOnHoldProp = Object.prototype.hasOwnProperty.call(details, 'onhold');
-          const isChecked = barcodeQueue.some(q => q.page === page && q.category === category && q.item === item);
-
-          const profitSplit = details.profitSplit || "50/50";
-          const price = Number(details.price) || 0;
-          const cosignerPercent = Number(profitSplit.split('/')[1]) || 50;
-          const cosignerProfit = ((price * cosignerPercent) / 100).toFixed(2);
-          totalCosignerProfit += Number(cosignerProfit);
-
-          html += `<tr>
-            <td>
-              <select onchange="changeCategory('${page}','${category}','${item}', this.value)">
-                ${Array.from(allCategories).map(cat =>
-                  `<option value="${cat}" ${cat === category ? 'selected' : ''}>${cat}</option>`
-                ).join('')}
-                <option value="__new__">-- New Category --</option>
-              </select>
-            </td>
-            <td><input type="text" value="${item}" onchange="editItem('${page}','${category}','${item}','item', this.value)"></td>
-            <td>
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <input type="file" accept="image/*" onchange="uploadImageAndUpdate('${category}','${item}', this)">
-                ${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}
-              </div>
-            </td>
-            <td><input type="number" value="${details.price}" onchange="editItem('${page}','${category}','${item}','price', this.value)"></td>
-            <td>
-              <textarea rows="2" cols="18" onchange="editItem('${page}','${category}','${item}','specials', this.value)">${details.specials ? details.specials.join('\n') : ''}</textarea>
-            </td>
-            <td>
-              <input type="number" value="${details.stock ?? ''}" 
-                onchange="editItem('${page}','${category}','${item}','stock', this.value)" 
-                ${hasOnHoldProp ? 'disabled' : ''}>
-            </td>
-            <td>
-              ${
-                typeof details.itemsOnHold === 'number'
-                  ? `<input type="number" min="0" value="${details.itemsOnHold}" 
-                      onchange="editItem('${page}','${category}','${item}','itemsOnHold', this.value)">`
-                  : `<input type="checkbox" ${details.onhold ? 'checked' : ''} 
-                      onchange="editItem('${page}','${category}','${item}','onhold', this.checked)" 
-                      ${hasStockProp ? 'disabled' : ''}>`
+      // Restore inventory for expired order
+      if (order.orderType === 'buy') {
+        for (const [itemName, qty] of Object.entries(order.items)) {
+          let found = false;
+          for (const page in inventory) {
+            for (const category in inventory[page]) {
+              if (inventory[page][category][itemName]) {
+                let item = inventory[page][category][itemName];
+                if ('stock' in item) {
+                  item.stock = (item.stock || 0) + qty;
+                  if ('itemsBought' in item) {
+                    item.itemsBought = Math.max(0, (item.itemsBought || 0) - qty);
+                  }
+                } else if ('bought' in item) {
+                  item.bought = false;
+                }
+                found = true;
+                break;
               }
-            </td>
-            <td>
-              ${
-                typeof details.itemsBought === 'number'
-                  ? `<input type="number" min="0" max="${details.stock ?? ''}" value="${details.itemsBought}" 
-                        onchange="editItem('${page}','${category}','${item}','itemsBought', this.value)">`
-                  : `<input type="checkbox" ${details.bought ? 'checked' : ''} 
-                        onchange="editItem('${page}','${category}','${item}','bought', this.checked)" 
-                        ${hasStockProp ? 'disabled' : ''}>`
+            }
+            if (found) break;
+          }
+        }
+      } else if (order.orderType === 'hold') {
+        for (const [itemName, qty] of Object.entries(order.items)) {
+          let found = false;
+          for (const page in inventory) {
+            for (const category in inventory[page]) {
+              if (inventory[page][category][itemName]) {
+                let item = inventory[page][category][itemName];
+                if ('stock' in item) {
+                  item.stock = (item.stock || 0) + qty;
+                  if ('itemsOnHold' in item) {
+                    item.itemsOnHold = Math.max(0, (item.itemsOnHold || 0) - qty);
+                  }
+                } else if ('onhold' in item) {
+                  item.onhold = false;
+                }
+                found = true;
+                break;
               }
-            </td>
-            <td>${details.profitSplit || "50/50"}</td>
-            <td>${cosignerProfit}</td>
-            <td>${details.barcode}</td>
-            <td>
-              <button onclick="removeItem('${page}','${category}','${item}')">Remove</button>
-              <label style="display:inline-flex;align-items:center;">
-                <input type="checkbox" onchange="toggleBarcodeQueue('${page}','${category}','${item}')" ${isChecked ? 'checked' : ''}>
-                Barcode
-              </label>
-            </td>
-          </tr>`;
+            }
+            if (found) break;
+          }
         }
       }
     }
   }
 
-  html += '</table>';
-  const owed = Number(me.owedProfit) || 0;
-  container.innerHTML = `
-    <strong>Total Cosigner Profit: $${totalCosignerProfit.toFixed(2)}</strong>
-    <br>
-    <strong>Unpaid (Owed by Admin): $${owed.toFixed(2)}</strong>
-  ` + html;
+  // Save updated inventory
+  await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inventory)
+  });
 
+  return validOrders;
 }
 
-window.removeItem = function(page, category, item) {
-  if (allitems[page] && allitems[page][category] && allitems[page][category][item]) {
-    delete allitems[page][category][item];
-    // Save to backend
-    showLoading();
-    fetch(CLOUD_API_URL, {
+async function updateAnalytics(order, allitems) {
+  // Fetch current analytics
+  const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+  let analytics = {};
+  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: {}, "registerAmount": 0, "registerOpened": false, months: {} }; }
+
+  if (!analytics.customers || typeof analytics.customers !== 'object') analytics.customers = {};
+  const customerEmail = order.email || '';
+  const customerName = order.name || '';
+  const customerPhone = order.phone || '';
+  if (customerEmail) {
+    analytics.customers[customerEmail] = {
+      name: customerName,
+      phone: customerPhone
+    };
+  }
+
+  if (!analytics.orderType === 'hold') {
+    // Get current month/year key
+    const now = new Date(order.id || Date.now());
+    const monthKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
+    if (!analytics.months[monthKey]) {
+      analytics.months[monthKey] = {
+        totalProfit: 0.0,
+        adminProfit: 0.0,
+        cosignerProfits: {},
+        itemsSold: {}
+      };
+    }
+
+    let totalProfit = 0.0;
+    let adminProfit = 0.0;
+    let cosignerProfits = {};
+    let itemsSold = analytics.months[monthKey].itemsSold;
+
+    for (const [itemName, qty] of Object.entries(order.items)) {
+      let itemObj = null;
+      for (const page in allitems) {
+        for (const category in allitems[page]) {
+          if (allitems[page][category][itemName]) {
+            itemObj = allitems[page][category][itemName];
+            break;
+          }
+        }
+        if (itemObj) break;
+      }
+      if (!itemObj) continue;
+
+      const price = Number(itemObj.price) || 0;
+      const profitSplit = (itemObj.profitSplit || "50/50").split('/');
+      const adminPercent = Number(profitSplit[0]) || 50;
+      const cosignerPercent = Number(profitSplit[1]) || 50;
+      const itemAdminProfit = (price * adminPercent / 100) * qty;
+      const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
+      totalProfit += price * qty;
+      adminProfit += itemAdminProfit;
+
+      // Cosigner profit
+      const cosignerEmail = itemObj.cosignerEmail;
+      if (cosignerEmail) { // Only add if cosignerEmail exists
+        cosignerProfits[cosignerEmail] = (cosignerProfits[cosignerEmail] || 0) + itemCosignerProfit;
+      }
+
+      // Items sold
+      if (!itemsSold[itemName]) {
+        itemsSold[itemName] = { quantity: 0, price: 0.0, date: order.id || Date.now(), cosignerEmail: cosignerEmail || '' };
+      }
+      itemsSold[itemName].quantity += qty;
+      itemsSold[itemName].price += price * qty;
+      itemsSold[itemName].date = order.id || Date.now();
+      itemsSold[itemName].cosignerEmail = cosignerEmail || '';
+
+      await notifyCosignerOrAdmin(itemObj, qty);
+    }
+
+    // Update analytics object
+    analytics.revenue = (analytics.revenue || 0) + totalProfit;
+    analytics.months[monthKey].totalProfit += totalProfit;
+    analytics.months[monthKey].adminProfit += adminProfit;
+    for (const [email, profit] of Object.entries(cosignerProfits)) {
+      analytics.months[monthKey].cosignerProfits[email] = (analytics.months[monthKey].cosignerProfits[email] || 0) + profit;
+    }
+    analytics.months[monthKey].itemsSold = itemsSold;
+  }
+
+  // Save analytics back to Apps Script
+  await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(analytics)
+  });
+}
+
+app.post('/update-analytics', async (req, res) => {
+  const { order, allitems } = req.body;
+  if (!order || !allitems) return res.status(400).send('Missing order or allitems');
+  try {
+    await updateAnalytics(order, allitems);
+    res.status(200).send('Analytics updated');
+  } catch (err) {
+    res.status(500).send('Failed to update analytics');
+  }
+});
+
+app.post('/analytics', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(allitems)
-    })
-    .then(res => res.text())
-    .then(msg => {
-      loadInventory();
-      hideLoading();
-    })
-    .catch(err => showLoadingError(err.message))
-  }
-};
-
-window.editItem = function(page, category, item, field, value) {
-  let itemObj = allitems[page][category][item];
-  if (field === 'item') {
-    allitems[page][category][value] = itemObj;
-    delete allitems[page][category][item];
-  } else if (field === 'specials') {
-    itemObj.specials = value
-      .split('\n')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-  } else if (field === 'onhold' || field === 'bought') {
-    // Checkbox: convert to boolean
-    itemObj[field] = value === true || value === "true" || value === "on" || value === "checked";
-  } else if (
-    field === 'price' ||
-    field === 'stock' ||
-    field === 'itemsOnHold' ||
-    field === 'itemsBought'
-  ) {
-    // Number fields
-    itemObj[field] = Number(value);
-  } else {
-    itemObj[field] = value;
-  }
-  renderTable();
-};
-
-window.changeCategory = function(page, oldCategory, item, newCategory) {
-  if (newCategory === "__new__") {
-    const name = prompt("Enter new category name:");
-    if (!name) {
-      renderTable();
-      return;
-    }
-    newCategory = name.trim();
-    if (!newCategory) {
-      renderTable();
-      return;
-    }
-  }
-  if (!allitems[page][newCategory]) allitems[page][newCategory] = {};
-  allitems[page][newCategory][item] = allitems[page][oldCategory][item];
-  delete allitems[page][oldCategory][item];
-  // Remove old category if empty
-  if (Object.keys(allitems[page][oldCategory]).length === 0) {
-    delete allitems[page][oldCategory];
-  }
-  renderTable();
-};
-
-window.saveAll = function() {
-  showLoading();
-  fetch(CLOUD_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(allitems)
-  })
-  .then(res => res.text())
-  .then(hideLoading)
-  .catch(err => showLoadingError(err.message));
-};
-
-function logoutToHub() {
-      // Clear cosigner info from localStorage
-      localStorage.removeItem('cosignerEmail');
-      localStorage.removeItem('cosignerName');
-      window.location.href = "adminhub.html";
-}
-
-function openAddItemOverlay() {
-  const overlay = document.getElementById('add-item-overlay');
-  overlay.style.display = 'flex';
-  setTimeout(() => {
-    overlay.style.transform = 'translateY(0)';
-  }, 10);
-  document.body.style.overflow = 'hidden';
-  updatePageDropdown();
-}
-
-function closeAddItemOverlay() {
-  const overlay = document.getElementById('add-item-overlay');
-  overlay.style.transform = 'translateY(-100vh)';
-  setTimeout(() => {
-    overlay.style.display = 'none';
-    document.body.style.overflow = '';
-    document.getElementById('addItemForm').reset();
-    document.getElementById('addItemMsg').textContent = '';
-  }, 500);
-}
-
-window.openAddItemOverlay = openAddItemOverlay;
-window.closeAddItemOverlay = closeAddItemOverlay;
-
-window.submitNewItem = async function(event) {
-  event.preventDefault();
-  showLoading();
-  const page = document.getElementById('newItemPageDropdown').value;
-  let category = document.getElementById('newItemCategoryDropdown').value;
-  if (category === '__new__') {
-    category = document.getElementById('newItemCategoryInput').value.trim();
-  }
-  const item = document.getElementById('newItemName').value.trim();
-  //const img = document.getElementById('newItemImg').value.trim();
-  const type = document.getElementById('newItemType').value;
-  const price = Number(document.getElementById('newItemPrice').value);
-  const specials = document.getElementById('newItemSpecials').value
-    .split('\n').map(s => s.trim()).filter(s => s.length > 0);
-
-  if (!page || !category || !item) {
-    document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
-    return false;
-  }
-
-  if (!allitems[page]) allitems[page] = {};
-  if (!allitems[page][category]) allitems[page][category] = {};
-
-  const file = document.getElementById('imageUpload')?.files[0];
-  let imageURL
-
-  if (file) {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
-      method: 'POST',
-      body: formData
+      body: JSON.stringify(req.body)
     });
-    const { id } = await res.json();
-    imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
-  }
-
-  let newItem = {
-    img: imageURL || '',
-    price: price || 0,
-    single: (type === 'onhold'),
-    specials: specials,
-    cosignerName: cosignerName,
-    cosignerEmail: cosignerEmail,
-    profitSplit: "50/50",
-    barcode: Date.now().toString()
-  };
-  if (type === 'stock') {
-    newItem.stock = 1;
-    newItem.itemsOnHold = 0;
-    newItem.itemsBought = 0;
-  } else if (type === 'onhold') {
-    newItem.onhold = false;
-    newItem.bought = false;
-  }
-
-  allitems[page][category][item] = newItem;
-
-  fetch(CLOUD_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(allitems)
-  })
-  .then(res => res.text())
-  .then(msg => {
-    closeAddItemOverlay();
-    loadInventory();
-    hideLoading();
-  })
-  .catch(err => showLoadingError(err.message));
-
-  return false;
-};
-
-function updatePageDropdown() {
-  const pageDropdown = document.getElementById('newItemPageDropdown');
-  pageDropdown.innerHTML = '';
-  Object.keys(allitems).forEach(page => {
-    pageDropdown.innerHTML += `<option value="${page}">${page}</option>`;
-  });
-  // Optionally, select the first page by default
-  if (Object.keys(allitems).length > 0) {
-    pageDropdown.value = Object.keys(allitems)[0];
-  }
-  updateCategoryDropdown();
-}
-
-function updateCategoryDropdown() {
-  const page = document.getElementById('newItemPageDropdown').value;
-  const dropdown = document.getElementById('newItemCategoryDropdown');
-  dropdown.innerHTML = '<option value="">-- Select Category --</option>';
-  if (allitems[page]) {
-    Object.keys(allitems[page]).forEach(cat => {
-      dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
-    });
-  }
-  dropdown.innerHTML += '<option value="__new__">-- New Category --</option>';
-  document.getElementById('newItemCategoryInput').style.display = 'none';
-}
-
-window.updatePageDropdown = updatePageDropdown;
-window.updateCategoryDropdown = updateCategoryDropdown;
-
-function onCategoryDropdownChange() {
-  const dropdown = document.getElementById('newItemCategoryDropdown');
-  const input = document.getElementById('newItemCategoryInput');
-  if (dropdown.value === '__new__') {
-    input.style.display = '';
-    input.required = true;
-  } else {
-    input.style.display = 'none';
-    input.required = false;
-  }
-}
-
-function showLoading() {
-  const overlay = document.getElementById('loading-overlay');
-  if (!overlay) return;
-  document.getElementById('loading-text').style.display = '';
-  document.getElementById('loading-error').style.display = 'none';
-  document.getElementById('loading-error-close').style.display = 'none';
-  overlay.style.display = 'flex';
-  setTimeout(() => overlay.classList.add('active'), 10);
-}
-
-function hideLoading() {
-  const overlay = document.getElementById('loading-overlay');
-  if (!overlay) return;
-  overlay.classList.remove('active');
-  setTimeout(() => overlay.style.display = 'none', 300);
-}
-
-function showLoadingError(message) {
-  const overlay = document.getElementById('loading-overlay');
-  if (!overlay) return;
-  document.getElementById('loading-text').style.display = 'none';
-  const errorDiv = document.getElementById('loading-error');
-  errorDiv.textContent = message || "An error occurred.";
-  errorDiv.style.display = '';
-  document.getElementById('loading-error-close').style.display = '';
-  overlay.style.display = 'flex';
-  overlay.classList.add('active');
-}
-
-function hideLoadingError() {
-  hideLoading();
-}
-
-window.toggleBarcodeQueue = function(page, category, item) {
-  const idx = barcodeQueue.findIndex(q => q.page === page && q.category === category && q.item === item);
-  if (idx === -1) {
-    barcodeQueue.push({ page, category, item });
-  } else {
-    barcodeQueue.splice(idx, 1);
-  }
-  renderTable();
-};
-
-window.printBarcodeQueue = function() {
-  if (barcodeQueue.length === 0) return;
-  let printWindow = window.open('', '', 'width=600,height=800');
-  printWindow.document.write(`
-    <html>
-      <head>
-        <title>Print Barcodes</title>
-        <style>
-          body { font-family: sans-serif; }
-          .barcode-block { margin-bottom: 32px; text-align: center; }
-          .barcode-value { margin-top: 12px; font-size: 18px; font-family: monospace; }
-        </style>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-      </head>
-      <body>
-        ${barcodeQueue.map(q => {
-          const details = allitems[q.page][q.category][q.item];
-          const barcode = details.barcode || '';
-          const itemName = q.item;
-          const price = details.price || '';
-          return `
-            <div class="barcode-block">
-              <svg class="barcode-svg" data-barcode="${barcode}"></svg>
-              <div class="barcode-value">${itemName} - $${price}</div>
-            </div>
-          `;
-        }).join('')}
-        <script>
-          window.onload = function() {
-            document.querySelectorAll('.barcode-svg').forEach(svg => {
-              const code = svg.getAttribute('data-barcode');
-              if (window.JsBarcode && code) {
-                JsBarcode(svg, code, {
-                  format: "CODE128",
-                  lineColor: "#000",
-                  width: 2,
-                  height: 100,
-                  displayValue: true
-                });
-              }
-            });
-            setTimeout(() => window.print(), 500);
-          }
-        <\/script>
-      </body>
-    </html>
-  `);
-  printWindow.document.close();
-  printWindow.focus();
-  // Optionally clear the queue after printing
-  barcodeQueue = [];
-  setTimeout(renderTable, 1000);
-};
-
-window.uploadImageAndUpdate = async function(category, item, inputElement) {
-  const file = inputElement.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append('image', file);
-
-  showLoading(); // Optional visual feedback
-
-  try {
-    const res = await fetch('https://labelle-co-server.vercel.app/upload-image', {
-      method: 'POST',
-      body: formData
-    });
-    const { id } = await res.json();
-
-    const imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
-    allitems[currentpage][category][item].img = imageURL;
-    renderTable();
-    hideLoading();
+    const data = await response.text();
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(data);
   } catch (err) {
-    showLoadingError("Image upload failed: " + err.message);
+    res.status(500).send('Proxy POST analytics error: ' + err.message);
   }
-};
-<body>
-  <div id="sidebar">
-    <h2 style="text-align:center;">Labelle-Co</h2>
-    <a href="#" onclick="logoutToHub()"><i class="fas fa-sign-out-alt"></i> Logout</a>
-  </div>
+});
 
-  <div id="main-content">
-    <div class="card" id="options-card">
-      <h2><span id="cosignerName"></span>'s Inventory</h2>
-      <p>Use this page to manage the inventory. You can add, edit, and delete items.</p>
-      <button class="btn" onclick="openAddItemOverlay()">Add New Item</button>
-      <button class="btn" onclick="saveAll()">Save All Changes</button>
-      <button class="btn" onclick="loadInventory()">Reload Inventory</button>
-    </div>
-    <br>
-    <div id="inventory" class="card"></div>
-  </div>
+app.get('/get-analytics', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    const data = await response.text();
+    res.type('json').send(data);
+  } catch (err) {
+    res.status(500).send('Proxy GET analytics error: ' + err.message);
+  }
+});
 
-  <script src="cosigner.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+app.post('/send-bulk-email', async (req, res) => {
+  const { subject, html, recipients } = req.body;
+  if (!subject || !html || !Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).send('Missing subject, html, or recipients');
+  }
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'mstc.industries.official@gmail.com',
+      pass: 'uvpfeqssibtxxgdq' // Use your app password
+    }
+  });
+  let errors = [];
+  for (const email of recipients) {
+    let mailOptions = {
+      from: ownerEmail,
+      to: email,
+      subject,
+      html
+    };
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (err) {
+      errors.push(email + ': ' + err.message);
+    }
+  }
+  if (errors.length === 0) {
+    res.status(200).send('All emails sent!');
+  } else {
+    res.status(500).send('Some errors: ' + errors.join('; '));
+  }
+});
 
-  <div id="add-item-overlay">
-    <div class="card">
-      <h2>Add New Item</h2>
-      <form id="addItemForm" onsubmit="return submitNewItem(event)">
-        <label>Page:
-          <select id="newItemPageDropdown" onchange="updateCategoryDropdown()" required></select>
-        </label>
-        <label>Category:
-          <select id="newItemCategoryDropdown" onchange="onCategoryDropdownChange()" required>
-            <option value="">-- Select Category --</option>
-            <option value="__new__">-- New Category --</option>
-          </select>
-          <input type="text" id="newItemCategoryInput" placeholder="New category" style="display:none;margin-top:8px;">
-        </label>
-        <label>Item Name: <input type="text" id="newItemName" required></label>
-        <label>Upload Image:
-          <input type="file" id="imageUpload" accept="image/*" required>
-        </label>
-        <label>Type:
-          <select id="newItemType" required>
-            <option value="stock">Stock (multiple)</option>
-            <option value="onhold">Single (on hold)</option>
-          </select>
-        </label>
-        <label>Price: <input type="number" id="newItemPrice" min="0" step="0.01" required></label>
-        <label>Specials: <textarea id="newItemSpecials" rows="2" placeholder="One per line"></textarea></label>
-        <button type="submit" class="btn">Add Item</button>
-        <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
-        <div id="addItemMsg" style="color:red;margin-top:8px;"></div>
-      </form>
-    </div>
-  </div>
+async function notifyCosignerOrAdmin(item, qty) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: 'mstc.industries.official@gmail.com', pass: 'uvpfeqssibtxxgdq' }
+  });
+  const recipient = item.cosignerEmail && item.cosignerEmail !== '' ? item.cosignerEmail : ownerEmail;
+  const subject = `Item Sold: ${item.generalName || item.name}`;
+  const body = `
+    <p>Item <b>${item.generalName || item.name}</b> was sold.</p>
+    <p>Quantity: ${qty}</p>
+    <p>Price: ${item.price}</p>
+    <p>Profit Split: ${item.profitSplit}</p>
+    <p>Consignor: ${item.cosignerName || 'N/A'} (${item.cosignerEmail || 'N/A'})</p>
+  `;
+  await transporter.sendMail({ from: ownerEmail, to: recipient, subject, html: body });
+}
 
-  <div id="loading-overlay">
-    <div id="loading-text">Loading...</div>
-    <div id="loading-error"></div>
-    <button id="loading-error-close" onclick="hideLoadingError()">Close</button>
-  </div>
-</body>
+app.post('/cosigner-add-item-email', async (req, res) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: 'mstc.industries.official@gmail.com', pass: 'uvpfeqssibtxxgdq' }
+  });
+  const subject = `Cosigner Added Item: ${req.body.itemName}`;
+  const body = `
+    <p>Cosigner <b>${req.body.cosignerName}</b> (${req.body.cosignerEmail}) added item <b>${req.body.itemName}</b>.</p>
+  `;
+  await transporter.sendMail({ from: 'mstc.industries.official@gmail.com', to: ownerEmail, subject, html: body });
+  res.status(200).send('Item added and admin notified.');
+});
+
+app.post('/admin-change-password', async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (oldPassword !== ADMIN_PASSWORD) return res.status(401).send('Incorrect password');
+  ADMIN_PASSWORD = newPassword;
+  res.send('Password updated');
+});
+
+app.post('/cosigner-change-password', async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+  let cosigners = await loadCosigners();
+  const user = cosigners.find(c => c.email === email && c.password === oldPassword);
+  if (!user) return res.status(401).send('Incorrect credentials');
+  user.password = newPassword;
+  await saveCosigners(cosigners);
+  res.send('Password updated');
+});
+
+app.get('/cosigner-analytics', async (req, res) => {
+  const { email } = req.query;
+  const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+  const analytics = await analyticsRes.json();
+  let totalProfit = 0;
+  let itemsSold = [];
+  for (const month of Object.values(analytics.months || {})) {
+    totalProfit += month.cosignerProfits[email] || 0;
+    for (const [itemName, itemData] of Object.entries(month.itemsSold || {})) {
+      if (itemData.cosignerEmail === email) {
+        itemsSold.push({ itemName, ...itemData });
+      }
+    }
+  }
+  res.json({ totalProfit, itemsSold });
+});
+
+// Get current register state
+app.get('/get-register', async (req, res) => {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    if (analytics.registerAmount === undefined) analytics.registerAmount = 0;
+    if (analytics.registerOpened === undefined) analytics.registerOpened = false;
+    res.json({
+      registerAmount: analytics.registerAmount,
+      registerOpened: analytics.registerOpened
+    });
+  } catch (err) {
+    res.status(500).send('Failed to load register data');
+  }
+});
+
+// Toggle register open/close (password required)
+app.post('/toggle-register', async (req, res) => {
+  const { password } = req.body;
+  if (password !== ADMIN_PASSWORD) return res.status(401).send('Invalid password');
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    analytics.registerOpened = !analytics.registerOpened;
+    await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(analytics)
+    });
+    res.json({ registerOpened: analytics.registerOpened });
+  } catch {
+    res.status(500).send('Error toggling register');
+  }
+});
+
+// Add money
+app.post('/add-money', async (req, res) => {
+  const { amount } = req.body;
+  if (typeof amount !== 'number' || amount < 0) return res.status(400).send('Invalid amount');
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    analytics.registerAmount = (analytics.registerAmount || 0) + amount;
+    await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(analytics)
+    });
+    res.sendStatus(200);
+  } catch {
+    res.status(500).send('Error adding money');
+  }
+});
+
+// Remove money
+app.post('/remove-money', async (req, res) => {
+  const { amount } = req.body;
+  try {
+    const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+    let analytics = await response.json();
+    if (typeof amount !== 'number' || amount < 0 || amount > analytics.registerAmount) {
+      return res.status(400).send('Invalid amount');
+    }
+    analytics.registerAmount -= amount;
+    await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(analytics)
+    });
+    res.sendStatus(200);
+  } catch {
+    res.status(500).send('Error removing money');
+  }
+});
+
+module.exports = app;
+
+app.listen(3000, () => console.log('Proxy running at http://localhost:3000'));

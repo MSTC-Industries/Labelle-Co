@@ -397,6 +397,13 @@ table tr:hover {
       </div>
       <div class="card">
         <h2>All Customers</h2>
+        <input 
+          type="text" 
+          id="customerSearch" 
+          placeholder="Search by name..." 
+          style="margin-bottom:12px; padding:8px; width:100%; max-width:300px; border-radius:6px; border:1px solid #ccc;"
+          onkeyup="filterCustomers()"
+        >
         <div id="customersTable"></div>
       </div>
     </div>

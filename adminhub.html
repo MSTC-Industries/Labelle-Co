@@ -59,6 +59,7 @@
     <a href="cosigner-create.html"><i class="fas fa-user-plus"></i> Create Account</a>
     <a href="scanner.html"><i class="fas fa-barcode"></i> Scanner</a>
     <a href="admin-checkout.html"><i class="fas fa-credit-card"></i> Admin Checkout</a>
+    <a href="register.html"><i class="fas fa-cash-register"></i> Register</a>
   </div>
   <div class="main">
     <div class="card">
@@ -66,5 +67,62 @@
       <p>Use the sidebar to navigate through the system.</p>
     </div>
   </div>
+
+  <div id="hub-password-overlay" style="
+    position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:1000;
+    background:rgba(255,255,255,0.98);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    transition:transform 0.5s cubic-bezier(.77,0,.18,1);transform:translateY(0);">
+    <div style="background:#fff;padding:32px 24px;border-radius:8px;
+                box-shadow:0 2px 16px #0002;min-width:280px;">
+      <h2>Admin Hub Access</h2>
+      <input type="password" id="hubPasswordInput"
+            placeholder="Enter password"
+            style="width:100%;padding:8px;margin:12px 0;">
+      <div id="hubPasswordMsg" style="color:red;min-height:20px;"></div>
+      <button onclick="submitHubPassword()">Unlock</button>
+    </div>
+  </div>
+
+<script>
+window.onload = function() {
+  document.getElementById('hub-password-overlay').style.display = 'flex';
+   document.body.style.overflow = 'hidden';
+};
+    
+async function submitHubPassword() {
+  const password = document.getElementById('hubPasswordInput').value;
+  const msg = document.getElementById('hubPasswordMsg');
+
+  if (!password) {
+    msg.textContent = "Please enter a password.";
+    return;
+  }
+
+  msg.textContent = "Checking...";
+
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/check-hub-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+
+    if (res.ok) {
+      const overlay = document.getElementById('hub-password-overlay');
+      overlay.style.transform = 'translateY(-100vh)';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }, 500);
+    } else {
+      msg.textContent = "Incorrect password. Try again.";
+    }
+  } catch (err) {
+    msg.textContent = "Error: " + err.message;
+  }
+}
+
+</script>    
 </body>
 </html>

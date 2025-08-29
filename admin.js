@@ -1332,3 +1332,19 @@ async function changeAdminPassword() {
   });
   msg.textContent = await res.text();
 }
+
+function filterCustomers() {
+  const input = document.getElementById("customerSearch");
+  const filter = input.value.toLowerCase();
+  const table = document.querySelector("#customersTable table");
+  if (!table) return;
+  const rows = table.getElementsByTagName("tr");
+
+  for (let i = 1; i < rows.length; i++) { // skip header row
+    const nameCell = rows[i].getElementsByTagName("td")[0];
+    if (nameCell) {
+      const nameText = nameCell.textContent || nameCell.innerText;
+      rows[i].style.display = nameText.toLowerCase().includes(filter) ? "" : "none";
+    }
+  }
+}

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register - Admin Hub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    #main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 0;
+    box-sizing: border-box;
+    }
+    .card {
+      background: #fff;
+      padding: 200px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1.amount {
+      font-size: 8em;
+      margin: 0;
+    }
+    .btn {
+      background: #0078d4;
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      margin: 5px;
+      transition: background 0.3s;
+    }
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .btn:hover:enabled { background: #005a9e; }
+    /* Overlay styles */
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .overlay-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      width: 300px;
+      text-align: center;
+    }
+    .overlay-content input {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .msg {
+      color: red;
+      font-size: 0.9em;
+      height: 1.2em;
+    }
+    /* Status styles */
+    #registerStatus {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 1.2em;
+    }
+    .status-open { color: green; }
+    .status-closed { color: red; }
+  </style>
+</head>
+<body>
+
+<div id="main-content">
+  <div class="card">
+    <h2>Register</h2>
+    <h1 id="registerAmount" class="amount">$0.00</h1>
+    <div style="margin-top:20px;">
+      <button id="toggleRegisterBtn" class="btn" onclick="openToggleRegisterOverlay()">Open Register</button>
+      <button id="addMoneyBtn" class="btn" onclick="openAddMoneyOverlay()">Add Money</button>
+      <button id="removeMoneyBtn" class="btn" onclick="openRemoveMoneyOverlay()">Remove Money</button>
+      <button class="btn" onclick="window.location.href='adminhub.html'">Return to Hub</button>
+      <div id="registerStatus" class="status-closed">CLOSED</div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlays -->
+<div id="toggleOverlay" class="overlay">
+  <div class="overlay-content">
+    <h3>Admin Password</h3>
+    <input type="password" id="adminPassword" placeholder="Enter password">
+    <div id="adminPasswordMsg" class="msg"></div>
+    <button class="btn" onclick="submitToggleRegister()">Submit</button>
+    <button class="btn" onclick="closeOverlay('toggleOverlay')">Cancel</button>
+  </div>
+</div>
+
+<div id="moneyOverlay" class="overlay">
+  <div class="overlay-content">
+    <h3 id="moneyOverlayTitle"></h3>
+    <input type="number" id="moneyAmount" placeholder="Enter amount" min="0" step="0.01">
+    <div id="moneyMsg" class="msg"></div>
+    <button class="btn" onclick="submitMoneyAction()">Submit</button>
+    <button class="btn" onclick="closeOverlay('moneyOverlay')">Cancel</button>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" class="overlay" style="background: rgba(255,255,255,0.8); z-index:2000;">
+  <div class="overlay-content" style="background:none; box-shadow:none;">
+    <i class="fas fa-spinner fa-spin" style="font-size:2em; color:#0078d4;"></i>
+  </div>
+</div>
+
+<script>
+let registerOpened = false;
+let registerAmount = 0;
+let currentMoneyAction = null; // 'add' or 'remove'
+
+document.addEventListener('DOMContentLoaded', loadRegisterData);
+
+function showLoading() {
+  document.getElementById('loading-overlay').style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+function showOverlay(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+function closeOverlay(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+async function loadRegisterData() {
+  showLoading();
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/get-register');
+    const data = await res.json();
+    registerOpened = data.registerOpened;
+    registerAmount = data.registerAmount;
+    updateUI();
+  } catch (err) {
+    alert('Error loading register data');
+  } finally {
+    hideLoading();
+  }
+}
+
+function updateUI() {
+  document.getElementById('registerAmount').textContent = `$${registerAmount.toFixed(2)}`;
+  document.getElementById('toggleRegisterBtn').textContent = registerOpened ? 'Close Register' : 'Open Register';
+  
+  // Update status text and color
+  const statusEl = document.getElementById('registerStatus');
+  if (registerOpened) {
+    statusEl.textContent = 'OPEN';
+    statusEl.className = 'status-open';
+  } else {
+    statusEl.textContent = 'CLOSED';
+    statusEl.className = 'status-closed';
+  }
+  
+  // Enable/disable buttons
+  document.getElementById('addMoneyBtn').disabled = !registerOpened;
+  document.getElementById('removeMoneyBtn').disabled = !registerOpened;
+}
+
+// Toggle Register flow
+function openToggleRegisterOverlay() {
+  document.getElementById('adminPassword').value = '';
+  document.getElementById('adminPasswordMsg').textContent = '';
+  showOverlay('toggleOverlay');
+}
+
+async function submitToggleRegister() {
+  const password = document.getElementById('adminPassword').value.trim();
+  if (!password) {
+    document.getElementById('adminPasswordMsg').textContent = 'Password required';
+    return;
+  }
+  showLoading();
+  closeOverlay('toggleOverlay');
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/toggle-register', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ password })
+    });
+    if (!res.ok) {
+      alert('Incorrect password');
+      return;
+    }
+    const data = await res.json();
+    registerOpened = data.registerOpened;
+    updateUI();
+  } catch (err) {
+    alert('Error toggling register');
+  } finally {
+    hideLoading();
+  }
+}
+
+// Money flows
+function openAddMoneyOverlay() {
+  currentMoneyAction = 'add';
+  setupMoneyOverlay('Add Money');
+}
+function openRemoveMoneyOverlay() {
+  currentMoneyAction = 'remove';
+  setupMoneyOverlay(`Remove Money (max $${registerAmount.toFixed(2)})`);
+}
+
+function setupMoneyOverlay(title) {
+  document.getElementById('moneyOverlayTitle').textContent = title;
+  document.getElementById('moneyAmount').value = '';
+  document.getElementById('moneyMsg').textContent = '';
+  showOverlay('moneyOverlay');
+}
+
+async function submitMoneyAction() {
+  const amount = parseFloat(document.getElementById('moneyAmount').value);
+  if (isNaN(amount) || amount < 0) {
+    document.getElementById('moneyMsg').textContent = 'Enter a valid amount';
+    return;
+  }
+  if (!registerOpened) {
+    document.getElementById('moneyMsg').textContent = 'Register is closed';
+    return;
+  }
+  if (currentMoneyAction === 'remove' && amount > registerAmount) {
+    document.getElementById('moneyMsg').textContent = 'Amount exceeds register total';
+    return;
+  }
+  showLoading();
+  closeOverlay('moneyOverlay');
+  const endpoint = currentMoneyAction === 'add' ? 'add-money' : 'remove-money';
+  try {
+    await fetch(`https://labelle-co-server.vercel.app/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ amount })
+    });
+    registerAmount += currentMoneyAction === 'add' ? amount : -amount;
+    updateUI();
+  } catch (err) {
+    alert('Error updating register');
+  } finally {
+    hideLoading();
+  }
+}
+</script>
+</body>
+</html>
