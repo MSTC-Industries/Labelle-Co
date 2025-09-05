@@ -121,7 +121,6 @@ function renderTable() {
     <th>Stock</th>
     <th>On Hold</th>
     <th>Bought</th>
-    <th>Profit Split</th>
     <th>Admin Profit</th>
     <th>Consignor Name</th>
     <th>Consignor Email</th>
@@ -214,13 +213,6 @@ function renderTable() {
                         ${hasStockProp ? 'disabled' : ''}>`
               }
             </td>
-            <td>
-              <select onchange="editItem('${category}','${itemKey}','profitSplit', this.value)" class="profit-split-select">
-                ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
-                  `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
-                ).join('')}
-              </select>
-            </td>
             <td>${adminProfit}</td>
             <td>${details.cosignerName || ''}</td>
             <td>${details.cosignerEmail || ''}</td>
@@ -290,13 +282,6 @@ function renderTable() {
                       onchange="editItem('${category}','${itemKey}','bought', this.checked)" 
                       ${hasStockProp ? 'disabled' : ''}>`
             }
-          </td>
-          <td>
-            <select onchange="editItem('${category}','${itemKey}','profitSplit', this.value)" class="profit-split-select">
-              ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
-                `<option value="${opt}" ${details.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
-              ).join('')}
-            </select>
           </td>
           <td>${adminProfit}</td>
           <td>${details.cosignerName || ''}</td>
@@ -742,15 +727,22 @@ window.submitNewAdminItem = async function(event) {
   const price = Number(document.getElementById('newItemPrice').value);
   const specials = document.getElementById('newItemSpecials').value
     .split('\n').map(s => s.trim()).filter(s => s.length > 0);
-  const profitSplit = document.getElementById('newItemProfitSplit').value;
   const barcodeInput = document.getElementById('newItemBarcode').value.trim();
   const cosignerValue = document.getElementById('cosignerDropdown').value;
   let cosignerName = '';
   let cosignerEmail = '';
+  let profitSplit = "100/0";
   if (cosignerValue) {
     const cosignerData = JSON.parse(cosignerValue);
     cosignerName = cosignerData.name || '';
     cosignerEmail = cosignerData.email || '';
+    // Fetch consignor's profitSplit from backend
+    try {
+      const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+      const cosigners = await res.json();
+      const c = cosigners.find(c => c.email === cosignerEmail);
+      if (c && c.profitSplit) profitSplit = c.profitSplit;
+    } catch {}
   }
 
   if (!page || !category || !item) {
@@ -775,10 +767,8 @@ window.submitNewAdminItem = async function(event) {
     imageURL = `https://lh3.googleusercontent.com/d/${id}=s800`;
   }
 
-  // Barcode logic
   const barcode = barcodeInput || (Date.now().toString() + Math.floor(Math.random() * 1000000).toString());
 
-  // If subcategories exist, add multiple items
   if (subcategories.length > 0) {
     subcategories.forEach(subcategory => {
       let newItem = {
@@ -788,7 +778,7 @@ window.submitNewAdminItem = async function(event) {
         specials: specials,
         cosignerName: cosignerName,
         cosignerEmail: cosignerEmail,
-        profitSplit: cosignerValue ? profitSplit : "100/0",
+        profitSplit: profitSplit,
         barcode: barcode,
         subcategory: subcategory,
         generalName: item
@@ -811,7 +801,7 @@ window.submitNewAdminItem = async function(event) {
       specials: specials,
       cosignerName: cosignerName,
       cosignerEmail: cosignerEmail,
-      profitSplit: cosignerValue ? profitSplit : "100/0",
+      profitSplit: profitSplit,
       barcode: barcode
     };
     if (type === 'stock') {
@@ -977,15 +967,28 @@ async function renderConsignors() {
         <th>Name</th>
         <th>Email</th>
         <th>Owed Amount</th>
+        <th>Profit Split (%)</th>
         <th>Pay Back</th>
       </tr>`;
 
     for (const c of cosigners) {
       const profit = Number(c.owedProfit) || 0;
+      // Extract consignor percent from profitSplit string
+      let consignorPercent = 50;
+      if (c.profitSplit && typeof c.profitSplit === "string" && c.profitSplit.includes('/')) {
+        const parts = c.profitSplit.split('/');
+        consignorPercent = Number(parts[1]) || 50;
+      }
       html += `<tr>
         <td>${c.name || ''}</td>
         <td>${c.email || ''}</td>
         <td>$${profit.toFixed(2)}</td>
+        <td>
+          <input type="number" min="0" max="100" value="${consignorPercent}" 
+            style="width:60px;" 
+            onchange="window.updateConsignorSplit('${c.email}', this.value)">
+          <span style="font-size:12px;color:#888;">(Consignor %)</span>
+        </td>
         <td>
           <input type="number" 
                 id="payInput-${c.email}" 
@@ -1348,3 +1351,26 @@ function filterCustomers() {
     }
   }
 }
+
+window.updateConsignorSplit = async function(email, value) {
+  const percent = Math.max(0, Math.min(100, Number(value)));
+  const profitSplit = `${100 - percent}/${percent}`;
+  showLoading();
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    const c = cosigners.find(c => c.email === email);
+    if (!c) throw new Error("Consignor not found.");
+    c.profitSplit = profitSplit;
+    await fetch('https://labelle-co-server.vercel.app/cosigners', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+    renderConsignors();
+    hideLoading();
+  } catch (err) {
+    alert("Failed to update profit split: " + err.message);
+    hideLoading();
+  }
+};

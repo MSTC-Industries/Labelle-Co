@@ -11,6 +11,8 @@ fetchConsignorInfo();
 loadInventory();
 showSection('inventory');
 
+let consignorProfitSplit = "50/50"; // Default
+
 async function fetchConsignorInfo() {
   if (!cosignerEmail) return;
   showLoading();
@@ -19,12 +21,12 @@ async function fetchConsignorInfo() {
     if (res.ok) {
       const data = await res.json();
       cosignerName = data.name;
+      consignorProfitSplit = data.profitSplit || "50/50"; // <-- Get profitSplit
       document.getElementById('cosignerName').textContent = data.name;
     } else {
       document.getElementById('cosignerName').textContent = '';
       showLoadingError("Could not fetch cosigner info.");
     }
-
     hideLoading();
   } catch (err) {
     showLoadingError("Network error: " + err.message);
@@ -78,7 +80,6 @@ async function renderTable() {
       <th>Stock</th>
       <th>On Hold</th>
       <th>Bought</th>
-      <th>Profit Split</th>
       <th>Consignor Profit</th>
       <th>Barcode ID</th>
       <th>Actions</th>
@@ -180,7 +181,6 @@ async function renderTable() {
                           ${hasStockProp ? 'disabled' : ''}>`
                 }
               </td>
-              <td>${details.profitSplit || "50/50"}</td>
               <td>${cosignerProfit}</td>
               <td>${details.barcode}</td>
               <td>
@@ -249,7 +249,6 @@ async function renderTable() {
                         ${hasStockProp ? 'disabled' : ''}>`
               }
             </td>
-            <td>${details.profitSplit || "50/50"}</td>
             <td>${cosignerProfit}</td>
             <td>${details.barcode}</td>
             <td>
@@ -278,6 +277,10 @@ async function renderTable() {
     <strong>Total Consignor Value: $${totalConsignorProfit.toFixed(2)}</strong>
     <br>
     <strong>Unpaid (Owed by Admin): $${owed.toFixed(2)}</strong>
+    <br>
+    <span style="font-size:15px;color:#555;">
+      <i class="fas fa-percent"></i> Your Profit Split: ${consignorProfitSplit}
+    </span>
     <br>
     ${html}
   `;
@@ -477,7 +480,7 @@ window.submitNewItem = async function(event) {
         specials: specials,
         cosignerName: cosignerName,
         cosignerEmail: cosignerEmail,
-        profitSplit: "50/50",
+        profitSplit: consignorProfitSplit,
         barcode: barcode,
         subcategory: subcategory,
         generalName: item
@@ -511,7 +514,7 @@ window.submitNewItem = async function(event) {
       specials: specials,
       cosignerName: cosignerName,
       cosignerEmail: cosignerEmail,
-      profitSplit: "50/50",
+      profitSplit: consignorProfitSplit,
       barcode: barcode
       // no subcategory field
     };
