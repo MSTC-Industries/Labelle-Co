@@ -73,6 +73,7 @@ function loadInventory() {
     .then(data => {
       allitems = data;
       renderTable();
+      updatePrintBarcodeButton();
       hideLoading();
     })
     .catch(err => showLoadingError(err.message))
@@ -337,8 +338,28 @@ window.editItem = function(category, item, field, value) {
 };
 
 window.removeItem = function(category, item) {
+  // Remove from data
   delete allitems[currentpage][category][item];
-  renderTable();
+  // Remove from DOM
+  // Find the row by a unique attribute (e.g., barcode or item name)
+  const table = document.querySelector("#inventory table");
+  if (table) {
+    const rows = table.getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+      const barcodeCell = rows[i].getElementsByTagName("td")[12]; // Barcode column
+      if (barcodeCell && barcodeCell.textContent === allitems[currentpage][category][item]?.barcode) {
+        table.deleteRow(i);
+        break;
+      }
+      // Or match by item name (column 1)
+      const itemCell = rows[i].getElementsByTagName("td")[1];
+      if (itemCell && itemCell.value === item) {
+        table.deleteRow(i);
+        break;
+      }
+    }
+  }
+  updatePrintBarcodeButton();
 };
 
 window.saveAll = function() {
@@ -873,7 +894,7 @@ window.toggleBarcodeQueue = function(page, category, item) {
   } else {
     barcodeQueue.splice(idx, 1);
   }
-  //renderTable();
+  updatePrintBarcodeButton();
 };
 
 window.printBarcodeQueue = function() {
@@ -948,7 +969,9 @@ window.printBarcodeQueue = function() {
   printWindow.document.close();
   printWindow.focus();
   barcodeQueue = [];
-  setTimeout(renderTable, 1000);
+  setTimeout(() => {
+    updatePrintBarcodeButton();
+  }, 1000);
 };
 
 async function renderConsignors() {
@@ -1397,4 +1420,17 @@ function clearInventorySearch() {
   const input = document.getElementById("inventorySearch");
   input.value = "";
   filterInventoryTable();
+}
+
+function updatePrintBarcodeButton() {
+  const optionsCard = document.getElementById('options-card');
+  let btn = document.getElementById('print-barcode-btn');
+  if (btn) btn.remove();
+  if (barcodeQueue.length > 0) {
+    btn = document.createElement('button');
+    btn.id = 'print-barcode-btn';
+    btn.textContent = `Print Barcodes (${barcodeQueue.length})`;
+    btn.onclick = printBarcodeQueue;
+    optionsCard.appendChild(btn);
+  }
 }
