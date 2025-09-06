@@ -992,6 +992,9 @@ async function renderConsignors() {
       <tr>
         <th>Name</th>
         <th>Email</th>
+        <th>Address</th>
+        <th>Phone</th>
+        <th>Last Login</th>
         <th>Owed Amount</th>
         <th>Profit Split (%)</th>
         <th>Pay Back</th>
@@ -1005,9 +1008,18 @@ async function renderConsignors() {
         const parts = c.profitSplit.split('/');
         consignorPercent = Number(parts[1]) || 50;
       }
+      // Format last login date
+      let lastLoginStr = '-';
+      if (c.lastLogin) {
+        const d = new Date(Number(c.lastLogin));
+        lastLoginStr = isNaN(d.getTime()) ? '-' : d.toLocaleString();
+      }
       html += `<tr>
         <td>${c.name || ''}</td>
         <td>${c.email || ''}</td>
+        <td>${c.address || ''}</td>
+        <td>${c.phone || ''}</td>
+        <td>${lastLoginStr}</td>
         <td>$${profit.toFixed(2)}</td>
         <td>
           <input type="number" min="0" max="100" value="${consignorPercent}" 

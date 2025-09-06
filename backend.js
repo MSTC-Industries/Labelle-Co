@@ -187,6 +187,9 @@ app.post('/cosigner-login', async (req, res) => {
   let cosigners = await loadCosigners();
   const user = cosigners.find(c => c.email === email && c.password === password);
   if (user) {
+    // Update lastLogin to current time
+    user.lastLogin = Date.now();
+    await saveCosigners(cosigners);
     res.status(200).send('Login successful');
   } else {
     res.status(401).send('Invalid credentials');
