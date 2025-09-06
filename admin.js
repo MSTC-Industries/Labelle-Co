@@ -338,22 +338,17 @@ window.editItem = function(category, item, field, value) {
 };
 
 window.removeItem = function(category, item) {
+  // Get barcode before deleting
+  const barcode = allitems[currentpage][category][item]?.barcode;
   // Remove from data
   delete allitems[currentpage][category][item];
   // Remove from DOM
-  // Find the row by a unique attribute (e.g., barcode or item name)
   const table = document.querySelector("#inventory table");
-  if (table) {
+  if (table && barcode) {
     const rows = table.getElementsByTagName("tr");
     for (let i = 1; i < rows.length; i++) {
       const barcodeCell = rows[i].getElementsByTagName("td")[12]; // Barcode column
-      if (barcodeCell && barcodeCell.textContent === allitems[currentpage][category][item]?.barcode) {
-        table.deleteRow(i);
-        break;
-      }
-      // Or match by item name (column 1)
-      const itemCell = rows[i].getElementsByTagName("td")[1];
-      if (itemCell && itemCell.value === item) {
+      if (barcodeCell && barcodeCell.textContent === barcode) {
         table.deleteRow(i);
         break;
       }
@@ -970,6 +965,7 @@ window.printBarcodeQueue = function() {
   printWindow.focus();
   barcodeQueue = [];
   setTimeout(() => {
+    renderTable();
     updatePrintBarcodeButton();
   }, 1000);
 };
