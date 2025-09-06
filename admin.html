@@ -322,6 +322,15 @@ table tr:hover {
         <button onclick="openAddItemOverlay()">Add New Item</button>
         <button onclick="saveAll()">Save All Changes</button>
         <button onclick="loadInventory()">Reload Inventory</button>
+        <p>When printing, remember to remove margins.</p>
+        <!-- Add inventory search bar here -->
+        <input 
+          type="text" 
+          id="inventorySearch" 
+          placeholder="Search inventory by item name..." 
+          style="margin-bottom:12px; padding:8px; width:100%; max-width:300px; border-radius:6px; border:1px solid #ccc;"
+          onkeyup="filterInventoryTable()"
+        >
       </div>
       <br>
       <div id="inventory" class="card"></div>

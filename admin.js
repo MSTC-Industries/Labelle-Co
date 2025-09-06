@@ -1374,3 +1374,21 @@ window.updateConsignorSplit = async function(email, value) {
     hideLoading();
   }
 };
+
+function filterInventoryTable() {
+  const input = document.getElementById("inventorySearch");
+  const filter = input.value.toLowerCase();
+  const table = document.querySelector("#inventory table");
+  if (!table) return;
+  const rows = table.getElementsByTagName("tr");
+
+  // Start from 1 to skip header row
+  for (let i = 1; i < rows.length; i++) {
+    // Item name is in the second column (index 1)
+    const itemCell = rows[i].getElementsByTagName("td")[1];
+    if (itemCell) {
+      const itemText = itemCell.textContent || itemCell.innerText;
+      rows[i].style.display = itemText.toLowerCase().includes(filter) ? "" : "none";
+    }
+  }
+}

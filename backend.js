@@ -177,7 +177,7 @@ app.post('/cosigner-create', async (req, res) => {
   if (!email || !password || !name || !address || !phone) return res.status(400).send('Missing fields');
   let cosigners = await loadCosigners();
   if (cosigners.find(c => c.email === email)) return res.status(409).send('Email already exists');
-  cosigners.push({ email, password, name, address, phone, "owedProfit": 0.0, "lastLogin": Date.now(), "split": "50/50" });
+  cosigners.push({ email, password, name, address, phone, "owedProfit": 0.0, "lastLogin": Date.now(), "profitSplit": "50/50" });
   await saveCosigners(cosigners);
   res.status(200).send('Account created');
 });

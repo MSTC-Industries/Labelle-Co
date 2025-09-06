@@ -186,6 +186,8 @@
     </div>
     <div class="main" style="align-content: center;">
         <div id="reader"></div>
+        <label for="barcodeInput">Manual Barcode Entry:</label>
+        <input type="text" id="barcodeInput" autofocus placeholder="Scan or enter barcode then press enter" style="font-size: 18px; padding: 10px; margin-bottom: 10px;">
 
         <button class="btn scan-btn" onclick="triggerScan()" disabled>Scan</button>
         <br>
@@ -244,6 +246,16 @@ isPreviewing = true;
 console.error("Camera start failed:", err);
 });
 
+const barcodeInput = document.getElementById('barcodeInput');
+barcodeInput.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    const barcode = barcodeInput.value.trim();
+    if (barcode) {
+      handleScan(barcode); // Use the same handler as camera scan
+      barcodeInput.value = '';
+    }
+  }
+});
 
 function handleScan(decodedText) {
   let matchedItem = null;
