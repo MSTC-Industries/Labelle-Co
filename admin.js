@@ -338,6 +338,7 @@ window.editItem = function(category, item, field, value) {
 };
 
 window.removeItem = function(category, item) {
+  showLoading();
   // Get barcode before deleting
   const barcode = allitems[currentpage][category][item]?.barcode;
   // Remove from data
@@ -355,6 +356,12 @@ window.removeItem = function(category, item) {
     }
   }
   updatePrintBarcodeButton();
+  // If category is empty, remove it
+  if (Object.keys(allitems[currentpage][category]).length === 0) {
+    delete allitems[currentpage][category];
+  }
+  renderTable();
+  hideLoading();
 };
 
 window.saveAll = function() {
@@ -1401,13 +1408,20 @@ function filterInventoryTable() {
   if (!table) return;
   const rows = table.getElementsByTagName("tr");
 
-  // Start from 1 to skip header row
-  for (let i = 1; i < rows.length; i++) {
-    // Item name is in the second column (index 1)
+  for (let i = 1; i < rows.length; i++) { // skip header row
     const itemCell = rows[i].getElementsByTagName("td")[1];
-    if (itemCell) {
+    if (itemCell && itemCell.querySelector('input[type="text"]')) {
+      // For editable item name cells
+      const inputElem = itemCell.querySelector('input[type="text"]');
+      const itemText = inputElem.value || inputElem.textContent || inputElem.innerText;
+      rows[i].style.display = itemText.toLowerCase().includes(filter) ? "" : "none";
+    } else if (itemCell) {
+      // For static item name cells
       const itemText = itemCell.textContent || itemCell.innerText;
       rows[i].style.display = itemText.toLowerCase().includes(filter) ? "" : "none";
+    } else {
+      // Hide non-item rows (group headers, etc.)
+      rows[i].style.display = "none";
     }
   }
 }
