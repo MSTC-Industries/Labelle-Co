@@ -873,7 +873,7 @@ window.toggleBarcodeQueue = function(page, category, item) {
   } else {
     barcodeQueue.splice(idx, 1);
   }
-  renderTable();
+  //renderTable();
 };
 
 window.printBarcodeQueue = function() {
