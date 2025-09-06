@@ -317,20 +317,20 @@ table tr:hover {
       <div class="card" id="options-card">
         <h1>Inventory</h1>
         <p>Use this page to manage the inventory. You can add, edit, and delete items.</p>
-        <label for="pageSelect">Select Page:</label>
-        <select id="pageSelect" onchange="switchPage(this.value)"></select>
-        <button onclick="openAddItemOverlay()">Add New Item</button>
-        <button onclick="saveAll()">Save All Changes</button>
-        <button onclick="loadInventory()">Reload Inventory</button>
-        <p>When printing, remember to remove margins.</p>
-        <!-- Add inventory search bar here -->
         <input 
           type="text" 
           id="inventorySearch" 
           placeholder="Search inventory by item name..." 
           style="margin-bottom:12px; padding:8px; width:100%; max-width:300px; border-radius:6px; border:1px solid #ccc;"
-          onkeyup="filterInventoryTable()"
         >
+        <button type="button" class="btn" style="margin-left:8px;" onclick="filterInventoryTable()">Search</button>
+        <button type="button" class="btn" style="margin-left:8px;background:#e74c3c;" onclick="clearInventorySearch()">Clear</button>
+        <p>When printing, remember to remove margins.</p>
+        <label for="pageSelect">Select Page:</label>
+        <select id="pageSelect" onchange="switchPage(this.value)"></select>
+        <button onclick="openAddItemOverlay()">Add New Item</button>
+        <button onclick="saveAll()">Save All Changes</button>
+        <button onclick="loadInventory()">Reload Inventory</button>
       </div>
       <br>
       <div id="inventory" class="card"></div>

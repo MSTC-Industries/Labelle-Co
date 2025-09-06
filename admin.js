@@ -1392,3 +1392,9 @@ function filterInventoryTable() {
     }
   }
 }
+
+function clearInventorySearch() {
+  const input = document.getElementById("inventorySearch");
+  input.value = "";
+  filterInventoryTable();
+}
