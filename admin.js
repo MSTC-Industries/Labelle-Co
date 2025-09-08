@@ -1270,8 +1270,14 @@ function renderAnalytics() {
     itemsSold = month.itemsSold || {};
   }
 
+  // Calculate revenue after 6% tax
+  const taxRate = 0.06;
+  const revenueAfterTax = (summary.revenue || 0) * (1 - taxRate);
+
   // Render summary
   let html = `<strong>Total Revenue:</strong> $${(summary.revenue || 0).toFixed(2)}<br>
+    <strong>Revenue After Tax (6%):</strong> $${revenueAfterTax.toFixed(2)}<br>
+    <small style="color:#888;">(Tax rate is 6%)</small><br>
     <strong>Admin Profit:</strong> $${(summary.adminProfit || 0).toFixed(2)}<br>
     <strong>Consignor Profits:</strong><br>`;
   if (Object.keys(summary.cosignerProfits).length === 0) {
@@ -1383,10 +1389,13 @@ function filterCustomers() {
 
   for (let i = 1; i < rows.length; i++) { // skip header row
     const nameCell = rows[i].getElementsByTagName("td")[0];
-    if (nameCell) {
-      const nameText = nameCell.textContent || nameCell.innerText;
-      rows[i].style.display = nameText.toLowerCase().includes(filter) ? "" : "none";
-    }
+    const emailCell = rows[i].getElementsByTagName("td")[1];
+    const phoneCell = rows[i].getElementsByTagName("td")[2];
+    let match = false;
+    if (nameCell && (nameCell.textContent || nameCell.innerText).toLowerCase().includes(filter)) match = true;
+    if (emailCell && (emailCell.textContent || emailCell.innerText).toLowerCase().includes(filter)) match = true;
+    if (phoneCell && (phoneCell.textContent || phoneCell.innerText).toLowerCase().includes(filter)) match = true;
+    rows[i].style.display = match ? "" : "none";
   }
 }
 
