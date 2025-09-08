@@ -466,6 +466,11 @@ async function initialize() {
       });
     }
   });
+  cartItems.push({
+    name: "Transaction Fee",
+    price: 30,
+    quantity: 1
+  });
 
   const fetchClientSecret = async () => {
     const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {

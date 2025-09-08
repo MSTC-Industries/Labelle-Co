@@ -131,11 +131,16 @@ async function startAdminCheckout() {
     return;
   }
   // Prepare items for Stripe
-  const cartItems = checkoutItems.map(item => ({
+  let cartItems = checkoutItems.map(item => ({
     name: item.name,
     price: Math.round(item.price * 100),
     quantity: item.qty
   }));
+  cartItems.push({
+    name: "Transaction Fee",
+    price: 30,
+    quantity: 1
+  });
   // Save to localStorage for return.js
   localStorage.removeItem("pendingOrder");
   localStorage.removeItem("completedCart");
