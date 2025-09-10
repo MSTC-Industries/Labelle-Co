@@ -336,6 +336,18 @@ table tr:hover {
         </label>
         <label>Price: <input type="number" id="newItemPrice" min="0" step="0.01" required></label>
         <label>Specials: <textarea id="newItemSpecials" rows="2" placeholder="One per line"></textarea></label>
+        <label>Stock Amount:
+          <input type="number" id="newItemStockAmount" min="1" step="1" placeholder="Stock quantity">
+        </label>
+        <label>Item Cost:
+          <input type="number" id="newItemCost" min="0" step="0.01" placeholder="Cost per item">
+        </label>
+        <label>Taxed:
+          <select id="newItemTaxed">
+            <option value="true">Yes</option>
+            <option value="false" selected>No</option>
+          </select>
+        </label>
         <button type="submit" class="btn">Add Item</button>
         <button type="button" class="btn" onclick="closeAddItemOverlay()">Cancel</button>
         <div id="addItemMsg" style="color:red;margin-top:8px;"></div>

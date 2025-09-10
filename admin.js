@@ -8,11 +8,11 @@ let barcodeQueue = [];
 
 window.onload = function() {
   // Check for admin password in localStorage
-  /*const adminPasswordOk = localStorage.getItem('adminPasswordOk');
+  const adminPasswordOk = localStorage.getItem('adminPasswordOk');
   if (adminPasswordOk !== 'true') {
     window.location.href = "adminhub.html";
     return;
-  }*/
+  }
   showSection('inventory');
   populatePageSelector();
   loadInventory();
@@ -639,6 +639,7 @@ async function cancelOrder(orderId) {
 }
 
 function logoutToHub() {
+      localStorage.removeItem('adminPasswordOk');
       window.location.href = "adminhub.html";
 }
 
@@ -724,6 +725,9 @@ window.submitNewAdminItem = async function(event) {
     .split('\n').map(s => s.trim()).filter(s => s.length > 0);
   const barcodeInput = document.getElementById('newItemBarcode').value.trim();
   const cosignerValue = document.getElementById('cosignerDropdown').value;
+  const stockAmount = Number(document.getElementById('newItemStockAmount').value) || 1;
+  const cost = Number(document.getElementById('newItemCost').value) || 0;
+  const taxed = document.getElementById('newItemTaxed').value === "true";
   let cosignerName = '';
   let cosignerEmail = '';
   let profitSplit = "100/0";
@@ -731,7 +735,6 @@ window.submitNewAdminItem = async function(event) {
     const cosignerData = JSON.parse(cosignerValue);
     cosignerName = cosignerData.name || '';
     cosignerEmail = cosignerData.email || '';
-    // Fetch consignor's profitSplit from backend
     try {
       const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
       const cosigners = await res.json();
@@ -776,10 +779,12 @@ window.submitNewAdminItem = async function(event) {
         profitSplit: profitSplit,
         barcode: barcode,
         subcategory: subcategory,
-        generalName: item
+        generalName: item,
+        cost: cost,
+        taxed: taxed
       };
       if (type === 'stock') {
-        newItem.stock = 1;
+        newItem.stock = stockAmount;
         newItem.itemsOnHold = 0;
         newItem.itemsBought = 0;
       } else if (type === 'onhold') {
@@ -797,10 +802,12 @@ window.submitNewAdminItem = async function(event) {
       cosignerName: cosignerName,
       cosignerEmail: cosignerEmail,
       profitSplit: profitSplit,
-      barcode: barcode
+      barcode: barcode,
+      cost: cost,
+      taxed: taxed
     };
     if (type === 'stock') {
-      newItem.stock = 1;
+      newItem.stock = stockAmount;
       newItem.itemsOnHold = 0;
       newItem.itemsBought = 0;
     } else if (type === 'onhold') {

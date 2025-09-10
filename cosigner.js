@@ -7,6 +7,9 @@ let cosignerName = '';
 let barcodeQueue = [];
 let expandedGroups = {};
 
+if (!cosignerEmail || cosignerEmail.trim() === "") {
+  window.location.href = "adminhub.html";
+}
 fetchConsignorInfo();
 loadInventory();
 showSection('inventory');
@@ -441,11 +444,13 @@ window.submitNewItem = async function(event) {
     category = document.getElementById('newItemCategoryInput').value.trim();
   }
   const item = document.getElementById('newItemName').value.trim();
-  //const img = document.getElementById('newItemImg').value.trim();
   const type = document.getElementById('newItemType').value;
   const price = Number(document.getElementById('newItemPrice').value);
   const specials = document.getElementById('newItemSpecials').value
     .split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  const stockAmount = Number(document.getElementById('newItemStockAmount').value) || 1;
+  const cost = Number(document.getElementById('newItemCost').value) || 0;
+  const taxed = document.getElementById('newItemTaxed').value === "true";
 
   if (!page || !category || !item) {
     document.getElementById('addItemMsg').textContent = "Please fill out all required fields.";
@@ -483,10 +488,12 @@ window.submitNewItem = async function(event) {
         profitSplit: consignorProfitSplit,
         barcode: barcode,
         subcategory: subcategory,
-        generalName: item
+        generalName: item,
+        cost: cost,
+        taxed: taxed
       };
       if (type === 'stock') {
-        newItem.stock = 1;
+        newItem.stock = stockAmount;
         newItem.itemsOnHold = 0;
         newItem.itemsBought = 0;
       } else if (type === 'onhold') {
@@ -515,11 +522,12 @@ window.submitNewItem = async function(event) {
       cosignerName: cosignerName,
       cosignerEmail: cosignerEmail,
       profitSplit: consignorProfitSplit,
-      barcode: barcode
-      // no subcategory field
+      barcode: barcode,
+      cost: cost,
+      taxed: taxed
     };
     if (type === 'stock') {
-      newItem.stock = 1;
+      newItem.stock = stockAmount;
       newItem.itemsOnHold = 0;
       newItem.itemsBought = 0;
     } else if (type === 'onhold') {

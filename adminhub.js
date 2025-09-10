@@ -1,7 +1,3 @@
-function goToAdmin() {
-      window.location.href = "admin.html";
-    }
-
 async function cosignerLogin(event) {
   event.preventDefault();
   const email = document.getElementById('loginEmail').value;
@@ -49,25 +45,4 @@ async function cosignerCreate(event) {
     msg.textContent = "Account creation failed.";
   }
   return false;
-}
-
-async function submitAdminPagePassword() {
-  const password = document.getElementById('adminPagePasswordInput').value;
-  const msg = document.getElementById('adminPagePasswordMsg');
-  if (!password) {
-    msg.textContent = "Please enter a password.";
-    return;
-  }
-  msg.textContent = "Checking...";
-  const res = await fetch('https://labelle-co-server.vercel.app/check-admin-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password })
-  });
-  if (res.ok) {
-    localStorage.setItem('adminPasswordOk', 'true');
-    window.location.href = "admin.html";
-  } else {
-    msg.textContent = "Incorrect password. Try again.";
-  }
 }
