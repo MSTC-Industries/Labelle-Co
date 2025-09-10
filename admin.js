@@ -1185,9 +1185,14 @@ async function loadAnalytics() {
   document.getElementById('analyticsSummary').innerHTML = 'Loading...';
   document.getElementById('analyticsItemsSold').innerHTML = '';
   try {
-    const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
-    analyticsData = await res.json();
+    const [analyticsRes, consignorsRes] = await Promise.all([
+      fetch('https://labelle-co-server.vercel.app/get-analytics'),
+      fetch('https://labelle-co-server.vercel.app/cosigners')
+    ]);
+    analyticsData = await analyticsRes.json();
+    window.consignorsList = await consignorsRes.json();
     populateAnalyticsMonthDropdown();
+    populateAnalyticsConsignorDropdown();
     renderAnalytics();
   } catch (err) {
     document.getElementById('analyticsSummary').innerHTML = `<span style="color:red;">Failed to load analytics: ${err.message}</span>`;
@@ -1204,86 +1209,186 @@ function populateAnalyticsMonthDropdown() {
   }
 }
 
+function populateAnalyticsConsignorDropdown() {
+  const select = document.getElementById('analyticsConsignorSelect');
+  select.innerHTML = '<option value="all">All Consignors</option>';
+  const consignorSet = new Set();
+  if (analyticsData && analyticsData.months) {
+    for (const month of Object.values(analyticsData.months)) {
+      for (const item of Object.values(month.itemsSold || {})) {
+        if (item.cosignerEmail) consignorSet.add(item.cosignerEmail);
+      }
+    }
+  }
+  for (const email of consignorSet) {
+    // Try to get name from consignors list if available
+    let name = email;
+    if (window.consignorsList) {
+      const c = window.consignorsList.find(c => c.email === email);
+      if (c && c.name) name = `${c.name} (${email})`;
+    }
+    select.innerHTML += `<option value="${email}">${name}</option>`;
+  }
+}
+
 function renderAnalytics() {
   if (!analyticsData) return;
-  const select = document.getElementById('analyticsMonthSelect');
-  const selected = select.value;
-  let summary, itemsSold;
-  if (selected === 'all') {
-    // Combine all months
-    let totalRevenue = analyticsData.revenue || 0;
-    let totalAdminProfit = 0;
-    let cosignerProfits = {};
-    let allItemsSold = {};
+  const monthSelect = document.getElementById('analyticsMonthSelect');
+  const consignorSelect = document.getElementById('analyticsConsignorSelect');
+  const selectedMonth = monthSelect.value;
+  const selectedConsignor = consignorSelect.value;
+
+  // Gather itemsSold for selected month/all time
+  let itemsSold = {};
+  if (selectedMonth === 'all') {
     for (const month of Object.values(analyticsData.months || {})) {
-      totalAdminProfit += month.adminProfit || 0;
-      for (const [email, profit] of Object.entries(month.cosignerProfits || {})) {
-        cosignerProfits[email] = (cosignerProfits[email] || 0) + profit;
-      }
       for (const [itemName, itemData] of Object.entries(month.itemsSold || {})) {
-        if (!allItemsSold[itemName]) {
-          allItemsSold[itemName] = { ...itemData };
+        if (!itemsSold[itemName]) {
+          itemsSold[itemName] = { ...itemData };
         } else {
-          allItemsSold[itemName].quantity += itemData.quantity || 0;
-          allItemsSold[itemName].price += itemData.price || 0;
-          allItemsSold[itemName].date = Math.max(allItemsSold[itemName].date, itemData.date);
+          itemsSold[itemName].quantity += itemData.quantity || 0;
+          itemsSold[itemName].price += itemData.price || 0;
+          itemsSold[itemName].date = Math.max(itemsSold[itemName].date, itemData.date);
         }
         // Always keep cosigner info from last sale
-        allItemsSold[itemName].cosignerName = itemData.cosignerName || '';
-        allItemsSold[itemName].cosignerEmail = itemData.cosignerEmail || '';
+        itemsSold[itemName].cosignerName = itemData.cosignerName || '';
+        itemsSold[itemName].cosignerEmail = itemData.cosignerEmail || '';
+        itemsSold[itemName].profitSplit = itemData.profitSplit || "50/50";
+        itemsSold[itemName].cost = itemData.cost || 0;
+        itemsSold[itemName].taxed = !!itemData.taxed;
       }
     }
-    summary = {
-      revenue: totalRevenue,
-      adminProfit: totalAdminProfit,
-      cosignerProfits,
-    };
-    itemsSold = allItemsSold;
   } else {
-    const month = analyticsData.months[selected] || {};
-    summary = {
-      revenue: month.totalProfit || 0,
-      adminProfit: month.adminProfit || 0,
-      cosignerProfits: month.cosignerProfits || {},
-    };
-    itemsSold = month.itemsSold || {};
+    const month = analyticsData.months[selectedMonth] || {};
+    itemsSold = { ...(month.itemsSold || {}) };
   }
 
-  // Calculate revenue after 6% tax
-  const taxRate = 0.06;
-  const revenueAfterTax = (summary.revenue || 0) * (1 - taxRate);
-
-  // Render summary
-  let html = `<strong>Total Revenue:</strong> $${(summary.revenue || 0).toFixed(2)}<br>
-    <strong>Revenue After Tax (6%):</strong> $${revenueAfterTax.toFixed(2)}<br>
-    <small style="color:#888;">(Tax rate is 6%)</small><br>
-    <strong>Admin Profit:</strong> $${(summary.adminProfit || 0).toFixed(2)}<br>
-    <strong>Consignor Profits:</strong><br>`;
-  if (Object.keys(summary.cosignerProfits).length === 0) {
-    html += '<span style="margin-left:16px;">None</span>';
-  } else {
-    for (const [email, profit] of Object.entries(summary.cosignerProfits)) {
-      html += `<span style="margin-left:16px;">${email}: $${profit.toFixed(2)}</span><br>`;
+  // Filter by consignor if needed
+  let filteredItemsSold = itemsSold;
+  if (selectedConsignor !== 'all') {
+    filteredItemsSold = {};
+    for (const [itemName, itemData] of Object.entries(itemsSold)) {
+      if (itemData.cosignerEmail === selectedConsignor) {
+        filteredItemsSold[itemName] = itemData;
+      }
     }
   }
+
+  // Calculate totals
+  let totalRevenue = 0;
+  let totalProfit = 0;
+  let totalProfitAfterTax = 0;
+  let adminRevenue = 0, adminProfit = 0, adminProfitAfterTax = 0;
+  let consignorTotals = {}; // email → { revenue, profit, profitAfterTax, name }
+  const taxRate = 0.06;
+
+  for (const itemData of Object.values(filteredItemsSold)) {
+    const price = Number(itemData.price) || 0;
+    const cost = Number(itemData.cost) || 0;
+    const qty = Number(itemData.quantity) || 0;
+    const profitSplit = (itemData.profitSplit || "50/50").split('/');
+    const adminPercent = Number(profitSplit[0]) || 50;
+    const consignorPercent = Number(profitSplit[1]) || 50;
+    const taxed = !!itemData.taxed;
+
+    totalRevenue += price;
+    const profit = price - cost * qty;
+    totalProfit += profit;
+
+    // For profit after tax: subtract tax from revenue, then subtract cost
+    let revenueAfterTax = taxed ? price * (1 - taxRate) : price;
+    let profitAfterTax = revenueAfterTax - cost * qty;
+    totalProfitAfterTax += profitAfterTax;
+
+    // Admin and consignor splits
+    const adminRev = price * (adminPercent / 100);
+    const consignorRev = price * (consignorPercent / 100);
+    const adminProf = profit * (adminPercent / 100);
+    const consignorProf = profit * (consignorPercent / 100);
+    const adminProfAfterTax = profitAfterTax * (adminPercent / 100);
+    const consignorProfAfterTax = profitAfterTax * (consignorPercent / 100);
+
+    adminRevenue += adminRev;
+    adminProfit += adminProf;
+    adminProfitAfterTax += adminProfAfterTax;
+
+    const email = itemData.cosignerEmail || '';
+    const name = itemData.cosignerName || '';
+    if (email) {
+      if (!consignorTotals[email]) {
+        consignorTotals[email] = {
+          name,
+          revenue: 0,
+          profit: 0,
+          profitAfterTax: 0
+        };
+      }
+      consignorTotals[email].revenue += consignorRev;
+      consignorTotals[email].profit += consignorProf;
+      consignorTotals[email].profitAfterTax += consignorProfAfterTax;
+    }
+  }
+
+  // If viewing a specific consignor, show only their totals
+  let consignorSummaryHtml = '';
+  if (selectedConsignor !== 'all') {
+    const c = consignorTotals[selectedConsignor] || { name: '', revenue: 0, profit: 0, profitAfterTax: 0 };
+    consignorSummaryHtml = `
+      <strong>Consignor: ${c.name} (${selectedConsignor})</strong><br>
+      <strong>Revenue:</strong> $${c.revenue.toFixed(2)}<br>
+      <strong>Profit:</strong> $${c.profit.toFixed(2)}<br>
+      <strong>Profit After Tax (6%):</strong> $${c.profitAfterTax.toFixed(2)}<br>
+      <small style="color:#888;">(Tax rate is 6%)</small><br>
+    `;
+  }
+
+  // Render summary
+  let html = `
+    <strong>Total Revenue:</strong> $${totalRevenue.toFixed(2)}<br>
+    <strong>Total Profit:</strong> $${totalProfit.toFixed(2)}<br>
+    <strong>Total Profit After Tax (6%):</strong> $${totalProfitAfterTax.toFixed(2)}<br>
+    <small style="color:#888;">(Tax rate is 6%)</small><br>
+    <strong>Admin Revenue:</strong> $${adminRevenue.toFixed(2)}<br>
+    <strong>Admin Profit:</strong> $${adminProfit.toFixed(2)}<br>
+    <strong>Admin Profit After Tax (6%):</strong> $${adminProfitAfterTax.toFixed(2)}<br>
+    <br>
+    <strong>Consignor Totals:</strong><br>
+  `;
+  for (const [email, c] of Object.entries(consignorTotals)) {
+    html += `<span style="margin-left:16px;">
+      ${c.name} (${email}): 
+      Revenue: $${c.revenue.toFixed(2)}, 
+      Profit: $${c.profit.toFixed(2)}, 
+      Profit After Tax: $${c.profitAfterTax.toFixed(2)}
+    </span><br>`;
+  }
+  html += consignorSummaryHtml;
   document.getElementById('analyticsSummary').innerHTML = html;
 
-  // Render items sold
+  // Render items sold table
   let itemsHtml = `<table>
     <tr>
       <th>Item Name</th>
       <th>Quantity Sold</th>
       <th>Total Price</th>
       <th>Date Sold</th>
-      <th>Consigner</th>
+      <th>Consignor Name</th>
+      <th>Consignor Email</th>
+      <th>Profit Split</th>
+      <th>Cost</th>
+      <th>Taxed</th>
     </tr>`;
-  for (const [itemName, itemData] of Object.entries(itemsSold)) {
+  for (const [itemName, itemData] of Object.entries(filteredItemsSold)) {
     itemsHtml += `<tr>
       <td>${itemName}</td>
       <td>${itemData.quantity || 0}</td>
       <td>$${(itemData.price || 0).toFixed(2)}</td>
       <td>${itemData.date ? new Date(itemData.date).toLocaleString() : '-'}</td>
-      <td>${itemData.cosignerName || ''} (${itemData.cosignerEmail || ''})</td>
+      <td>${itemData.cosignerName || ''}</td>
+      <td>${itemData.cosignerEmail || ''}</td>
+      <td>${itemData.profitSplit || ''}</td>
+      <td>$${(itemData.cost || 0).toFixed(2)}</td>
+      <td>${itemData.taxed ? 'Yes' : 'No'}</td>
     </tr>`;
   }
   itemsHtml += '</table>';

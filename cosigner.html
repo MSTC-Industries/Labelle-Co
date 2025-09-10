@@ -296,6 +296,10 @@ table tr:hover {
     <div id="analytics-section" style="display:none;">
       <div class="card">
         <h2>Your Analytics</h2>
+        <label for="cosignerAnalyticsMonthSelect">Select Month:</label>
+        <select id="cosignerAnalyticsMonthSelect" onchange="loadCosignerAnalytics()">
+          <option value="all">All Time</option>
+        </select>
         <div id="cosignerAnalyticsSummary"></div>
         <div id="cosignerAnalyticsItemsSold"></div>
       </div>

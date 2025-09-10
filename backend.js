@@ -364,7 +364,7 @@ async function updateAnalytics(order, allitems) {
   // Fetch current analytics
   const analyticsRes = await fetch(APPS_SCRIPT_URL + '?type=analytics');
   let analytics = {};
-  try { analytics = await analyticsRes.json(); } catch { analytics = { revenue: 0.0, customers: {}, "registerAmount": 0, "registerOpened": false, months: {} }; }
+  try { analytics = await analyticsRes.json(); } catch { analytics = { customers: {}, registerAmount: 0, registerOpened: false, months: {} }; }
 
   if (!analytics.customers || typeof analytics.customers !== 'object') analytics.customers = {};
   const customerEmail = order.email || '';
@@ -383,16 +383,10 @@ async function updateAnalytics(order, allitems) {
     const monthKey = `${now.getMonth() + 1}-${now.getFullYear()}`;
     if (!analytics.months[monthKey]) {
       analytics.months[monthKey] = {
-        totalProfit: 0.0,
-        adminProfit: 0.0,
-        cosignerProfits: {},
         itemsSold: {}
       };
     }
 
-    let totalProfit = 0.0;
-    let adminProfit = 0.0;
-    let cosignerProfits = {};
     let itemsSold = analytics.months[monthKey].itemsSold;
 
     for (const [itemName, qty] of Object.entries(order.items)) {
@@ -408,42 +402,29 @@ async function updateAnalytics(order, allitems) {
       }
       if (!itemObj) continue;
 
-      const price = Number(itemObj.price) || 0;
-      const profitSplit = (itemObj.profitSplit || "50/50").split('/');
-      const adminPercent = Number(profitSplit[0]) || 50;
-      const cosignerPercent = Number(profitSplit[1]) || 50;
-      const itemAdminProfit = (price * adminPercent / 100) * qty;
-      const itemCosignerProfit = (price * cosignerPercent / 100) * qty;
-      totalProfit += price * qty;
-      adminProfit += itemAdminProfit;
-
-      // Cosigner profit
-      const cosignerEmail = itemObj.cosignerEmail;
-      if (cosignerEmail) { // Only add if cosignerEmail exists
-        cosignerProfits[cosignerEmail] = (cosignerProfits[cosignerEmail] || 0) + itemCosignerProfit;
-      }
-
-      // Items sold
+      // Save profitSplit, cost, taxed in itemsSold
       if (!itemsSold[itemName]) {
-        itemsSold[itemName] = { quantity: 0, price: 0.0, date: order.id || Date.now(), cosignerEmail: cosignerEmail || '' };
+        itemsSold[itemName] = { quantity: 0, price: 0.0, date: order.id || Date.now(), cosignerEmail: itemObj.cosignerEmail || '', profitSplit: itemObj.profitSplit || "50/50", cost: itemObj.cost || 0, taxed: !!itemObj.taxed };
       }
       itemsSold[itemName].quantity += qty;
-      itemsSold[itemName].price += price * qty;
+      itemsSold[itemName].price += Number(itemObj.price) * qty;
       itemsSold[itemName].date = order.id || Date.now();
-      itemsSold[itemName].cosignerEmail = cosignerEmail || '';
+      itemsSold[itemName].cosignerEmail = itemObj.cosignerEmail || '';
+      itemsSold[itemName].profitSplit = itemObj.profitSplit || "50/50";
+      itemsSold[itemName].cost = itemObj.cost || 0;
+      itemsSold[itemName].taxed = !!itemObj.taxed;
 
       await notifyCosignerOrAdmin(itemObj, qty);
     }
 
-    // Update analytics object
-    analytics.revenue = (analytics.revenue || 0) + totalProfit;
-    analytics.months[monthKey].totalProfit += totalProfit;
-    analytics.months[monthKey].adminProfit += adminProfit;
-    for (const [email, profit] of Object.entries(cosignerProfits)) {
-      analytics.months[monthKey].cosignerProfits[email] = (analytics.months[monthKey].cosignerProfits[email] || 0) + profit;
-    }
-    analytics.months[monthKey].itemsSold = itemsSold;
+    // Remove profit summary fields
+    if (analytics.months[monthKey].totalProfit !== undefined) delete analytics.months[monthKey].totalProfit;
+    if (analytics.months[monthKey].adminProfit !== undefined) delete analytics.months[monthKey].adminProfit;
+    if (analytics.months[monthKey].cosignerProfits !== undefined) delete analytics.months[monthKey].cosignerProfits;
   }
+
+  // Remove revenue from main analytics object
+  if (analytics.revenue !== undefined) delete analytics.revenue;
 
   // Save analytics back to Apps Script
   await fetch(APPS_SCRIPT_URL + '?type=analytics', {
