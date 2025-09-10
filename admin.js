@@ -8,11 +8,11 @@ let barcodeQueue = [];
 
 window.onload = function() {
   // Check for admin password in localStorage
-  const adminPasswordOk = localStorage.getItem('adminPasswordOk');
+  /*const adminPasswordOk = localStorage.getItem('adminPasswordOk');
   if (adminPasswordOk !== 'true') {
     window.location.href = "adminhub.html";
     return;
-  }
+  }*/
   showSection('inventory');
   populatePageSelector();
   loadInventory();
