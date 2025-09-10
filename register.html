@@ -90,23 +90,13 @@
     <h2>Register</h2>
     <h1 id="registerAmount" class="amount">$0.00</h1>
     <div style="margin-top:20px;">
-      <button id="toggleRegisterBtn" class="btn" onclick="openToggleRegisterOverlay()">Open Register</button>
+      <button id="toggleRegisterBtn" class="btn" style="display:none;" onclick="submitToggleRegister()">Open Register</button>
+      <button id="viewRegisterActionsBtn" class="btn" style="display:none;" onclick="showRegisterActionsOverlay()">View Register Actions</button>
       <button id="addMoneyBtn" class="btn" onclick="openAddMoneyOverlay()">Add Money</button>
       <button id="removeMoneyBtn" class="btn" onclick="openRemoveMoneyOverlay()">Remove Money</button>
       <button class="btn" onclick="window.location.href='adminhub.html'">Return to Hub</button>
       <div id="registerStatus" class="status-closed">CLOSED</div>
     </div>
-  </div>
-</div>
-
-<!-- Overlays -->
-<div id="toggleOverlay" class="overlay">
-  <div class="overlay-content">
-    <h3>Admin Password</h3>
-    <input type="password" id="adminPassword" placeholder="Enter password">
-    <div id="adminPasswordMsg" class="msg"></div>
-    <button class="btn" onclick="submitToggleRegister()">Submit</button>
-    <button class="btn" onclick="closeOverlay('toggleOverlay')">Cancel</button>
   </div>
 </div>
 
@@ -117,6 +107,14 @@
     <div id="moneyMsg" class="msg"></div>
     <button class="btn" onclick="submitMoneyAction()">Submit</button>
     <button class="btn" onclick="closeOverlay('moneyOverlay')">Cancel</button>
+  </div>
+</div>
+
+<div id="registerActionsOverlay" class="overlay">
+  <div class="overlay-content" style="max-width:700px; width:90%;">
+    <h3>Register Actions</h3>
+    <div id="registerActionsTable"></div>
+    <button class="btn" onclick="closeOverlay('registerActionsOverlay')">Close</button>
   </div>
 </div>
 
@@ -132,7 +130,21 @@ let registerOpened = false;
 let registerAmount = 0;
 let currentMoneyAction = null; // 'add' or 'remove'
 
-document.addEventListener('DOMContentLoaded', loadRegisterData);
+const registerAccess = localStorage.getItem('registerAccess') || "";
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadRegisterData();
+  // Show/hide the open/close register button based on access
+  const toggleBtn = document.getElementById('toggleRegisterBtn');
+  const viewActionsBtn = document.getElementById('viewRegisterActionsBtn');
+  if (registerAccess === "ADMIN") {
+    toggleBtn.style.display = "";
+    viewActionsBtn.style.display = "";
+  } else {
+    toggleBtn.style.display = "none";
+    viewActionsBtn.style.display = "none";
+  }
+});
 
 function showLoading() {
   document.getElementById('loading-overlay').style.display = 'flex';
@@ -164,7 +176,11 @@ async function loadRegisterData() {
 
 function updateUI() {
   document.getElementById('registerAmount').textContent = `$${registerAmount.toFixed(2)}`;
-  document.getElementById('toggleRegisterBtn').textContent = registerOpened ? 'Close Register' : 'Open Register';
+  // Only update toggleRegisterBtn if it's visible
+  const toggleBtn = document.getElementById('toggleRegisterBtn');
+  if (registerAccess === "ADMIN") {
+    toggleBtn.textContent = registerOpened ? 'Close Register' : 'Open Register';
+  }
   
   // Update status text and color
   const statusEl = document.getElementById('registerStatus');
@@ -181,31 +197,10 @@ function updateUI() {
   document.getElementById('removeMoneyBtn').disabled = !registerOpened;
 }
 
-// Toggle Register flow
-function openToggleRegisterOverlay() {
-  document.getElementById('adminPassword').value = '';
-  document.getElementById('adminPasswordMsg').textContent = '';
-  showOverlay('toggleOverlay');
-}
-
 async function submitToggleRegister() {
-  const password = document.getElementById('adminPassword').value.trim();
-  if (!password) {
-    document.getElementById('adminPasswordMsg').textContent = 'Password required';
-    return;
-  }
   showLoading();
-  closeOverlay('toggleOverlay');
   try {
-    const res = await fetch('https://labelle-co-server.vercel.app/toggle-register', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ password })
-    });
-    if (!res.ok) {
-      alert('Incorrect password');
-      return;
-    }
+    const res = await fetch('https://labelle-co-server.vercel.app/toggle-register');
     const data = await res.json();
     registerOpened = data.registerOpened;
     updateUI();
@@ -250,11 +245,12 @@ async function submitMoneyAction() {
   showLoading();
   closeOverlay('moneyOverlay');
   const endpoint = currentMoneyAction === 'add' ? 'add-money' : 'remove-money';
+  const person = localStorage.getItem('registerAccess') || 'UNKNOWN';
   try {
     await fetch(`https://labelle-co-server.vercel.app/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ amount })
+      body: JSON.stringify({ amount, person })
     });
     registerAmount += currentMoneyAction === 'add' ? amount : -amount;
     updateUI();
@@ -264,6 +260,58 @@ async function submitMoneyAction() {
     hideLoading();
   }
 }
+
+async function showRegisterActionsOverlay() {
+  showOverlay('registerActionsOverlay');
+  document.getElementById('registerActionsTable').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  try {
+    // Fetch register actions and consignors list
+    const [analyticsRes, consignorsRes] = await Promise.all([
+      fetch('https://labelle-co-server.vercel.app/get-analytics'),
+      fetch('https://labelle-co-server.vercel.app/cosigners')
+    ]);
+    const analytics = await analyticsRes.json();
+    const consignors = await consignorsRes.json();
+    const actions = Array.isArray(analytics.registerActions) ? analytics.registerActions : [];
+    actions.sort((a, b) => b.date - a.date);
+
+    let html = `<table style="width:100%;border-collapse:collapse;">
+      <tr style="background:#f0f0f0;">
+        <th style="padding:8px;border-bottom:1px solid #ccc;">Consignor Name</th>
+        <th style="padding:8px;border-bottom:1px solid #ccc;">Consignor Email</th>
+        <th style="padding:8px;border-bottom:1px solid #ccc;">Amount</th>
+        <th style="padding:8px;border-bottom:1px solid #ccc;">Date/Time</th>
+      </tr>`;
+
+    for (const action of actions) {
+      let name = '';
+      let email = '';
+      if (action.person === "ADMIN") {
+        name = "ADMIN";
+        email = "-";
+      } else if (typeof action.person === "string" && action.person.includes("@")) {
+        email = action.person;
+        // Find consignor by email
+        const consignor = consignors.find(c => c.email === email);
+        name = consignor ? consignor.name : "-";
+      } else {
+        name = action.person || "-";
+        email = "-";
+      }
+      html += `<tr>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${name}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${email}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${action.amount >= 0 ? '+' : ''}$${Math.abs(action.amount).toFixed(2)}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${new Date(action.date).toLocaleString()}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    document.getElementById('registerActionsTable').innerHTML = html;
+  } catch (err) {
+    document.getElementById('registerActionsTable').innerHTML = '<span style="color:red;">Failed to load register actions.</span>';
+  }
+}
+
 </script>
 </body>
 </html>

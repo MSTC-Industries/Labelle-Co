@@ -7,8 +7,16 @@ let currentpage = 'main.html';
 let barcodeQueue = [];
 
 window.onload = function() {
-  showPasswordOverlay();
+  // Check for admin password in localStorage
+  const adminPasswordOk = localStorage.getItem('adminPasswordOk');
+  if (adminPasswordOk !== 'true') {
+    window.location.href = "adminhub.html";
+    return;
+  }
   showSection('inventory');
+  populatePageSelector();
+  loadInventory();
+  loadOrders();
 };
 
 function showSection(section) {
@@ -28,42 +36,6 @@ function showSection(section) {
     loadAnalytics();
   }
 }
-
-function showPasswordOverlay() {
-  document.getElementById('admin-password-overlay').style.transform = 'translateY(0)';
-  document.getElementById('admin-password-overlay').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-window.submitAdminPassword = async function() {
-  const password = document.getElementById('adminPasswordInput').value;
-  const msg = document.getElementById('adminPasswordMsg');
-  if (!password) {
-    msg.textContent = "Please enter a password.";
-    return;
-  }
-  msg.textContent = "Checking...";
-  const res = await fetch('https://labelle-co-server.vercel.app/check-admin-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password })
-  });
-  if (res.ok) {
-    // Slide up overlay
-    const overlay = document.getElementById('admin-password-overlay');
-    overlay.style.transform = 'translateY(-100vh)';
-    setTimeout(() => {
-      overlay.style.display = 'none';
-      document.body.style.overflow = '';
-    }, 500);
-    // Now load data
-    populatePageSelector()
-    loadInventory();
-    loadOrders();
-  } else {
-    msg.textContent = "Incorrect password. Try again.";
-  }
-};
 
 // Load inventory
 function loadInventory() {
@@ -1464,4 +1436,8 @@ function updatePrintBarcodeButton() {
     btn.onclick = printBarcodeQueue;
     optionsCard.appendChild(btn);
   }
+}
+
+function setRegisterAccess(user) {
+  localStorage.setItem('registerAccess', user);
 }

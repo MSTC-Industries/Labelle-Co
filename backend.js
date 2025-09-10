@@ -603,9 +603,7 @@ app.get('/get-register', async (req, res) => {
 });
 
 // Toggle register open/close (password required)
-app.post('/toggle-register', async (req, res) => {
-  const { password } = req.body;
-  if (password !== ADMIN_PASSWORD) return res.status(401).send('Invalid password');
+app.get('/toggle-register', async (req, res) => {
   try {
     const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
     let analytics = await response.json();
@@ -623,12 +621,21 @@ app.post('/toggle-register', async (req, res) => {
 
 // Add money
 app.post('/add-money', async (req, res) => {
-  const { amount } = req.body;
+  const { amount, person } = req.body;
   if (typeof amount !== 'number' || amount < 0) return res.status(400).send('Invalid amount');
   try {
     const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
     let analytics = await response.json();
     analytics.registerAmount = (analytics.registerAmount || 0) + amount;
+
+    // Record action
+    if (!Array.isArray(analytics.registerActions)) analytics.registerActions = [];
+    analytics.registerActions.push({
+      person: person || 'UNKNOWN',
+      date: Date.now(),
+      amount: amount
+    });
+
     await fetch(APPS_SCRIPT_URL + '?type=analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -642,7 +649,7 @@ app.post('/add-money', async (req, res) => {
 
 // Remove money
 app.post('/remove-money', async (req, res) => {
-  const { amount } = req.body;
+  const { amount, person } = req.body;
   try {
     const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
     let analytics = await response.json();
@@ -650,6 +657,15 @@ app.post('/remove-money', async (req, res) => {
       return res.status(400).send('Invalid amount');
     }
     analytics.registerAmount -= amount;
+
+    // Record action (amount negative for removal)
+    if (!Array.isArray(analytics.registerActions)) analytics.registerActions = [];
+    analytics.registerActions.push({
+      person: person || 'UNKNOWN',
+      date: Date.now(),
+      amount: -amount
+    });
+
     await fetch(APPS_SCRIPT_URL + '?type=analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

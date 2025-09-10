@@ -809,3 +809,7 @@ async function loadCosignerAnalytics() {
   html += '</table>';
   document.getElementById('cosignerAnalyticsItemsSold').innerHTML = html;
 }
+
+function setRegisterAccess(user) {
+  localStorage.setItem('registerAccess', user);
+}
