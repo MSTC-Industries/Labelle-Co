@@ -70,6 +70,12 @@
       <div id="adminPagePasswordMsg" style="color:red;min-height:20px;"></div>
       <button onclick="submitAdminPagePassword()">Login to Admin Page</button>
     </div>
+    <div class="card">
+      <h3>Sales Account Login</h3>
+      <input type="password" id="salesPagePasswordInput" placeholder="Enter sales account password" style="width:100%;padding:8px;margin:12px 0;">
+      <div id="salesPagePasswordMsg" style="color:red;min-height:20px;"></div>
+      <button onclick="submitSalesPagePassword()">Login to Sales Page</button>
+    </div>
   </div>
 
   <div id="hub-password-overlay" style="
@@ -143,6 +149,27 @@ async function submitAdminPagePassword() {
   if (res.ok) {
     localStorage.setItem('adminPasswordOk', 'true');
     window.location.href = "admin.html";
+  } else {
+    msg.textContent = "Incorrect password. Try again.";
+  }
+}
+
+async function submitSalesPagePassword() {
+  const password = document.getElementById('salesPagePasswordInput').value;
+  const msg = document.getElementById('salesPagePasswordMsg');
+  if (!password) {
+    msg.textContent = "Please enter a password.";
+    return;
+  }
+  msg.textContent = "Checking...";
+  const res = await fetch('https://labelle-co-server.vercel.app/check-sales-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (res.ok) {
+    localStorage.setItem('salesPasswordOk', 'true');
+    window.location.href = "sales.html";
   } else {
     msg.textContent = "Incorrect password. Try again.";
   }
