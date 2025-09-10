@@ -58,6 +58,16 @@
               </div>
               <div class="column">
                 <button type="submit" class="btn" style="margin-top:16px;width:100%;">Add Item</button>
+                <div class="card" id="discounts-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
+                  <h3>Discounts</h3>
+                  <label for="discountPercent">Percent Off Each Item (%):</label>
+                  <input type="number" id="discountPercent" min="0" max="99" value="0" style="margin-bottom:10px;">
+                  <label for="discountFixed">Fixed Amount Off Total ($):</label>
+                  <input type="number" id="discountFixed" min="0" step="0.01" value="0" style="margin-bottom:10px;">
+                  <div style="font-size:13px;color:#888;margin-top:8px;">
+                    The fixed amount will be divided evenly among all items in the cart.
+                  </div>
+                </div>
                 <button class="btn" style="margin-top:16px;width:100%;" onclick="startAdminCheckout()">Checkout</button>
                 <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
                 <br>

@@ -118,6 +118,11 @@
       <button class="btn" onclick="window.location.href='adminhub.html'">Back to Admin Hub</button>
     </div>
   </div>
+  <script>
+    if (localStorage.getItem('hubPasswordOk') !== 'true') {
+      window.location.href = "adminhub.html";
+    }
+  </script>
   <script src="adminhub.js"></script>
 </body>
 </html>

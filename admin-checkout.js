@@ -133,17 +133,34 @@ async function startAdminCheckout() {
     document.getElementById('checkoutMsg').textContent = "Add items before checkout.";
     return;
   }
+
+  // Get discount values
+  const discountPercent = Math.max(0, Math.min(99, Number(document.getElementById('discountPercent')?.value) || 0));
+  const discountFixed = Math.max(0, Number(document.getElementById('discountFixed')?.value) || 0);
+
+  // Count total items for fixed discount division
+  let totalQty = checkoutItems.reduce((sum, item) => sum + item.qty, 0) || 1;
+
   // Prepare items for Stripe
-  let cartItems = checkoutItems.map(item => ({
-    name: item.name,
-    price: Math.round(item.price * 100),
-    quantity: item.qty
-  }));
+  let cartItems = checkoutItems.map(item => {
+    let price = item.price || 0;
+    // Apply percent discount
+    price = price * (1 - discountPercent / 100);
+    // Apply fixed discount divided by total quantity
+    price = price - (discountFixed / totalQty);
+    price = Math.max(0, price); // Prevent negative price
+    return {
+      name: item.name,
+      price: Math.round(price * 100),
+      quantity: item.qty
+    };
+  });
   cartItems.push({
     name: "Transaction Fee",
     price: 30,
     quantity: 1
   });
+
   // Save to localStorage for return.js
   localStorage.removeItem("pendingOrder");
   localStorage.removeItem("completedCart");
