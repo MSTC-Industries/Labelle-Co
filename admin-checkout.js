@@ -1,4 +1,7 @@
 function loadStuff() {
+    if (localStorage.getItem('hubPasswordOk') !== 'true') {
+      window.location.href = "adminhub.html";
+    }
     populateCheckoutConsignorDropdown();
     renderCheckoutList();
 }

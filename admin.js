@@ -9,7 +9,7 @@ let barcodeQueue = [];
 window.onload = function() {
   // Check for admin password in localStorage
   const adminPasswordOk = localStorage.getItem('adminPasswordOk');
-  if (adminPasswordOk !== 'true') {
+  if (adminPasswordOk !== 'true' || localStorage.getItem('hubPasswordOk') !== 'true') {
     window.location.href = "adminhub.html";
     return;
   }
@@ -44,6 +44,7 @@ function loadInventory() {
     .then(res => res.json())
     .then(data => {
       allitems = data;
+      populateInventoryOwnerDropdown();
       renderTable();
       updatePrintBarcodeButton();
       hideLoading();
@@ -101,10 +102,25 @@ function renderTable() {
     <th>Actions</th>
   </tr>`;
 
+  // Get selected owner filter
+  const ownerSelect = document.getElementById('inventoryOwnerSelect');
+  const selectedOwner = ownerSelect ? ownerSelect.value : 'all';
+
   for (const [category, items] of Object.entries(allitems[currentpage])) {
     // Group items by generalName
     const groups = {};
     for (const [itemKey, details] of Object.entries(items)) {
+      // Owner filter logic
+      let isOwnerMatch = false;
+      if (selectedOwner === 'all') {
+        isOwnerMatch = true;
+      } else if (selectedOwner === 'admin') {
+        isOwnerMatch = !details.cosignerEmail && !details.cosignerName;
+      } else {
+        isOwnerMatch = details.cosignerEmail === selectedOwner;
+      }
+      if (!isOwnerMatch) continue;
+
       const groupKey = details.generalName || null;
       if (groupKey) {
         if (!groups[groupKey]) groups[groupKey] = [];
@@ -967,8 +983,19 @@ async function renderConsignors() {
       return;
     }
 
-    let html = `<table>
+    // Check if all consignors are paid
+    const allPaid = cosigners.every(c => Number(c.owedProfit) === 0);
+
+    let html = '';
+    if (allPaid) {
+      html += `<div style="font-weight:bold;color:#27ae60;font-size:1.2em;margin-bottom:12px;">
+        <i class="fas fa-check-circle"></i> All consignors are paid
+      </div>`;
+    }
+
+    html += `<table>
       <tr>
+        <th></th>
         <th>Name</th>
         <th>Email</th>
         <th>Address</th>
@@ -977,6 +1004,7 @@ async function renderConsignors() {
         <th>Owed Amount</th>
         <th>Profit Split (%)</th>
         <th>Pay Back</th>
+        <th>Pay Forward</th>
       </tr>`;
 
     for (const c of cosigners) {
@@ -993,7 +1021,13 @@ async function renderConsignors() {
         const d = new Date(Number(c.lastLogin));
         lastLoginStr = isNaN(d.getTime()) ? '-' : d.toLocaleString();
       }
+      // Checkmark if paid
+      let paidCheck = '';
+      if (profit === 0) {
+        paidCheck = `<span style="color:#27ae60;font-size:1.2em;"><i class="fas fa-check-circle"></i></span>`;
+      }
       html += `<tr>
+        <td style="width:32px;text-align:center;">${paidCheck}</td>
         <td>${c.name || ''}</td>
         <td>${c.email || ''}</td>
         <td>${c.address || ''}</td>
@@ -1018,6 +1052,16 @@ async function renderConsignors() {
             Submit
           </button>
         </td>
+        <td>
+          <input type="number" 
+                id="payForwardInput-${c.email}" 
+                min="0" 
+                placeholder="Amount" 
+                style="width:80px;">
+          <button onclick="submitConsignorPayForward('${c.email}')">
+            Submit
+          </button>
+        </td>
       </tr>`;
     }
 
@@ -1027,6 +1071,40 @@ async function renderConsignors() {
     cosignersDiv.innerHTML = `<p style="color:red;">Failed to load cosigners: ${err.message}</p>`;
   }
 }
+
+// Add this new function for pay forward
+window.submitConsignorPayForward = async function(email) {
+  const input = document.getElementById(`payForwardInput-${email}`);
+  const value = Number(input.value);
+
+  if (isNaN(value) || value <= 0) {
+    alert("Enter a valid positive amount.");
+    return;
+  }
+
+  showLoading();
+
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+
+    const c = cosigners.find(c => c.email === email);
+    if (!c) throw new Error("Consignor not found.");
+
+    c.owedProfit = Number(c.owedProfit || 0) + value;
+
+    await fetch('https://labelle-co-server.vercel.app/cosigners', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cosigners)
+    });
+
+    renderConsignors();
+    hideLoading();
+  } catch (err) {
+    alert("Failed to process pay forward: " + err.message);
+  }
+};
 
 window.submitConsignorPayment = async function(email) {
   const input = document.getElementById(`payInput-${email}`);
@@ -1552,4 +1630,33 @@ function updatePrintBarcodeButton() {
 
 function setRegisterAccess(user) {
   localStorage.setItem('registerAccess', user);
+}
+
+function populateInventoryOwnerDropdown() {
+  const ownerSelect = document.getElementById('inventoryOwnerSelect');
+  if (!ownerSelect) return;
+  // Always keep "All" and "Admin"
+  ownerSelect.innerHTML = `<option value="all">All</option><option value="admin">Admin</option>`;
+  const consignorSet = new Set();
+  for (const page of Object.values(allitems)) {
+    for (const category of Object.values(page)) {
+      for (const details of Object.values(category)) {
+        if (details.cosignerEmail) {
+          consignorSet.add(details.cosignerEmail);
+        }
+      }
+    }
+  }
+  // Optionally, get consignor names from window.consignorsList if available
+  if (window.consignorsList) {
+    for (const email of consignorSet) {
+      const c = window.consignorsList.find(c => c.email === email);
+      const name = c && c.name ? `${c.name} (${email})` : email;
+      ownerSelect.innerHTML += `<option value="${email}">${name}</option>`;
+    }
+  } else {
+    for (const email of consignorSet) {
+      ownerSelect.innerHTML += `<option value="${email}">${email}</option>`;
+    }
+  }
 }

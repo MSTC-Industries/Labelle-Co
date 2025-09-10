@@ -3,7 +3,7 @@ const CLOUD_API_URL = 'https://labelle-co-server.vercel.app/cloud';
 window.onload = function() {
   // Security check
   const salesPasswordOk = localStorage.getItem('salesPasswordOk');
-  if (salesPasswordOk !== 'true') {
+  if (salesPasswordOk !== 'true' || localStorage.getItem('hubPasswordOk') !== 'true') {
     window.location.href = "adminhub.html";
     return;
   }
@@ -52,15 +52,12 @@ function renderSalesInventoryTable() {
   let html = `<table><tr>
     <th>Category</th>
     <th>Item</th>
-    <th>Image</th>
     <th>Price</th>
     <th>Specials</th>
     <th>Stock</th>
     <th>On Hold</th>
     <th>Bought</th>
     <th>Consignor Name</th>
-    <th>Consignor Email</th>
-    <th>Barcode ID</th>
   </tr>`;
 
   for (const [category, items] of Object.entries(allitems[currentpage])) {
@@ -68,15 +65,12 @@ function renderSalesInventoryTable() {
       html += `<tr>
         <td>${category}</td>
         <td>${itemKey}</td>
-        <td>${details.img ? `<img src="${details.img}" alt="preview" style="max-width:60px; max-height:60px;">` : ''}</td>
         <td>$${Number(details.price).toFixed(2)}</td>
         <td>${details.specials ? details.specials.join(', ') : ''}</td>
         <td>${details.stock ?? ''}</td>
         <td>${details.onhold ? 'Yes' : 'No'}</td>
         <td>${details.bought ? 'Yes' : 'No'}</td>
         <td>${details.cosignerName || ''}</td>
-        <td>${details.cosignerEmail || ''}</td>
-        <td>${details.barcode || ''}</td>
       </tr>`;
     }
   }

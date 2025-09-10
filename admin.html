@@ -316,6 +316,11 @@ table tr:hover {
         <p>When printing, remember to remove margins.</p>
         <label for="pageSelect">Select Page:</label>
         <select id="pageSelect" onchange="switchPage(this.value)"></select>
+        <label for="inventoryOwnerSelect">Filter by Owner:</label>
+        <select id="inventoryOwnerSelect" onchange="renderTable()" style="margin-bottom:12px;max-width:220px;">
+          <option value="all">All</option>
+          <option value="admin">Admin</option>
+        </select>
         <button onclick="openAddItemOverlay()">Add New Item</button>
         <button onclick="saveAll()">Save All Changes</button>
         <button onclick="loadInventory()">Reload Inventory</button>

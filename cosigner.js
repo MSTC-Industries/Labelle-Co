@@ -7,7 +7,7 @@ let cosignerName = '';
 let barcodeQueue = [];
 let expandedGroups = {};
 
-if (!cosignerEmail || cosignerEmail.trim() === "") {
+if (!cosignerEmail || cosignerEmail.trim() === "" || localStorage.getItem('hubPasswordOk') !== 'true') {
   window.location.href = "adminhub.html";
 }
 fetchConsignorInfo();

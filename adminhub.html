@@ -96,10 +96,16 @@
 
 <script>
 window.onload = function() {
+  // Clear all access localStorage values on hub load
+  localStorage.removeItem('hubPasswordOk');
+  localStorage.removeItem('adminPasswordOk');
+  localStorage.removeItem('salesPasswordOk');
+  localStorage.removeItem('cosignerEmail');
+  localStorage.removeItem('cosignerName');
   document.getElementById('hub-password-overlay').style.display = 'flex';
-   document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
 };
-    
+
 async function submitHubPassword() {
   const password = document.getElementById('hubPasswordInput').value;
   const msg = document.getElementById('hubPasswordMsg');
@@ -119,6 +125,7 @@ async function submitHubPassword() {
     });
 
     if (res.ok) {
+      localStorage.setItem('hubPasswordOk', 'true');
       const overlay = document.getElementById('hub-password-overlay');
       overlay.style.transform = 'translateY(-100vh)';
       setTimeout(() => {
