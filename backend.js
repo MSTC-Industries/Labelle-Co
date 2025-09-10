@@ -12,7 +12,7 @@ app.use(express.json());
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
 const ADMIN_PASSWORD = 'password';
 const HUB_PASSWORD = 'password';
-const SALES_PASSWORD = 'salespassword';
+const SALES_PASSWORD = 'password';
 const adminURL = "https://mstc-industries.github.io/Labelle-Co/admin.html";
 const ownerEmail = 'mstc.industries.official@gmail.com';
 const YOUR_DOMAIN = 'http://127.0.0.1:3000';
