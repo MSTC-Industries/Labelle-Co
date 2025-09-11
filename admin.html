@@ -446,6 +446,17 @@ table tr:hover {
         <div id="adminPasswordChangeMsg"></div>
       </div>
     </div>
+    <div id="hub-password-change-section" style="display:none;">
+      <div class="card">
+        <h2>Change Hub Password</h2>
+        <input type="password" id="hubOldPassword" placeholder="Current hub password">
+        <br>
+        <input type="password" id="hubNewPassword" placeholder="New hub password">
+        <br>
+        <button class="btn" onclick="changeHubPassword()">Change Hub Password</button>
+        <div id="hubPasswordChangeMsg"></div>
+      </div>
+    </div>
   </div>
   
   <script src="admin.js"></script>

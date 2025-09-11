@@ -97,3 +97,26 @@ window.clearSalesInventorySearch = function() {
   input.value = "";
   filterSalesInventoryTable();
 };
+
+// Add this function
+window.showSection = function(section) {
+  document.querySelectorAll('#main-content > div').forEach(div => div.style.display = 'none');
+  if (section === 'sales-password-change') {
+    document.getElementById('sales-password-change-section').style.display = '';
+  } else {
+    document.querySelector('.card').style.display = '';
+  }
+};
+
+window.changeSalesPassword = async function() {
+  const oldPassword = document.getElementById('salesOldPassword').value;
+  const newPassword = document.getElementById('salesNewPassword').value;
+  const msg = document.getElementById('salesPasswordChangeMsg');
+  msg.textContent = "Processing...";
+  const res = await fetch('https://labelle-co-server.vercel.app/sales-change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldPassword, newPassword })
+  });
+  msg.textContent = await res.text();
+};

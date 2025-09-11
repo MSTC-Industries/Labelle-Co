@@ -44,6 +44,8 @@
 <body>
   <div id="sidebar">
     <h2>Labelle-Co</h2>
+    <a href="#" onclick="showSection('inventory')"><i class="fas fa-boxes"></i> Inventory</a>
+    <a href="#" onclick="showSection('sales-password-change')"><i class="fas fa-key"></i> Change Password</a>
     <a href="#" onclick="logoutSales()"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
   <div id="main-content">
@@ -53,6 +55,17 @@
       <button type="button" onclick="filterSalesInventoryTable()">Search</button>
       <button type="button" style="background:#e74c3c;" onclick="clearSalesInventorySearch()">Clear</button>
       <div id="salesInventoryTable"></div>
+    </div>
+    <div id="sales-password-change-section" style="display:none;">
+      <div class="card">
+        <h2>Change Sales Password</h2>
+        <input type="password" id="salesOldPassword" placeholder="Current sales password">
+        <br>
+        <input type="password" id="salesNewPassword" placeholder="New sales password">
+        <br>
+        <button class="btn" onclick="changeSalesPassword()">Change Sales Password</button>
+        <div id="salesPasswordChangeMsg"></div>
+      </div>
     </div>
   </div>
   <script src="sales.js"></script>

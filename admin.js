@@ -1542,6 +1542,19 @@ async function changeAdminPassword() {
   msg.textContent = await res.text();
 }
 
+async function changeHubPassword() {
+  const oldPassword = document.getElementById('hubOldPassword').value;
+  const newPassword = document.getElementById('hubNewPassword').value;
+  const msg = document.getElementById('hubPasswordChangeMsg');
+  msg.textContent = "Processing...";
+  const res = await fetch('https://labelle-co-server.vercel.app/hub-change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldPassword, newPassword })
+  });
+  msg.textContent = await res.text();
+}
+
 function filterCustomers() {
   const input = document.getElementById("customerSearch");
   const filter = input.value.toLowerCase();

@@ -10,9 +10,6 @@ app.use(express.json());
 
 //update all these
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
-const ADMIN_PASSWORD = 'password';
-const HUB_PASSWORD = 'password';
-const SALES_PASSWORD = 'password';
 const adminURL = "https://mstc-industries.github.io/Labelle-Co/admin.html";
 const ownerEmail = 'mstc.industries.official@gmail.com';
 const YOUR_DOMAIN = 'http://127.0.0.1:3000';
@@ -28,31 +25,49 @@ app.use((req, res, next) => {
   next();
 });
 
-app.post('/check-hub-password', (req, res) => {
+// Check hub password
+app.post('/check-hub-password', async (req, res) => {
   const { password } = req.body;
-  if (password === HUB_PASSWORD) {
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(401);
-  }
-});
-
-app.post('/check-sales-password', (req, res) => {
-  const { password } = req.body;
-  if (password === SALES_PASSWORD) {
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(401);
-  }
-});
-
-app.post('/check-admin-password', (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
-        res.sendStatus(200);
+  try {
+    const analytics = await getAnalytics();
+    if (password === analytics.hubPassword) {
+      res.sendStatus(200);
     } else {
-        res.sendStatus(401);
+      res.sendStatus(401);
     }
+  } catch {
+    res.sendStatus(500);
+  }
+});
+
+// Check sales password
+app.post('/check-sales-password', async (req, res) => {
+  const { password } = req.body;
+  try {
+    const analytics = await getAnalytics();
+    if (password === analytics.salesPassword) {
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(401);
+    }
+  } catch {
+    res.sendStatus(500);
+  }
+});
+
+// Check admin password
+app.post('/check-admin-password', async (req, res) => {
+  const { password } = req.body;
+  try {
+    const analytics = await getAnalytics();
+    if (password === analytics.adminPassword) {
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(401);
+    }
+  } catch {
+    res.sendStatus(500);
+  }
 });
 
 app.get('/cloud', async (req, res) => {
@@ -544,9 +559,42 @@ app.post('/cosigner-add-item-email', async (req, res) => {
 
 app.post('/admin-change-password', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  if (oldPassword !== ADMIN_PASSWORD) return res.status(401).send('Incorrect password');
-  ADMIN_PASSWORD = newPassword;
-  res.send('Password updated');
+  try {
+    const analytics = await getAnalytics();
+    if (oldPassword !== analytics.adminPassword) return res.status(401).send('Incorrect password');
+    analytics.adminPassword = newPassword;
+    await saveAnalytics(analytics);
+    res.send('Password updated');
+  } catch {
+    res.status(500).send('Failed to update password');
+  }
+});
+
+app.post('/hub-change-password', async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  try {
+    const analytics = await getAnalytics();
+    if (oldPassword !== analytics.hubPassword) return res.status(401).send('Incorrect password');
+    analytics.hubPassword = newPassword;
+    await saveAnalytics(analytics);
+    res.send('Password updated');
+  } catch {
+    res.status(500).send('Failed to update password');
+  }
+});
+
+// Change sales password
+app.post('/sales-change-password', async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  try {
+    const analytics = await getAnalytics();
+    if (oldPassword !== analytics.salesPassword) return res.status(401).send('Incorrect password');
+    analytics.salesPassword = newPassword;
+    await saveAnalytics(analytics);
+    res.send('Password updated');
+  } catch {
+    res.status(500).send('Failed to update password');
+  }
 });
 
 app.post('/cosigner-change-password', async (req, res) => {
@@ -666,6 +714,20 @@ app.post('/remove-money', async (req, res) => {
     res.status(500).send('Error removing money');
   }
 });
+
+async function getAnalytics() {
+  const response = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+  return await response.json();
+}
+
+// Helper to save analytics JSON
+async function saveAnalytics(analytics) {
+  await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(analytics)
+  });
+}
 
 module.exports = app;
 
