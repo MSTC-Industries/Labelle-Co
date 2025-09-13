@@ -12,6 +12,7 @@
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       background-color: #ecf0f1;
+      min-height: 100vh;
     }
     .sidebar {
       width: 220px;
@@ -19,28 +20,48 @@
       color: white;
       height: 100vh;
       padding-top: 20px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .sidebar a {
       display: block;
       padding: 15px 20px;
       color: white;
       text-decoration: none;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      text-align: left;
     }
     .sidebar a:hover {
       background-color: #34495e;
     }
     .main {
-      padding: 40px;
+      padding: 32px 0;
       width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
       flex-direction: column;
+      gap: 24px;
+      align-items: center;
+      min-height: 100vh;
     }
     .card {
       background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      max-width: 500px;
-      margin: auto;
+      padding: 24px 28px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 540px;
+      margin: 0 auto 16px auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
     h2 {
       margin-bottom: 20px;
@@ -48,15 +69,17 @@
     }
     label {
       display: block;
-      margin-top: 15px;
+      margin-top: 12px;
       font-weight: bold;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 16px;
     }
     .btn {
       background-color: #3498db;
@@ -64,19 +87,25 @@
       padding: 12px 20px;
       border: none;
       border-radius: 5px;
-      margin-top: 20px;
+      margin-top: 16px;
       cursor: pointer;
-      width: 500px;
+      width: 100%;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    .btn.scan-btn {
+      background-color: green;
+      margin-top: 0;
+    }
+    .btn.scan-btn:disabled {
+      background-color: red !important;
+      cursor: not-allowed;
     }
     .btn:hover {
       background-color: #2980b9;
     }
     .form-actions {
       text-align: center;
-    }
-    a {
-      color: #3498db;
-      text-decoration: none;
     }
     .sidebar h2 { color: white; }
     a:hover {
@@ -86,118 +115,204 @@
       margin-top: 15px;
       color: green;
     }
-
-.scan-btn {
-  background-color: green;
-}
-
-.scan-btn:disabled {
-  background-color: red !important;
-  cursor: not-allowed;
-}
-
-.scan-btn {
-  transition: background-color 0.3s ease;
-}
-
+    #reader {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto 16px auto;
+      border-radius: 8px;
+      background: #f4f6f8;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      padding: 12px;
+    }
+    #barcodeInput {
+      font-size: 18px;
+      padding: 10px;
+      margin-bottom: 10px;
+      margin-top: 0;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+    #show {
+      margin-top: 10px;
+      width: 100%;
+      max-width: 540px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      padding: 18px 16px;
+      box-sizing: border-box;
+    }
+    #show h4 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+    #resultsList {
+      color: blue;
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    #resultsList li {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+    }
+    #resultsList li strong {
+      color: #2c3e50;
+    }
+    #resultsList button {
+      background-color: #e74c3c;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #resultsList button:hover {
+      background-color: #c0392b;
+    }
+    #orders {
+      width: 100%;
+      max-width: 540px;
+      overflow-x: auto;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    #orders table {
+      width: 100%;
+      min-width: 400px;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    #orders th, #orders td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      font-size: 15px;
+    }
+    #orders th {
+      background: #f4f6f8;
+      font-weight: bold;
+    }
+    #orders tr:hover {
+      background: #f2f6fa;
+    }
+    #customer-lookup-card {
+      max-height: 260px;
+      overflow-y: auto;
+      min-height: 180px;
+    }
+    #customersTable {
+      max-height: 140px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+    #customersTable table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+    #customersTable th, #customersTable td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    #customersTable th {
+      background: #f4f6f8;
+      font-weight: bold;
+    }
+    #customersTable tr:hover {
+      background: #f2f6fa;
+    }
+    @media (max-width: 900px) {
+      .main {
+        max-width: 100vw;
+        padding: 16px 0;
+      }
+      .card, #show, #orders {
+        max-width: 98vw;
+        min-width: 0;
+      }
+      #reader, #barcodeInput {
+        max-width: 98vw;
+      }
+    }
     @media (max-width: 600px) {
-  body {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    height: auto;
-    padding: 10px;
-    text-align: center;
-  }
-
-  .main {
-    padding: 20px;
-    width: 100%;
-  }
-
-  .btn {
-    width: 100%;
-  }
-
-  #reader {
-    width: 100% !important;
-    height: auto;
-  }
-
-  .card {
-    padding: 20px;
-    margin: 10px auto;
-  }
-
-  ul#resultsList li {
-    font-size: 14px;
-  }
-}
-
-#resultsList li, .resultlist {
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#resultsList li strong {
-  color: #2c3e50;
-}
-
-#resultsList button {
-  background-color: #e74c3c;
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#resultsList button:hover {
-  background-color: #c0392b;
-}
-
-/* Responsive orders table */
-@media (max-width: 600px) {
-  #orders table, #orders th, #orders td {
-    font-size: 13px;
-    padding: 6px;
-  }
-  #orders table {
-    min-width: 400px;
-    width: 100%;
-    display: block;
-    overflow-x: auto;
-  }
-}
-  </style>
+      body {
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 10px 0;
+        text-align: center;
+        position: static;
+      }
+      .main {
+        padding: 10px 0;
+        max-width: 100vw;
+        gap: 16px;
+      }
+      .card, #show, #orders {
+        max-width: 99vw;
+        padding: 12px 8px;
+        margin: 8px auto;
+      }
+      #reader, #barcodeInput {
+        max-width: 99vw;
+      }
+      #resultsList li {
+        font-size: 14px;
+        padding: 8px;
+      }
+      #orders table, #orders th, #orders td {
+        font-size: 13px;
+        padding: 6px;
+      }
+      #customer-lookup-card {
+        max-height: 180px;
+        min-height: 100px;
+      }
+      #customersTable {
+        max-height: 90px;
+      }
+    }
+    </style>
 </head>
 <body>
     <div class="sidebar">
         <h2 style="text-align:center;">Labelle-Co</h2>
         <a href="adminhub.html"><i class="fas fa-arrow-left"></i> Back to Hub</a>
     </div>
-    <div class="main" style="align-content: center;">
+    <div class="main">
         <div id="reader"></div>
-        <label for="barcodeInput">Manual Barcode Entry:</label>
-        <input type="text" id="barcodeInput" autofocus placeholder="Scan or enter barcode then press enter" style="font-size: 18px; padding: 10px; margin-bottom: 10px;">
-
-        <button class="btn scan-btn" onclick="triggerScan()" disabled>Scan</button>
-        <br>
-        <div id="show" style="display: none; margin-top: 10px;" class="resultlist">
-            <h4>Cart</h4>
-            <ul id="resultsList" style="color: blue; list-style: none; padding-left: 0;"></ul>
+        <div class="card" style="margin-bottom:0;">
+          <label for="barcodeInput">Manual Barcode Entry:</label>
+          <input type="text" id="barcodeInput" autofocus placeholder="Scan or enter barcode then press enter">
+          <button class="btn scan-btn" onclick="triggerScan()" disabled>Scan</button>
         </div>
-        <br>
-        <button class="btn" onclick="clearScannedBarcodes()">Clear</button>
-        <div class="card" id="admin-checkout-card" style="max-width:600px;margin:auto;margin-bottom:20px;">
+        <div id="show" style="display: none;" class="card">
+            <h4>Cart</h4>
+            <ul id="resultsList"></ul>
+        </div>
+        <div class="form-actions" style="width:100%;max-width:540px;display:flex;gap:12px;justify-content:center;">
+          <button class="btn" onclick="clearScannedBarcodes()" style="max-width:220px;">Clear</button>
+          <button class="btn" onclick="removeScannedItemsNoPay()" style="max-width:220px;">Remove From Inventory</button>
+          <button class="btn" onclick="html5Qrcode.stop(); initialize()" style="max-width:220px;">Checkout</button>
+        </div>
+        <div class="card" id="admin-checkout-card">
           <h3>Manual Admin Checkout</h3>
           <form id="checkoutForm" onsubmit="return addManualItemToScannedList(event)">
             <label>Name:
@@ -226,40 +341,32 @@
             <label>Consignor:
               <select id="checkoutConsignorDropdown"></select>
             </label>
-            <button type="submit" class="btn" style="margin-top:16px;width:100%;">Add Item</button>
+            <button type="submit" class="btn" style="margin-top:16px;">Add Item</button>
             <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
           </form>
         </div>
-        <div class="card" id="discounts-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
+        <div class="card" id="discounts-card">
           <h3>Discounts</h3>
           <label for="discountPercent">Percent Off Each Item (%):</label>
-          <input type="number" id="discountPercent" min="0" max="99" value="0" style="margin-bottom:10px;">
+          <input type="number" id="discountPercent" min="0" max="99" value="0">
           <label for="discountFixed">Fixed Amount Off Total ($):</label>
-          <input type="number" id="discountFixed" min="0" step="0.01" value="0" style="margin-bottom:10px;">
+          <input type="number" id="discountFixed" min="0" step="0.01" value="0">
           <div style="font-size:13px;color:#888;margin-top:8px;">
             The fixed amount will be divided evenly among all items in the cart.
           </div>
         </div>
-        <button class="btn" onclick="removeScannedItemsNoPay()">Remove From Inventory (for pickup orders)</button>
-        <br>
-        <button class="btn" onclick="html5Qrcode.stop(); initialize()">Checkout</button>
-        <br>
-        <div id="orders" class="card" style="margin-bottom:20px;overflow-x:auto;"></div>
-        <br>
-         <div id="checkout" style="margin-top: 10px;">
-            <!-- Checkout will insert the payment form here -->
-        </div>
-        <div class="card" id="customer-lookup-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
+        <div class="card" id="orders"></div>
+        <div class="card" id="customer-lookup-card">
           <h3>Customer Lookup</h3>
           <input 
             type="text" 
             id="customerSearch" 
             placeholder="Search by name, phone, or email..." 
-            style="margin-bottom:12px; padding:8px; width:100%; max-width:300px; border-radius:6px; border:1px solid #ccc;"
             onkeyup="filterCustomers()"
           >
           <div id="customersTable"></div>
         </div>
+        <div id="checkout" style="margin-top: 10px; width:100%;max-width:540px;"></div>
     </div>
     <script src="scanner.js"></script>
     <script src="https://js.stripe.com/basil/stripe.js"></script>

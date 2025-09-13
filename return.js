@@ -174,7 +174,7 @@ async function initialize() {
           }
         }
 
-        // Update analytics (same as before)
+        /* Update analytics (same as before)
         await fetch('https://labelle-co-server.vercel.app/update-analytics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -182,7 +182,7 @@ async function initialize() {
             order: completedCart,
             allitems: allitems
           })
-        });
+        });*/
 
         // Mutate inventory for items that exist in inventory
         for (const [itemName, qty] of Object.entries(completedCart.items)) {
@@ -217,6 +217,74 @@ async function initialize() {
           }
         });
 
+        const now = Date.now();
+        const monthKey = `${new Date(now).getMonth() + 1}-${new Date(now).getFullYear()}`;
+
+        // Fetch current analytics
+        const analyticsRes = await fetch('https://labelle-co-server.vercel.app/get-analytics');
+        let analytics = await analyticsRes.json();
+        if (!analytics.months) analytics.months = {};
+        if (!analytics.months[monthKey]) {
+          analytics.months[monthKey] = { itemsSold: {} };
+        }
+
+        // Add all items (inventory and manual) to analytics
+        for (const [itemName, qty] of Object.entries(completedCart.items)) {
+          let itemObj = null;
+          // Try to find in inventory
+          for (const page in allitems) {
+            for (const category in allitems[page]) {
+              if (allitems[page][category][itemName]) {
+                itemObj = allitems[page][category][itemName];
+                break;
+              }
+            }
+            if (itemObj) break;
+          }
+          // If not found, check manualItems
+          if (!itemObj && completedCart.manualItems) {
+            for (const manual of Object.values(completedCart.manualItems)) {
+              if (manual.name === itemName) {
+                itemObj = manual;
+                break;
+              }
+            }
+          }
+          if (!itemObj) continue;
+
+          if (!analytics.months[monthKey].itemsSold[itemName]) {
+            analytics.months[monthKey].itemsSold[itemName] = {
+              quantity: 0,
+              price: 0.0,
+              date: now,
+              cosignerEmail: itemObj.cosignerEmail || '',
+              profitSplit: itemObj.profitSplit || "50/50",
+              cost: itemObj.cost || 0,
+              taxed: !!itemObj.taxed
+            };
+          }
+          analytics.months[monthKey].itemsSold[itemName].quantity += qty;
+          analytics.months[monthKey].itemsSold[itemName].price += Number(itemObj.price) * qty;
+          analytics.months[monthKey].itemsSold[itemName].date = now;
+          analytics.months[monthKey].itemsSold[itemName].cosignerEmail = itemObj.cosignerEmail || '';
+          analytics.months[monthKey].itemsSold[itemName].profitSplit = itemObj.profitSplit || "50/50";
+          analytics.months[monthKey].itemsSold[itemName].cost = itemObj.cost || 0;
+          analytics.months[monthKey].itemsSold[itemName].taxed = !!itemObj.taxed;
+        }
+
+        // Remove profit summary fields
+        if (analytics.months[monthKey].totalProfit !== undefined) delete analytics.months[monthKey].totalProfit;
+        if (analytics.months[monthKey].adminProfit !== undefined) delete analytics.months[monthKey].adminProfit;
+        if (analytics.months[monthKey].cosignerProfits !== undefined) delete analytics.months[monthKey].cosignerProfits;
+        if (analytics.revenue !== undefined) delete analytics.revenue;
+
+        // Save analytics
+        await fetch('https://labelle-co-server.vercel.app/analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(analytics)
+        });
+
         // Save updated allitems and cosigners to the cloud
         await Promise.all([
           fetch('https://labelle-co-server.vercel.app/cloud', {
@@ -242,7 +310,7 @@ async function initialize() {
         Thank you for shopping with us!`;
         document.getElementById('exit').style.display = 'block';
       }
-    } else if (adminCheckoutCartStr) {
+    } /*else if (adminCheckoutCartStr) {
       returntype = "admin.html";
       try {
         showLoading();
@@ -347,7 +415,7 @@ async function initialize() {
         Thank you for shopping with us!`;
         document.getElementById('exit').style.display = 'block';
       }
-    }
+    }*/
   }
 }
 
