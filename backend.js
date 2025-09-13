@@ -12,7 +12,7 @@ app.use(express.json());
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
 const adminURL = "https://mstc-industries.github.io/Labelle-Co/admin.html";
 const ownerEmail = 'mstc.industries.official@gmail.com';
-const YOUR_DOMAIN = 'http://127.0.0.1:3000';
+const YOUR_DOMAIN = 'https://mstc-industries.github.io/Labelle-Co/';
 const stripe = require('stripe')('sk_test_51RUqjwI71UXMKz4PmfNcNYoW5Ui6wxwhpVciop00STAMnzNPvMHRIZfcfX5KNdkCcHDf8g2506lY6tC3hEe9hLpB00DFPvqjV1');
 
 app.use((req, res, next) => {
