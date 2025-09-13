@@ -197,6 +197,40 @@
         </div>
         <br>
         <button class="btn" onclick="clearScannedBarcodes()">Clear</button>
+        <div class="card" id="admin-checkout-card" style="max-width:600px;margin:auto;margin-bottom:20px;">
+          <h3>Manual Admin Checkout</h3>
+          <form id="checkoutForm" onsubmit="return addCheckoutItem(event)">
+            <label>Name:
+              <input type="text" id="checkoutName" required>
+            </label>
+            <label>Price:
+              <input type="number" id="checkoutPrice" min="0" step="0.01" required>
+            </label>
+            <label>Quantity:
+              <input type="number" id="checkoutQty" min="1" step="1" required>
+            </label>
+            <label>Profit Split:
+              <select id="checkoutProfitSplit">
+                <option value="100/0">100/0 (No Consignor)</option>
+                <option value="90/10">90/10</option>
+                <option value="80/20">80/20</option>
+                <option value="70/30">70/30</option>
+                <option value="60/40">60/40</option>
+                <option value="50/50" selected>50/50</option>
+                <option value="40/60">40/60</option>
+                <option value="30/70">30/70</option>
+                <option value="20/80">20/80</option>
+                <option value="10/90">10/90</option>
+              </select>
+            </label>
+            <label>Consignor:
+              <select id="checkoutConsignorDropdown"></select>
+            </label>
+            <button type="submit" class="btn" style="margin-top:16px;width:100%;">Add Item</button>
+            <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
+          </form>
+          <div id="checkoutList"></div>
+        </div>
         <div class="card" id="discounts-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
           <h3>Discounts</h3>
           <label for="discountPercent">Percent Off Each Item (%):</label>
@@ -215,6 +249,17 @@
         <br>
          <div id="checkout" style="margin-top: 10px;">
             <!-- Checkout will insert the payment form here -->
+        </div>
+        <div class="card" id="customer-lookup-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
+          <h3>Customer Lookup</h3>
+          <input 
+            type="text" 
+            id="customerSearch" 
+            placeholder="Search by name, phone, or email..." 
+            style="margin-bottom:12px; padding:8px; width:100%; max-width:300px; border-radius:6px; border:1px solid #ccc;"
+            onkeyup="filterCustomers()"
+          >
+          <div id="customersTable"></div>
         </div>
     </div>
     <script src="scanner.js"></script>
@@ -596,6 +641,175 @@ async function removeScannedItemsNoPay() {
   clearScannedBarcodes();
   alert("Scanned items removed from inventory.");
 }
+
+async function loadCustomers() {
+  const customersTable = document.getElementById('customersTable');
+  customersTable.innerHTML = 'Loading...';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
+    const analytics = await res.json();
+    const customersObj = analytics.customers && typeof analytics.customers === 'object' ? analytics.customers : {};
+    let html = `<table>
+      <tr><th>Name</th><th>Email</th><th>Phone</th></tr>`;
+    for (const [email, info] of Object.entries(customersObj)) {
+      html += `<tr>
+        <td>${info.name || ''}</td>
+        <td>${email}</td>
+        <td>${info.phone || ''}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    customersTable.innerHTML = html;
+  } catch (err) {
+    customersTable.innerHTML = `<span style="color:red;">Failed to load customers: ${err.message}</span>`;
+  }
+}
+
+function filterCustomers() {
+  const input = document.getElementById("customerSearch");
+  const filter = input.value.toLowerCase();
+  const table = document.querySelector("#customersTable table");
+  if (!table) return;
+  const rows = table.getElementsByTagName("tr");
+  for (let i = 1; i < rows.length; i++) { // skip header row
+    const nameCell = rows[i].getElementsByTagName("td")[0];
+    const emailCell = rows[i].getElementsByTagName("td")[1];
+    const phoneCell = rows[i].getElementsByTagName("td")[2];
+    let match = false;
+    if (nameCell && (nameCell.textContent || nameCell.innerText).toLowerCase().includes(filter)) match = true;
+    if (emailCell && (emailCell.textContent || emailCell.innerText).toLowerCase().includes(filter)) match = true;
+    if (phoneCell && (phoneCell.textContent || phoneCell.innerText).toLowerCase().includes(filter)) match = true;
+    rows[i].style.display = match ? "" : "none";
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadCustomers);
+
+let checkoutItems = JSON.parse(localStorage.getItem("scannerAdminCheckoutItems") || "[]");
+
+function saveCheckoutItems() {
+  localStorage.setItem("scannerAdminCheckoutItems", JSON.stringify(checkoutItems));
+}
+
+function addCheckoutItem(event) {
+  event.preventDefault();
+  const name = document.getElementById('checkoutName').value.trim();
+  const price = Number(document.getElementById('checkoutPrice').value);
+  const qty = Number(document.getElementById('checkoutQty').value);
+  let profitSplit = document.getElementById('checkoutProfitSplit').value;
+  const cosignerData = JSON.parse(document.getElementById('checkoutConsignorDropdown').value || '{}');
+  if (!name || !price || !qty) {
+    document.getElementById('checkoutMsg').textContent = "Fill out all fields.";
+    return false;
+  }
+  // If no cosigner, force profitSplit to 100/0
+  if (!cosignerData.email) profitSplit = "100/0";
+  checkoutItems.push({
+    name, price, qty, profitSplit,
+    cosignerName: cosignerData.name,
+    cosignerEmail: cosignerData.email
+  });
+  saveCheckoutItems();
+  renderCheckoutList();
+  document.getElementById('checkoutForm').reset();
+  document.getElementById('checkoutMsg').textContent = "";
+  return false;
+}
+
+function renderCheckoutList() {
+  const container = document.getElementById('checkoutList');
+  if (!checkoutItems.length) {
+    container.innerHTML = '<p>No items added.</p>';
+    return;
+  }
+  let html = `<table>
+    <tr>
+      <th>Name</th>
+      <th>Price</th>
+      <th>Quantity</th>
+      <th>Profit Split</th>
+      <th>Consignor</th>
+      <th>Actions</th>
+    </tr>`;
+  checkoutItems.forEach((item, idx) => {
+    html += `<tr>
+      <td><input type="text" value="${item.name}" onchange="editCheckoutItem(${idx}, 'name', this.value)"></td>
+      <td><input type="number" value="${item.price}" onchange="editCheckoutItem(${idx}, 'price', this.value)"></td>
+      <td><input type="number" value="${item.qty}" min="1" onchange="editCheckoutItem(${idx}, 'qty', this.value)"></td>
+      <td>
+        <select onchange="editCheckoutItem(${idx}, 'profitSplit', this.value)">
+          ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
+            `<option value="${opt}" ${item.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
+          ).join('')}
+        </select>
+      </td>
+      <td>
+        <select onchange="editCheckoutItem(${idx}, 'cosigner', this.value)">
+          ${getConsignorOptions(item.cosignerName, item.cosignerEmail)}
+        </select>
+      </td>
+      <td>
+        <button onclick="removeCheckoutItem(${idx})">Remove</button>
+      </td>
+    </tr>`;
+  });
+  html += '</table>';
+  container.innerHTML = html;
+}
+
+function getConsignorOptions(selectedName, selectedEmail) {
+  let options = '<option value="">-- Select Consignor --</option>';
+  const cosignerDropdown = document.getElementById('checkoutConsignorDropdown');
+  for (let i = 1; i < cosignerDropdown.options.length; i++) {
+    const val = cosignerDropdown.options[i].value;
+    const { name, email } = JSON.parse(val);
+    options += `<option value="${val}" ${name === selectedName && email === selectedEmail ? 'selected' : ''}>${name} (${email})</option>`;
+  }
+  return options;
+}
+
+function editCheckoutItem(idx, field, value) {
+  if (field === 'cosigner') {
+    const data = JSON.parse(value || '{}');
+    checkoutItems[idx].cosignerName = data.name;
+    checkoutItems[idx].cosignerEmail = data.email;
+  } else if (field === 'price' || field === 'qty') {
+    checkoutItems[idx][field] = Number(value);
+  } else {
+    checkoutItems[idx][field] = value;
+  }
+  saveCheckoutItems();
+  renderCheckoutList();
+}
+
+function removeCheckoutItem(idx) {
+  checkoutItems.splice(idx, 1);
+  saveCheckoutItems();
+  renderCheckoutList();
+}
+
+async function populateCheckoutConsignorDropdown() {
+  const dropdown = document.getElementById('checkoutConsignorDropdown');
+  dropdown.innerHTML = '<option value="">-- Select Consignor --</option>';
+  try {
+    const res = await fetch('https://labelle-co-server.vercel.app/cosigners');
+    const cosigners = await res.json();
+    cosigners.forEach(c => {
+      const option = document.createElement('option');
+      option.value = JSON.stringify({ name: c.name, email: c.email });
+      option.textContent = `${c.name} (${c.email})`;
+      dropdown.appendChild(option);
+    });
+  } catch (err) {
+    dropdown.innerHTML = '<option value="">Error loading cosigners</option>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadCustomers();
+  populateCheckoutConsignorDropdown();
+  renderCheckoutList();
+});
 
 </script>
 </body>
