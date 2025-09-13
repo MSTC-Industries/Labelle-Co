@@ -143,7 +143,8 @@ function renderTable() {
       }
     }
 
-    for (const [groupName, groupItems, category] of Object.entries(groups)) {
+    for (const [groupName, groupItems] of Object.entries(groups)) {
+      const category = groupItems[0].category;
       const isGrouped = groupItems.length > 1 || groupItems[0].details.generalName;
       const groupId = `${category}-${groupName}`.replace(/\s+/g, '_');
 
