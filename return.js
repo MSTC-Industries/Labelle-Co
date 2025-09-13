@@ -252,6 +252,9 @@ async function initialize() {
           }
           if (!itemObj) continue;
 
+          const isManual = !!(completedCart.manualItems && completedCart.manualItems[itemObj.barcode]);
+          const taxedValue = isManual ? true : !!itemObj.taxed;
+
           if (!analytics.months[monthKey].itemsSold[itemName]) {
             analytics.months[monthKey].itemsSold[itemName] = {
               quantity: 0,
@@ -260,7 +263,7 @@ async function initialize() {
               cosignerEmail: itemObj.cosignerEmail || '',
               profitSplit: itemObj.profitSplit || "50/50",
               cost: itemObj.cost || 0,
-              taxed: !!itemObj.taxed
+              taxed: taxedValue
             };
           }
           analytics.months[monthKey].itemsSold[itemName].quantity += qty;
@@ -269,7 +272,7 @@ async function initialize() {
           analytics.months[monthKey].itemsSold[itemName].cosignerEmail = itemObj.cosignerEmail || '';
           analytics.months[monthKey].itemsSold[itemName].profitSplit = itemObj.profitSplit || "50/50";
           analytics.months[monthKey].itemsSold[itemName].cost = itemObj.cost || 0;
-          analytics.months[monthKey].itemsSold[itemName].taxed = !!itemObj.taxed;
+          analytics.months[monthKey].itemsSold[itemName].taxed = taxedValue;
         }
 
         // Remove profit summary fields
@@ -469,3 +472,113 @@ function hideLoading() {
 function exit() {
   window.location.href = returntype;
 }
+
+function printReceiptFromCompletedCart(completedCart) {
+  // Get date string
+  const now = new Date();
+  const dateStr = now.toLocaleString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+  // Build receipt HTML
+  let html = `
+    <div style="font-family:monospace;max-width:400px;margin:0 auto;">
+      <div style="text-align:center;">
+        <div style="font-size:1.3em;font-weight:bold;">LaBelle &amp; Co</div>
+        <div>${dateStr}</div>
+        <div>8906 W. Broad Street Suite J</div>
+        <div>Henrico, VA 23294</div>
+        <div>804-655-2131</div>
+      </div>
+      <table style="width:100%;margin-top:18px;border-collapse:collapse;">
+        <tr>
+          <th style="border-bottom:1px solid #333;text-align:left;">Item</th>
+          <th style="border-bottom:1px solid #333;text-align:right;">Qty</th>
+          <th style="border-bottom:1px solid #333;text-align:right;">Price</th>
+        </tr>
+  `;
+
+  // Gather items and manualItems
+  let items = [];
+  let subtotal = 0;
+  let totalTax = 0;
+
+  // Helper: get manual item details by name
+  function getManualDetails(name) {
+    if (!completedCart.manualItems) return null;
+    for (const manual of Object.values(completedCart.manualItems)) {
+      if (manual.name === name) return manual;
+    }
+    return null;
+  }
+
+  for (const [itemName, qty] of Object.entries(completedCart.items)) {
+    let price = 0, taxed = false, taxAmount = 0;
+    let manualDetails = getManualDetails(itemName);
+    if (manualDetails) {
+      price = Number(manualDetails.price) || 0;
+      taxed = manualDetails.taxed !== undefined ? manualDetails.taxed : true;
+      taxAmount = taxed ? price * 0.06 * qty : 0;
+    } else {
+      // Try to get from inventory (allitems not available here, so use taxed=false if not manual)
+      price = 0;
+      taxed = false;
+      taxAmount = 0;
+    }
+    // If not manual, try to get price from analytics (not available here), so skip tax
+    // You can optionally fetch price from server if needed
+
+    // For receipt, show untaxed price
+    html += `
+      <tr>
+        <td>${itemName}</td>
+        <td style="text-align:right;">${qty}</td>
+        <td style="text-align:right;">$${(price * qty).toFixed(2)}</td>
+      </tr>
+    `;
+    subtotal += price * qty;
+    totalTax += taxAmount;
+  }
+
+  html += `
+      </table>
+      <div style="margin-top:18px;">
+        <div style="display:flex;justify-content:space-between;">
+          <span>Subtotal:</span>
+          <span>$${subtotal.toFixed(2)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span>Tax:</span>
+          <span>$${totalTax.toFixed(2)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:bold;">
+          <span>Total:</span>
+          <span>$${(subtotal + totalTax).toFixed(2)}</span>
+        </div>
+      </div>
+      <div style="margin-top:30px;text-align:center;font-size:1em;">
+        Make sure you love it... All sales are final.
+      </div>
+    </div>
+  `;
+
+  // Open print window
+  const printWin = window.open('', '', 'width=500,height=700');
+  printWin.document.write(`<html><head><title>Receipt</title></head><body>${html}</body></html>`);
+  printWin.document.close();
+  printWin.focus();
+  printWin.print();
+}
+
+// Add this button to your thankyou-container in return.html (after the exit button)
+document.addEventListener('DOMContentLoaded', () => {
+  const completedCartStr = localStorage.getItem("completedCart");
+  if (completedCartStr) {
+    const btn = document.createElement('button');
+    btn.textContent = "Print Receipt";
+    btn.style.marginTop = "1rem";
+    btn.onclick = () => printReceiptFromCompletedCart(JSON.parse(completedCartStr));
+    document.getElementById('success').appendChild(btn);
+  }
+});

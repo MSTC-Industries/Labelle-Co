@@ -552,8 +552,10 @@ function getScannedItemSummary() {
 
   for (const barcode in scannedItems) {
     let matchedItem = null;
+    let isManual = false;
     if (window.manualItems && window.manualItems[barcode]) {
       matchedItem = { ...window.manualItems[barcode] };
+      isManual = true;
     } else {
       for (const [page, categories] of Object.entries(allitems)) {
         for (const [category, items] of Object.entries(categories)) {
@@ -576,10 +578,18 @@ function getScannedItemSummary() {
       // Apply fixed discount divided by total quantity
       price = price - (discountFixed / totalQty);
       price = Math.max(0, price); // Prevent negative price
+
+      // Apply 6% tax if manual or taxed
+      let taxed = isManual || !!matchedItem.taxed;
+      let taxAmount = taxed ? price * 0.06 : 0;
+      let finalPrice = price + taxAmount;
+
       summary.push({
         name: matchedItem.name,
-        price: Math.round(price * 100),
-        quantity: scannedItems[barcode]
+        price: Math.round(price * 100), // Stripe expects cents
+        quantity: scannedItems[barcode],
+        taxed: taxed,
+        finalPrice: Math.round(finalPrice * 100) // Save tax in cents for return.js
       });
     }
   }
@@ -587,7 +597,9 @@ function getScannedItemSummary() {
   summary.push({
     name: "Transaction Fee",
     price: 30,
-    quantity: 1
+    quantity: 1,
+    taxed: false,
+    finalPrice: 30
   });
 
   return summary;
@@ -597,34 +609,45 @@ async function initialize() {
   // Build cart object: { items: { itemName: quantity } }
   const cart = { items: {} };
   const manualItems = {};
-  for (const barcode in scannedItems) {
-    let matchedItem = null;
-    if (window.manualItems && window.manualItems[barcode]) {
-      matchedItem = { ...window.manualItems[barcode] };
-      manualItems[barcode] = matchedItem;
-    } else {
-      for (const [page, categories] of Object.entries(allitems)) {
-        for (const [category, items] of Object.entries(categories)) {
-          for (const [itemName, details] of Object.entries(items)) {
-            if (details.barcode === barcode) {
-              matchedItem = { name: itemName, ...details };
-              break;
-            }
-          }
-          if (matchedItem) break;
+
+  // Get full summary with tax info
+  const summary = getScannedItemSummary();
+
+  // Populate cart.items and manualItems using summary
+  for (const item of summary) {
+    // Skip transaction fee row for cart.items
+    if (item.name === "Transaction Fee") continue;
+
+    // Find barcode for manual items (if needed)
+    let barcode = null;
+    if (window.manualItems) {
+      for (const [manualBarcode, manualDetails] of Object.entries(window.manualItems)) {
+        if (manualDetails.name === item.name) {
+          barcode = manualBarcode;
+          manualItems[manualBarcode] = {
+            ...manualDetails,
+            taxed: item.taxed,
+            taxAmount: item.taxAmount
+          };
+          break;
         }
-        if (matchedItem) break;
       }
     }
-    if (matchedItem) {
-      cart.items[matchedItem.name] = scannedItems[barcode];
-    }
+
+    // Add to cart.items
+    cart.items[item.name] = item.quantity;
   }
+
   cart.manualItems = manualItems; // Add manual items to cart
+
   localStorage.removeItem("pendingOrder");
   localStorage.setItem("completedCart", JSON.stringify(cart));
 
-  let cartItems = getScannedItemSummary();
+  let cartItems = summary.map(item => ({
+    name: item.name,
+    price: item.finalPrice,      // already includes tax if applicable
+    quantity: item.quantity
+  }));
 
   const fetchClientSecret = async () => {
     const response = await fetch("https://labelle-co-server.vercel.app/create-checkout-session", {
