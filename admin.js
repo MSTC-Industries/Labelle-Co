@@ -137,13 +137,13 @@ function renderTable() {
       const groupKey = details.generalName || null;
       if (groupKey) {
         if (!groups[groupKey]) groups[groupKey] = [];
-        groups[groupKey].push({ itemKey, details });
+        groups[groupKey].push({ itemKey, details, category });
       } else {
-        groups[itemKey] = [{ itemKey, details }];
+        groups[itemKey] = [{ itemKey, details, category }];
       }
     }
 
-    for (const [groupName, groupItems] of Object.entries(groups)) {
+    for (const [groupName, groupItems, category] of Object.entries(groups)) {
       const isGrouped = groupItems.length > 1 || groupItems[0].details.generalName;
       const groupId = `${category}-${groupName}`.replace(/\s+/g, '_');
 
