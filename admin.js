@@ -6,6 +6,9 @@ let expandedGroups = {};
 let currentpage = 'main.html';
 let barcodeQueue = [];
 
+let inventoryPageIndex = 0;
+const INVENTORY_PAGE_SIZE = 50;
+
 window.onload = function() {
   // Check for admin password in localStorage
   const adminPasswordOk = localStorage.getItem('adminPasswordOk');
@@ -76,6 +79,22 @@ function renderTable() {
     container.innerHTML = '<p>No data for this page.</p>';
     return;
   }
+
+  let paginationDiv = document.getElementById('inventory-pagination-controls');
+  if (!paginationDiv) {
+    paginationDiv = document.createElement('div');
+    paginationDiv.id = 'inventory-pagination-controls';
+    optionsCard.appendChild(paginationDiv);
+  }
+
+  const allFilteredItems = getFilteredInventoryItems();
+  renderInventoryPaginationControls(allFilteredItems.length);
+
+  // Paginate items
+  const startIdx = inventoryPageIndex * INVENTORY_PAGE_SIZE;
+  const endIdx = startIdx + INVENTORY_PAGE_SIZE;
+  const pageItems = allFilteredItems.slice(startIdx, endIdx);
+
   let printBtnHtml = '';
   if (barcodeQueue.length > 0) {
     printBtnHtml = `<button onclick="printBarcodeQueue()" style="margin-bottom:12px;">Print Barcodes (${barcodeQueue.length})</button>`;
@@ -1667,4 +1686,54 @@ function populateInventoryOwnerDropdown() {
       ownerSelect.innerHTML += `<option value="${email}">${email}</option>`;
     }
   }
+}
+
+function renderInventoryPaginationControls(totalItems) {
+  const container = document.getElementById('inventory-pagination-controls');
+  if (!container) return;
+  const totalPages = Math.ceil(totalItems / INVENTORY_PAGE_SIZE);
+  let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">`;
+  html += `<button class="btn" onclick="prevInventoryPage()" ${inventoryPageIndex === 0 ? 'disabled' : ''}>Previous</button>`;
+  html += `<span>Page ${inventoryPageIndex + 1} of ${totalPages}</span>`;
+  html += `<button class="btn" onclick="nextInventoryPage()" ${inventoryPageIndex >= totalPages - 1 ? 'disabled' : ''}>Next</button>`;
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+window.prevInventoryPage = function() {
+  if (inventoryPageIndex > 0) {
+    inventoryPageIndex--;
+    renderTable();
+  }
+};
+
+window.nextInventoryPage = function() {
+  const totalItems = getFilteredInventoryItems().length;
+  const totalPages = Math.ceil(totalItems / INVENTORY_PAGE_SIZE);
+  if (inventoryPageIndex < totalPages - 1) {
+    inventoryPageIndex++;
+    renderTable();
+  }
+};
+
+function getFilteredInventoryItems() {
+  const selectedOwner = document.getElementById('inventoryOwnerSelect')?.value || 'all';
+  const itemsArr = [];
+  if (!allitems[currentpage]) return itemsArr;
+  for (const [category, items] of Object.entries(allitems[currentpage])) {
+    for (const [itemKey, details] of Object.entries(items)) {
+      let isOwnerMatch = false;
+      if (selectedOwner === 'all') {
+        isOwnerMatch = true;
+      } else if (selectedOwner === 'admin') {
+        isOwnerMatch = !details.cosignerEmail && !details.cosignerName;
+      } else {
+        isOwnerMatch = details.cosignerEmail === selectedOwner;
+      }
+      if (isOwnerMatch) {
+        itemsArr.push({ category, itemKey, details });
+      }
+    }
+  }
+  return itemsArr;
 }
