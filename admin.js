@@ -120,10 +120,9 @@ function renderTable() {
   const ownerSelect = document.getElementById('inventoryOwnerSelect');
   const selectedOwner = ownerSelect ? ownerSelect.value : 'all';
 
-  for (const { category, itemKey, details } of pageItems) {
     // Group items by generalName
     const groups = {};
-    for (const [itemKey, details] of Object.entries(items)) {
+    for (const { category, itemKey, details } of pageItems) {
       // Owner filter logic
       let isOwnerMatch = false;
       if (selectedOwner === 'all') {
@@ -300,7 +299,6 @@ function renderTable() {
         </tr>`;
       }
     }
-  }
 
   html += '</table>';
   if (barcodeQueue.length > 0) {
