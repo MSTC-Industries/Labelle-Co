@@ -199,7 +199,7 @@
         <button class="btn" onclick="clearScannedBarcodes()">Clear</button>
         <div class="card" id="admin-checkout-card" style="max-width:600px;margin:auto;margin-bottom:20px;">
           <h3>Manual Admin Checkout</h3>
-          <form id="checkoutForm" onsubmit="return addCheckoutItem(event)">
+          <form id="checkoutForm" onsubmit="return addManualItemToScannedList(event)">
             <label>Name:
               <input type="text" id="checkoutName" required>
             </label>
@@ -229,7 +229,6 @@
             <button type="submit" class="btn" style="margin-top:16px;width:100%;">Add Item</button>
             <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
           </form>
-          <div id="checkoutList"></div>
         </div>
         <div class="card" id="discounts-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
           <h3>Discounts</h3>
@@ -350,17 +349,22 @@ function updateScannedList() {
 
   for (const barcode in scannedItems) {
     let matchedItem = null;
-    for (const [page, categories] of Object.entries(allitems)) {
-      for (const [category, items] of Object.entries(categories)) {
-        for (const [itemName, details] of Object.entries(items)) {
-          if (details.barcode === barcode) {
-            matchedItem = { name: itemName, ...details };
-            break;
+    // Check if it's a manual item
+    if (window.manualItems && window.manualItems[barcode]) {
+      matchedItem = { ...window.manualItems[barcode] };
+    } else {
+      for (const [page, categories] of Object.entries(allitems)) {
+        for (const [category, items] of Object.entries(categories)) {
+          for (const [itemName, details] of Object.entries(items)) {
+            if (details.barcode === barcode) {
+              matchedItem = { name: itemName, ...details };
+              break;
+            }
           }
+          if (matchedItem) break;
         }
         if (matchedItem) break;
       }
-      if (matchedItem) break;
     }
 
     if (!matchedItem) continue;
@@ -372,7 +376,6 @@ function updateScannedList() {
     `;
     list.appendChild(li);
   }
-
 }
 
 function removeScannedItem(barcode) {
@@ -421,17 +424,21 @@ function getScannedItemSummary() {
 
   for (const barcode in scannedItems) {
     let matchedItem = null;
-    for (const [page, categories] of Object.entries(allitems)) {
-      for (const [category, items] of Object.entries(categories)) {
-        for (const [itemName, details] of Object.entries(items)) {
-          if (details.barcode === barcode) {
-            matchedItem = { name: itemName, ...details };
-            break;
+    if (window.manualItems && window.manualItems[barcode]) {
+      matchedItem = { ...window.manualItems[barcode] };
+    } else {
+      for (const [page, categories] of Object.entries(allitems)) {
+        for (const [category, items] of Object.entries(categories)) {
+          for (const [itemName, details] of Object.entries(items)) {
+            if (details.barcode === barcode) {
+              matchedItem = { name: itemName, ...details };
+              break;
+            }
           }
+          if (matchedItem) break;
         }
         if (matchedItem) break;
       }
-      if (matchedItem) break;
     }
 
     if (matchedItem) {
@@ -685,108 +692,6 @@ function filterCustomers() {
 
 document.addEventListener('DOMContentLoaded', loadCustomers);
 
-let checkoutItems = JSON.parse(localStorage.getItem("scannerAdminCheckoutItems") || "[]");
-
-function saveCheckoutItems() {
-  localStorage.setItem("scannerAdminCheckoutItems", JSON.stringify(checkoutItems));
-}
-
-function addCheckoutItem(event) {
-  event.preventDefault();
-  const name = document.getElementById('checkoutName').value.trim();
-  const price = Number(document.getElementById('checkoutPrice').value);
-  const qty = Number(document.getElementById('checkoutQty').value);
-  let profitSplit = document.getElementById('checkoutProfitSplit').value;
-  const cosignerData = JSON.parse(document.getElementById('checkoutConsignorDropdown').value || '{}');
-  if (!name || !price || !qty) {
-    document.getElementById('checkoutMsg').textContent = "Fill out all fields.";
-    return false;
-  }
-  // If no cosigner, force profitSplit to 100/0
-  if (!cosignerData.email) profitSplit = "100/0";
-  checkoutItems.push({
-    name, price, qty, profitSplit,
-    cosignerName: cosignerData.name,
-    cosignerEmail: cosignerData.email
-  });
-  saveCheckoutItems();
-  renderCheckoutList();
-  document.getElementById('checkoutForm').reset();
-  document.getElementById('checkoutMsg').textContent = "";
-  return false;
-}
-
-function renderCheckoutList() {
-  const container = document.getElementById('checkoutList');
-  if (!checkoutItems.length) {
-    container.innerHTML = '<p>No items added.</p>';
-    return;
-  }
-  let html = `<table>
-    <tr>
-      <th>Name</th>
-      <th>Price</th>
-      <th>Quantity</th>
-      <th>Profit Split</th>
-      <th>Consignor</th>
-      <th>Actions</th>
-    </tr>`;
-  checkoutItems.forEach((item, idx) => {
-    html += `<tr>
-      <td><input type="text" value="${item.name}" onchange="editCheckoutItem(${idx}, 'name', this.value)"></td>
-      <td><input type="number" value="${item.price}" onchange="editCheckoutItem(${idx}, 'price', this.value)"></td>
-      <td><input type="number" value="${item.qty}" min="1" onchange="editCheckoutItem(${idx}, 'qty', this.value)"></td>
-      <td>
-        <select onchange="editCheckoutItem(${idx}, 'profitSplit', this.value)">
-          ${["100/0","90/10","80/20","70/30","60/40","50/50","40/60","30/70","20/80","10/90"].map(opt =>
-            `<option value="${opt}" ${item.profitSplit === opt ? 'selected' : ''}>${opt}</option>`
-          ).join('')}
-        </select>
-      </td>
-      <td>
-        <select onchange="editCheckoutItem(${idx}, 'cosigner', this.value)">
-          ${getConsignorOptions(item.cosignerName, item.cosignerEmail)}
-        </select>
-      </td>
-      <td>
-        <button onclick="removeCheckoutItem(${idx})">Remove</button>
-      </td>
-    </tr>`;
-  });
-  html += '</table>';
-  container.innerHTML = html;
-}
-
-function getConsignorOptions(selectedName, selectedEmail) {
-  let options = '<option value="">-- Select Consignor --</option>';
-  const cosignerDropdown = document.getElementById('checkoutConsignorDropdown');
-  for (let i = 1; i < cosignerDropdown.options.length; i++) {
-    const val = cosignerDropdown.options[i].value;
-    const { name, email } = JSON.parse(val);
-    options += `<option value="${val}" ${name === selectedName && email === selectedEmail ? 'selected' : ''}>${name} (${email})</option>`;
-  }
-  return options;
-}
-
-function editCheckoutItem(idx, field, value) {
-  if (field === 'cosigner') {
-    const data = JSON.parse(value || '{}');
-    checkoutItems[idx].cosignerName = data.name;
-    checkoutItems[idx].cosignerEmail = data.email;
-  } else if (field === 'price' || field === 'qty') {
-    checkoutItems[idx][field] = Number(value);
-  } else {
-    checkoutItems[idx][field] = value;
-  }
-  saveCheckoutItems();
-  renderCheckoutList();
-}
-
-function removeCheckoutItem(idx) {
-  checkoutItems.splice(idx, 1);
-  saveCheckoutItems();
-  renderCheckoutList();
-}
 
 async function populateCheckoutConsignorDropdown() {
   const dropdown = document.getElementById('checkoutConsignorDropdown');
@@ -808,8 +713,41 @@ async function populateCheckoutConsignorDropdown() {
 document.addEventListener('DOMContentLoaded', () => {
   loadCustomers();
   populateCheckoutConsignorDropdown();
-  renderCheckoutList();
 });
+
+function addManualItemToScannedList(event) {
+  event.preventDefault();
+  const name = document.getElementById('checkoutName').value.trim();
+  const price = Number(document.getElementById('checkoutPrice').value);
+  const qty = Number(document.getElementById('checkoutQty').value);
+  let profitSplit = document.getElementById('checkoutProfitSplit').value;
+  const cosignerData = JSON.parse(document.getElementById('checkoutConsignorDropdown').value || '{}');
+  if (!name || !price || !qty) {
+    document.getElementById('checkoutMsg').textContent = "Fill out all fields.";
+    return false;
+  }
+  // If no cosigner, force profitSplit to 100/0
+  if (!cosignerData.email) profitSplit = "100/0";
+
+  // Use a synthetic barcode to avoid collision with real barcodes
+  const manualBarcode = "manual-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+
+  // Store manual item in scannedItems with all details
+  scannedItems[manualBarcode] = qty;
+  if (!window.manualItems) window.manualItems = {};
+  window.manualItems[manualBarcode] = {
+    name,
+    price,
+    profitSplit,
+    cosignerName: cosignerData.name,
+    cosignerEmail: cosignerData.email
+  };
+
+  updateScannedList();
+  document.getElementById('checkoutForm').reset();
+  document.getElementById('checkoutMsg').textContent = "";
+  return false;
+}
 
 </script>
 </body>
