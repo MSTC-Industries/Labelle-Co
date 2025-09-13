@@ -120,7 +120,7 @@ function renderTable() {
   const ownerSelect = document.getElementById('inventoryOwnerSelect');
   const selectedOwner = ownerSelect ? ownerSelect.value : 'all';
 
-  for (const [category, items] of Object.entries(allitems[currentpage])) {
+  for (const { category, itemKey, details } of pageItems) {
     // Group items by generalName
     const groups = {};
     for (const [itemKey, details] of Object.entries(items)) {
