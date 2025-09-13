@@ -347,6 +347,7 @@ function updateScannedList() {
   const list = document.getElementById("resultsList");
   list.innerHTML = '';
 
+  let hasItems = false;
   for (const barcode in scannedItems) {
     let matchedItem = null;
     // Check if it's a manual item
@@ -369,6 +370,7 @@ function updateScannedList() {
 
     if (!matchedItem) continue;
 
+    hasItems = true;
     const li = document.createElement("li");
     li.innerHTML = `
       <strong>${matchedItem.name}</strong> — $${matchedItem.price || 0} × ${scannedItems[barcode]}
@@ -376,6 +378,8 @@ function updateScannedList() {
     `;
     list.appendChild(li);
   }
+
+  document.getElementById("show").style.display = hasItems ? "block" : "none";
 }
 
 function removeScannedItem(barcode) {
