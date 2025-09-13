@@ -23,15 +23,10 @@ function showSection(section) {
   document.getElementById('order-section').style.display = (section === 'orders') ? '' : 'none';
   document.getElementById('inventory-section').style.display = (section === 'inventory') ? '' : 'none';
   document.getElementById('cosigners-section').style.display = (section === 'cosigners') ? '' : 'none';
-  document.getElementById('checkout-section').style.display = (section === 'checkout') ? '' : 'none';
   document.getElementById('analytics-section').style.display = (section === 'analytics') ? '' : 'none';
   document.getElementById('email-section').style.display = (section === 'email') ? '' : 'none';
   document.getElementById('admin-password-change-section').style.display = (section === 'admin-password-change') ? '' : 'none';
   if (section === 'cosigners') renderConsignors();
-  if (section === 'checkout') {
-    populateCheckoutConsignorDropdown();
-    renderCheckoutList();
-  }
   if (section === 'analytics') {
     loadAnalytics();
   }

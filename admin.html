@@ -282,7 +282,6 @@ table tr:hover {
     <a href="#" onclick="showSection('orders')"><i class="fas fa-box"></i> Orders</a>
     <a href="#" onclick="showSection('inventory')"><i class="fas fa-warehouse"></i> Inventory</a>
     <a href="#" onclick="showSection('cosigners')"><i class="fas fa-users"></i> Consignors</a>
-    <a href="#" onclick="showSection('checkout')"><i class="fas fa-credit-card"></i> Checkout</a>
     <a href="#" onclick="showSection('analytics')"><i class="fas fa-chart-bar"></i> Analytics</a>
     <a href="#" onclick="showSection('admin-password-change')"><i class="fas fa-key"></i> Change Password</a>
     <a href="#" onclick="showSection('email')"><i class="fas fa-envelope"></i> Send Email</a>
@@ -338,65 +337,6 @@ table tr:hover {
       <div id="cosigners-list" class="card"></div>
     </div>
 
-    <div id="checkout-section" style="display: none;">
-      <div class="card" id="checkoutListCard">
-        <h2>Checkout Items</h2>
-        <div id="checkoutList"></div>
-      </div>
-      <div style="display: flex; gap: 32px;">
-        <div class="card" style="max-width:600px;margin-bottom:30px;">
-          <h2>Checkout Form</h2>
-          <form id="checkoutForm" onsubmit="return addCheckoutItem(event)">
-            <div class="form-columns">
-              <div class="column">
-                <label>Name:
-                  <input style="margin-bottom: 10px;" type="text" id="checkoutName" required>
-                </label>
-                <label>Price:
-                  <input style="margin-bottom: 10px;" type="number" id="checkoutPrice" min="0" step="0.01" required>
-                </label>
-                <label>Quantity:
-                  <input style="margin-bottom: 10px;" type="number" id="checkoutQty" min="1" step="1" required>
-                </label>
-                <label>Profit Split:
-                  <select style="margin-bottom: 10px;" id="checkoutProfitSplit">
-                    <option value="100/0">100/0 (No Consignor)</option>
-                    <option value="90/10">90/10</option>
-                    <option value="80/20">80/20</option>
-                    <option value="70/30">70/30</option>
-                    <option value="60/40">60/40</option>
-                    <option value="50/50" selected>50/50</option>
-                    <option value="40/60">40/60</option>
-                    <option value="30/70">30/70</option>
-                    <option value="20/80">20/80</option>
-                    <option value="10/90">10/90</option>
-                  </select>
-                </label>
-                <label>Consignor:
-                  <select style="margin-bottom: 10px;" id="checkoutConsignorDropdown"></select>
-                </label>
-              </div>
-              <div class="column">
-                <button type="submit" class="btn" style="margin-top:16px;width:100%;">Add Item</button>
-                <div class="card" id="discounts-card" style="max-width:500px;margin:auto;margin-bottom:20px;">
-                  <h3>Discounts</h3>
-                  <label for="discountPercent">Percent Off Each Item (%):</label>
-                  <input type="number" id="discountPercent" min="0" max="99" value="0" style="margin-bottom:10px;">
-                  <label for="discountFixed">Fixed Amount Off Total ($):</label>
-                  <input type="number" id="discountFixed" min="0" step="0.01" value="0" style="margin-bottom:10px;">
-                  <div style="font-size:13px;color:#888;margin-top:8px;">
-                    The fixed amount will be divided evenly among all items in the cart.
-                  </div>
-                </div>
-                <button class="btn" style="margin-top:16px;width:100%;" onclick="startAdminCheckout()">Checkout</button>
-                <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div id="checkout" class="card" style="max-width:600px;margin-bottom:30px;"></div>
-      </div>
-    </div>
     <div id="analytics-section" style="display:none;">
       <div class="card">
         <h2>Analytics</h2>
@@ -458,7 +398,6 @@ table tr:hover {
   </div>
   
   <script src="admin.js"></script>
-  <script src="admin-checkout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://js.stripe.com/basil/stripe.js"></script>
 

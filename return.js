@@ -120,7 +120,7 @@ async function initialize() {
         document.getElementById('exit').style.display = 'block';
       }
     } else if (completedCartStr) {
-      returntype = "scanner.html"
+      returntype = "scanner.html";
       try {
         showLoading();
 
@@ -136,22 +136,45 @@ async function initialize() {
 
         // Calculate profits for consigners
         const emailToProfit = {};
+        // completedCart.items: { itemName: qty }
+        // completedCart.manualItems: { barcode: { name, price, profitSplit, cosignerName, cosignerEmail } }
         for (const [itemName, qty] of Object.entries(completedCart.items)) {
+          let found = false;
+          let itemObj = null;
+          // Try to find in inventory
           for (const page in allitems) {
             for (const category in allitems[page]) {
-              const item = allitems[page][category][itemName];
-              if (item) {
-                const price = Number(item.price);
-                const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
-                const cosignerPercent = Number(cosignerPercentStr);
-                const profit = price * cosignerPercent / 100 * qty;
-                const email = item.cosignerEmail;
-                emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+              if (allitems[page][category][itemName]) {
+                itemObj = allitems[page][category][itemName];
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          // If not found, check manualItems
+          if (!itemObj && completedCart.manualItems) {
+            // Find manual item by name
+            for (const manual of Object.values(completedCart.manualItems)) {
+              if (manual.name === itemName) {
+                itemObj = manual;
+                break;
               }
             }
           }
+          if (!itemObj) continue;
+
+          const price = Number(itemObj.price);
+          const [_, cosignerPercentStr] = itemObj.profitSplit?.split('/') ?? ['50', '50'];
+          const cosignerPercent = Number(cosignerPercentStr);
+          const profit = price * cosignerPercent / 100 * qty;
+          const email = itemObj.cosignerEmail;
+          if (email) {
+            emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+          }
         }
 
+        // Update analytics (same as before)
         await fetch('https://labelle-co-server.vercel.app/update-analytics', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -161,7 +184,7 @@ async function initialize() {
           })
         });
 
-        // Mutate inventory
+        // Mutate inventory for items that exist in inventory
         for (const [itemName, qty] of Object.entries(completedCart.items)) {
           let found = false;
           for (const page in allitems) {
@@ -184,6 +207,7 @@ async function initialize() {
             }
             if (found) break;
           }
+          // If not found, it's a manual item, so do nothing to inventory
         }
 
         // Apply profits to consigners
