@@ -1611,28 +1611,8 @@ window.updateConsignorSplit = async function(email, value) {
 };
 
 function filterInventoryTable() {
-  const input = document.getElementById("inventorySearch");
-  const filter = input.value.toLowerCase();
-  const table = document.querySelector("#inventory table");
-  if (!table) return;
-  const rows = table.getElementsByTagName("tr");
-
-  for (let i = 1; i < rows.length; i++) { // skip header row
-    const itemCell = rows[i].getElementsByTagName("td")[1];
-    if (itemCell && itemCell.querySelector('input[type="text"]')) {
-      // For editable item name cells
-      const inputElem = itemCell.querySelector('input[type="text"]');
-      const itemText = inputElem.value || inputElem.textContent || inputElem.innerText;
-      rows[i].style.display = itemText.toLowerCase().includes(filter) ? "" : "none";
-    } else if (itemCell) {
-      // For static item name cells
-      const itemText = itemCell.textContent || itemCell.innerText;
-      rows[i].style.display = itemText.toLowerCase().includes(filter) ? "" : "none";
-    } else {
-      // Hide non-item rows (group headers, etc.)
-      rows[i].style.display = "none";
-    }
-  }
+  inventoryPageIndex = 0; // Reset to first page when searching
+  renderTable();
 }
 
 function clearInventorySearch() {
@@ -1717,6 +1697,8 @@ window.nextInventoryPage = function() {
 
 function getFilteredInventoryItems() {
   const selectedOwner = document.getElementById('inventoryOwnerSelect')?.value || 'all';
+  const searchInput = document.getElementById("inventorySearch");
+  const searchFilter = searchInput ? searchInput.value.toLowerCase() : '';
   const itemsArr = [];
   if (!allitems[currentpage]) return itemsArr;
   for (const [category, items] of Object.entries(allitems[currentpage])) {
@@ -1729,7 +1711,18 @@ function getFilteredInventoryItems() {
       } else {
         isOwnerMatch = details.cosignerEmail === selectedOwner;
       }
-      if (isOwnerMatch) {
+      // Search filter logic
+      let isSearchMatch = true;
+      if (searchFilter) {
+        // You can filter by item name, category, consignor name/email, barcode, etc.
+        isSearchMatch =
+          itemKey.toLowerCase().includes(searchFilter) ||
+          category.toLowerCase().includes(searchFilter) ||
+          (details.cosignerName && details.cosignerName.toLowerCase().includes(searchFilter)) ||
+          (details.cosignerEmail && details.cosignerEmail.toLowerCase().includes(searchFilter)) ||
+          (details.barcode && details.barcode.toLowerCase().includes(searchFilter));
+      }
+      if (isOwnerMatch && isSearchMatch) {
         itemsArr.push({ category, itemKey, details });
       }
     }
