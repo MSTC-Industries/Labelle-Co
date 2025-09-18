@@ -443,6 +443,61 @@ a:hover {
     max-height: 90px;
   }
 }
+/* --- New/updated layout for bottom row cards --- */
+#bottom-row-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 24px;
+  width: 100%;
+  justify-content: flex-start;
+}
+.bottom-card {
+  flex: 1 1 260px;
+  min-width: 240px;
+  max-width: 340px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 24px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (max-width: 1200px) {
+  #bottom-row-cards {
+    gap: 16px;
+  }
+  .bottom-card {
+    min-width: 180px;
+    max-width: 99vw;
+    padding: 16px 8px;
+  }
+}
+@media (max-width: 900px) {
+  #bottom-row-cards {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bottom-card {
+    min-width: 0;
+    width: 100%;
+    max-width: 99vw;
+  }
+}
+#cart-buttons {
+  width: 100%;
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+#cart-buttons .btn {
+  max-width: 180px;
+  flex: 1 1 0;
+  margin-top: 0;
+}
     </style>
 </head>
 <body>
@@ -463,69 +518,60 @@ a:hover {
           <div id="cart-summary-total" class="cart-summary-row" style="font-weight:bold;"></div>
         </div>
       </div>
-      <div id="other-section" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start;">
-        <div style="flex:1 1 320px; min-width:280px; max-width:420px;">
-          <div class="form-actions" style="width:100%;max-width:540px;display:flex;gap:12px;justify-content:center;">
-            <button class="btn" onclick="clearScannedBarcodes()" style="max-width:220px;">Clear</button>
-            <button class="btn" onclick="removeScannedItemsNoPay()" style="max-width:220px;">Remove From Inventory</button>
-            <button class="btn" onclick="html5Qrcode.stop(); initialize()" style="max-width:220px;">Checkout</button>
-          </div>
-          <div class="card" id="admin-checkout-card">
-            <h3>Manual Admin Checkout</h3>
-            <form id="checkoutForm" onsubmit="return addManualItemToScannedList(event)">
-              <label>Name:
-                <input type="text" id="checkoutName" required>
-              </label>
-              <label>Price:
-                <input type="number" id="checkoutPrice" min="0" step="0.01" required>
-              </label>
-              <label>Quantity:
-                <input type="number" id="checkoutQty" min="1" step="1" required>
-              </label>
-              <label>Profit Split:
-                <select id="checkoutProfitSplit">
-                  <option value="100/0">100/0 (No Consignor)</option>
-                  <option value="90/10">90/10</option>
-                  <option value="80/20">80/20</option>
-                  <option value="70/30">70/30</option>
-                  <option value="60/40">60/40</option>
-                  <option value="50/50" selected>50/50</option>
-                  <option value="40/60">40/60</option>
-                  <option value="30/70">30/70</option>
-                  <option value="20/80">20/80</option>
-                  <option value="10/90">10/90</option>
-                </select>
-              </label>
-              <label>Consignor:
-                <select id="checkoutConsignorDropdown"></select>
-              </label>
-              <button type="submit" class="btn" style="margin-top:16px;">Add Item</button>
-              <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
-            </form>
+      <div id="bottom-row-cards">
+        <div class="bottom-card" id="admin-checkout-card">
+          <h3>Manual Admin Checkout</h3>
+          <form id="checkoutForm" onsubmit="return addManualItemToScannedList(event)">
+            <label>Name:
+              <input type="text" id="checkoutName" required>
+            </label>
+            <label>Price:
+              <input type="number" id="checkoutPrice" min="0" step="0.01" required>
+            </label>
+            <label>Quantity:
+              <input type="number" id="checkoutQty" min="1" step="1" required>
+            </label>
+            <label>Profit Split:
+              <select id="checkoutProfitSplit">
+                <option value="100/0">100/0 (No Consignor)</option>
+                <option value="90/10">90/10</option>
+                <option value="80/20">80/20</option>
+                <option value="70/30">70/30</option>
+                <option value="60/40">60/40</option>
+                <option value="50/50" selected>50/50</option>
+                <option value="40/60">40/60</option>
+                <option value="30/70">30/70</option>
+                <option value="20/80">20/80</option>
+                <option value="10/90">10/90</option>
+              </select>
+            </label>
+            <label>Consignor:
+              <select id="checkoutConsignorDropdown"></select>
+            </label>
+            <button type="submit" class="btn" style="margin-top:16px;">Add Item</button>
+            <div id="checkoutMsg" style="color:red;margin-top:8px;"></div>
+          </form>
+        </div>
+        <div class="bottom-card" id="discounts-card">
+          <h3>Discounts</h3>
+          <label for="discountPercent">Percent Off Each Item (%):</label>
+          <input type="number" id="discountPercent" min="0" max="99" value="0">
+          <label for="discountFixed">Fixed Amount Off Total ($):</label>
+          <input type="number" id="discountFixed" min="0" step="0.01" value="0">
+          <div style="font-size:13px;color:#888;margin-top:8px;">
+            The fixed amount will be divided evenly among all items in the cart.
           </div>
         </div>
-        <div style="flex:1 1 320px; min-width:280px; max-width:420px; display: flex; flex-direction: column; gap: 18px;">
-          <div class="card" id="discounts-card">
-            <h3>Discounts</h3>
-            <label for="discountPercent">Percent Off Each Item (%):</label>
-            <input type="number" id="discountPercent" min="0" max="99" value="0">
-            <label for="discountFixed">Fixed Amount Off Total ($):</label>
-            <input type="number" id="discountFixed" min="0" step="0.01" value="0">
-            <div style="font-size:13px;color:#888;margin-top:8px;">
-              The fixed amount will be divided evenly among all items in the cart.
-            </div>
-          </div>
-          <div class="card" id="orders"></div>
-          <div class="card" id="customer-lookup-card">
-            <h3>Customer Lookup</h3>
-            <input 
-              type="text" 
-              id="customerSearch" 
-              placeholder="Search by name, phone, or email..." 
-              onkeyup="filterCustomers()"
-            >
-            <div id="customersTable"></div>
-          </div>
+        <div class="bottom-card" id="orders"></div>
+        <div class="bottom-card" id="customer-lookup-card">
+          <h3>Customer Lookup</h3>
+          <input 
+            type="text" 
+            id="customerSearch" 
+            placeholder="Search by name, phone, or email..." 
+            onkeyup="filterCustomers()"
+          >
+          <div id="customersTable"></div>
         </div>
       </div>
     </div>
@@ -535,6 +581,11 @@ a:hover {
         <input type="text" id="barcodeInput" autofocus placeholder="Scan or enter barcode then press enter">
         <button class="btn scan-btn" onclick="triggerScan()" disabled>Scan</button>
         <div id="reader"></div>
+        <div id="cart-buttons">
+          <button class="btn" onclick="clearScannedBarcodes()">Clear</button>
+          <button class="btn" onclick="removeScannedItemsNoPay()">Remove From Inventory</button>
+          <button class="btn" onclick="html5Qrcode.stop(); initialize()">Checkout</button>
+        </div>
       </div>
       <div id="checkout"></div>
     </div>
