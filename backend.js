@@ -8,7 +8,7 @@ const FormData = require('form-data');
 const app = express();
 app.use(express.json());
 
-//update all these
+//UPDATE all these
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwR8h1NyFJgHmXHx8bjd7sBdEmElOpj6jOajwjwIwiLCiHNQaF2DRfauT_rWEIwgdMH/exec';
 const ownerEmail = 'mstc.industries.official@gmail.com';
 const YOUR_DOMAIN = 'https://mstc-industries.github.io/Labelle-Co/';
