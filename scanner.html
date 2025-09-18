@@ -585,9 +585,31 @@ a:hover {
           <button class="btn" onclick="clearScannedBarcodes()">Clear</button>
           <button class="btn" onclick="removeScannedItemsNoPay()">Remove From Inventory</button>
           <button class="btn" onclick="html5Qrcode.stop(); initialize()">Checkout</button>
+          <button class="btn" onclick="openCashCheckout()">Pay with Cash</button>
         </div>
       </div>
       <div id="checkout"></div>
+      <div id="cash-modal" style="display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:2rem 2.5rem;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.13);max-width:340px;width:90vw;display:flex;flex-direction:column;align-items:center;gap:18px;">
+          <h2 style="margin:0 0 10px 0;">Cash Checkout</h2>
+          <div style="width:100%;display:flex;justify-content:space-between;">
+            <span>Total:</span>
+            <span id="cash-cart-total" style="font-weight:bold;"></span>
+          </div>
+          <label style="width:100%;margin-top:10px;">
+            Cash Given:
+            <input type="number" id="cash-given" min="0" step="0.01" style="width:100%;padding:8px;margin-top:4px;" autocomplete="off">
+          </label>
+          <div style="width:100%;display:flex;justify-content:space-between;">
+            <span>Change:</span>
+            <span id="cash-change" style="font-weight:bold;">$0.00</span>
+          </div>
+          <div style="width:100%;display:flex;gap:12px;margin-top:10px;">
+            <button class="btn" style="flex:1;" onclick="submitCashCheckout()">Pay</button>
+            <button class="btn" style="flex:1;background:#bbb;color:#222;" onclick="closeCashCheckout()">Cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <script src="scanner.js"></script>
@@ -1142,7 +1164,70 @@ function addManualItemToScannedList(event) {
   document.getElementById('checkoutMsg').textContent = "";
   return false;
 }
+// Add these functions to your <script> section
 
+function openCashCheckout() {
+  // Calculate cart total (without transaction fee)
+  const summary = getScannedItemSummary();
+  let total = 0;
+  for (const item of summary) {
+    if (item.name !== "Transaction Fee") {
+      total += item.finalPrice * item.quantity / 100;
+    }
+  }
+  document.getElementById('cash-cart-total').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('cash-given').value = '';
+  document.getElementById('cash-change').textContent = '$0.00';
+  document.getElementById('cash-modal').style.display = 'flex';
+
+  // Update change on input
+  document.getElementById('cash-given').oninput = function() {
+    const cashGiven = parseFloat(this.value) || 0;
+    const change = cashGiven - total;
+    document.getElementById('cash-change').textContent = change >= 0 ? `$${change.toFixed(2)}` : '$0.00';
+  };
+}
+
+function closeCashCheckout() {
+  document.getElementById('cash-modal').style.display = 'none';
+}
+
+async function submitCashCheckout() {
+  // Build cart object as in initialize(), but mark as cash
+  const cart = { items: {} };
+  const manualItems = {};
+  const summary = getScannedItemSummary();
+
+  for (const item of summary) {
+    if (item.name === "Transaction Fee") continue;
+    let barcode = null;
+    if (window.manualItems) {
+      for (const [manualBarcode, manualDetails] of Object.entries(window.manualItems)) {
+        if (manualDetails.name === item.name) {
+          barcode = manualBarcode;
+          manualItems[manualBarcode] = {
+            ...manualDetails,
+            taxed: item.taxed,
+            taxAmount: item.taxAmount
+          };
+          break;
+        }
+      }
+    }
+    cart.items[item.name] = item.quantity;
+  }
+  cart.manualItems = manualItems;
+  cart.paymentType = "cash";
+  cart.cashGiven = parseFloat(document.getElementById('cash-given').value) || 0;
+  cart.cartTotal = parseFloat(document.getElementById('cash-cart-total').textContent.replace('$','')) || 0;
+  cart.change = cart.cashGiven - cart.cartTotal;
+
+  localStorage.removeItem("pendingOrder");
+  localStorage.setItem("completedCart", JSON.stringify(cart));
+
+  // Redirect to return.html (simulate Stripe flow)
+  window.location.href = "return.html";
+}
 </script>
 </body>
 </html>

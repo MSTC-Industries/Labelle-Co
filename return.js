@@ -8,119 +8,136 @@ async function initialize() {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
   const sessionId = urlParams.get('session_id');
-  const response = await fetch(`https://labelle-co-server.vercel.app/session-status?session_id=${sessionId}`);
-  const session = await response.json();
 
-  if (session.status == 'open') {
-    window.location.replace('index.html');
-  } else if (session.status == 'complete') {
-    // Submit the order if it exists in localStorage
-    const pendingOrderStr = localStorage.getItem("pendingOrder");
-    const completedCartStr = localStorage.getItem("completedCart");
-    const adminCheckoutCartStr = localStorage.getItem("adminCheckoutCart");
-    if (pendingOrderStr) {
-      try {
-        showLoading();
+  if (sessionId) {
+    // Stripe flow
+    const response = await fetch(`https://labelle-co-server.vercel.app/session-status?session_id=${sessionId}`);
+    const session = await response.json();
 
-        const pendingOrder = JSON.parse(pendingOrderStr);
+    if (session.status == 'open') {
+      window.location.replace('index.html');
+      return;
+    } else if (session.status == 'complete') {
+      // Submit the order if it exists in localStorage
+      const pendingOrderStr = localStorage.getItem("pendingOrder");
+      const completedCartStr = localStorage.getItem("completedCart");
+      if (pendingOrderStr) {
+        try {
+          showLoading();
 
-        // Fetch latest allitems and cosigners from the cloud
-        let [allitemsRes, cosignersRes] = await Promise.all([
-          fetch('https://labelle-co-server.vercel.app/cloud'),
-          fetch('https://labelle-co-server.vercel.app/cosigners')
-        ]);
-        let allitems = await allitemsRes.json();
-        let cosigners = await cosignersRes.json();
+          const pendingOrder = JSON.parse(pendingOrderStr);
 
-        await fetch('https://labelle-co-server.vercel.app/update-analytics', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order: pendingOrder,
-            allitems: allitems
-          })
-        });
+          // Fetch latest allitems and cosigners from the cloud
+          let [allitemsRes, cosignersRes] = await Promise.all([
+            fetch('https://labelle-co-server.vercel.app/cloud'),
+            fetch('https://labelle-co-server.vercel.app/cosigners')
+          ]);
+          let allitems = await allitemsRes.json();
+          let cosigners = await cosignersRes.json();
 
-        // Update bought/itemsBought in allitems
-        for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
-          outer: for (const page in allitems) {
-            for (const category in allitems[page]) {
-              if (allitems[page][category][itemName]) {
-                const itemData = allitems[page][category][itemName];
-                if ('onhold' in itemData) {
-                  itemData.bought = true;
-                } else if ('stock' in itemData) {
-                  let prevBought = itemData.itemsBought || 0;
-                  itemData.itemsBought = prevBought + quantity;
+          await fetch('https://labelle-co-server.vercel.app/update-analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order: pendingOrder,
+              allitems: allitems
+            })
+          });
+
+          // Update bought/itemsBought in allitems
+          for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
+            outer: for (const page in allitems) {
+              for (const category in allitems[page]) {
+                if (allitems[page][category][itemName]) {
+                  const itemData = allitems[page][category][itemName];
+                  if ('onhold' in itemData) {
+                    itemData.bought = true;
+                  } else if ('stock' in itemData) {
+                    let prevBought = itemData.itemsBought || 0;
+                    itemData.itemsBought = prevBought + quantity;
+                  }
+                  break outer;
                 }
-                break outer;
               }
             }
           }
-        }
 
-        // Calculate profits for consigners
-        const emailToProfit = {};
-        for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
-          for (const page in allitems) {
-            for (const category in allitems[page]) {
-              const item = allitems[page][category][itemName];
-              if (item) {
-                const price = Number(item.price);
-                const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
-                const cosignerPercent = Number(cosignerPercentStr);
-                const profit = price * cosignerPercent / 100 * quantity;
-                const email = item.cosignerEmail;
-                emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+          // Calculate profits for consigners
+          const emailToProfit = {};
+          for (const [itemName, quantity] of Object.entries(pendingOrder.items)) {
+            for (const page in allitems) {
+              for (const category in allitems[page]) {
+                const item = allitems[page][category][itemName];
+                if (item) {
+                  const price = Number(item.price);
+                  const [_, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
+                  const cosignerPercent = Number(cosignerPercentStr);
+                  const profit = price * cosignerPercent / 100 * quantity;
+                  const email = item.cosignerEmail;
+                  emailToProfit[email] = (emailToProfit[email] || 0) + profit;
+                }
               }
             }
           }
+
+          // Apply profits to consigners
+          cosigners.forEach(c => {
+            if (emailToProfit[c.email]) {
+              c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
+            }
+          });
+
+          // Save updated allitems and cosigners to the cloud
+          await Promise.all([
+            fetch('https://labelle-co-server.vercel.app/cloud', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(allitems)
+            }),
+            fetch('https://labelle-co-server.vercel.app/cosigners', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cosigners)
+            })
+          ]);
+
+          // Submit the order using the same logic as index.js
+          await submitOrder(pendingOrder);
+
+          // Notify the owner
+          await fetch('https://labelle-co-server.vercel.app/notify-owner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pendingOrder)
+          });
+
+          // Clear order.items and localStorage
+          localStorage.removeItem("pendingOrder");
+        } catch (err) {
+          console.error("Order submission failed:", err);
+        } finally {
+          hideLoading();
+          document.getElementById('message').innerHTML = 'Thank You!';
+          document.getElementById('details').innerHTML = `Your payment was successful.<br>
+          We appreciate your order and will process it soon.`;
+          document.getElementById('exit').style.display = 'block';
         }
-
-        // Apply profits to consigners
-        cosigners.forEach(c => {
-          if (emailToProfit[c.email]) {
-            c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
-          }
-        });
-
-        // Save updated allitems and cosigners to the cloud
-        await Promise.all([
-          fetch('https://labelle-co-server.vercel.app/cloud', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allitems)
-          }),
-          fetch('https://labelle-co-server.vercel.app/cosigners', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(cosigners)
-          })
-        ]);
-
-        // Submit the order using the same logic as index.js
-        await submitOrder(pendingOrder);
-
-        // Notify the owner
-        await fetch('https://labelle-co-server.vercel.app/notify-owner', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(pendingOrder)
-        });
-
-        // Clear order.items and localStorage
-        localStorage.removeItem("pendingOrder");
-      } catch (err) {
-        console.error("Order submission failed:", err);
-      } finally {
-        hideLoading();
-        document.getElementById('message').innerHTML = 'Thank You!';
-        document.getElementById('details').innerHTML = `Your payment was successful.<br>
-        We appreciate your order and will process it soon.`;
-        document.getElementById('exit').style.display = 'block';
+      } else if (completedCartStr) {
+        await completedCartStrLogic(completedCartStr);
       }
-    } else if (completedCartStr) {
-      returntype = "scanner.html";
+      return;
+    }
+  }
+
+  // If no sessionId, handle cash/manual checkout
+  const completedCartStr = localStorage.getItem("completedCart");
+  if (completedCartStr) {
+    await completedCartStrLogic(completedCartStr);
+  }
+}
+
+async function completedCartStrLogic(completedCartStr) {
+  returntype = "scanner.html";
       try {
         showLoading();
 
@@ -173,16 +190,6 @@ async function initialize() {
             emailToProfit[email] = (emailToProfit[email] || 0) + profit;
           }
         }
-
-        /* Update analytics (same as before)
-        await fetch('https://labelle-co-server.vercel.app/update-analytics', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order: completedCart,
-            allitems: allitems
-          })
-        });*/
 
         // Mutate inventory for items that exist in inventory
         for (const [itemName, qty] of Object.entries(completedCart.items)) {
@@ -313,113 +320,6 @@ async function initialize() {
         Thank you for shopping with us!`;
         document.getElementById('exit').style.display = 'block';
       }
-    } /*else if (adminCheckoutCartStr) {
-      returntype = "admin.html";
-      try {
-        showLoading();
-        const adminCheckoutCart = JSON.parse(adminCheckoutCartStr);
-
-        // Fetch cosigners from the cloud
-        let cosignersRes = await fetch('https://labelle-co-server.vercel.app/cosigners');
-        let cosigners = await cosignersRes.json();
-
-        // Calculate profits for consigners
-        const emailToProfit = {};
-        let totalProfit = 0;
-        let adminProfit = 0;
-        const now = Date.now();
-        const monthKey = `${new Date(now).getMonth() + 1}-${new Date(now).getFullYear()}`;
-        let cosignerProfits = {};
-
-        for (const item of adminCheckoutCart.items) {
-          const price = Number(item.price);
-          const [adminPercentStr, cosignerPercentStr] = item.profitSplit?.split('/') ?? ['50', '50'];
-          const adminPercent = Number(adminPercentStr);
-          const cosignerPercent = Number(cosignerPercentStr);
-          const profit = price * cosignerPercent / 100 * item.qty;
-          const adminCut = price * adminPercent / 100 * item.qty;
-          totalProfit += price * item.qty;
-          adminProfit += adminCut;
-          const email = item.cosignerEmail;
-          if (email) { // Only add if cosignerEmail exists
-            emailToProfit[email] = (emailToProfit[email] || 0) + profit;
-            cosignerProfits[email] = (cosignerProfits[email] || 0) + profit;
-          }
-        }
-
-        // Apply profits to consigners
-        cosigners.forEach(c => {
-          if (emailToProfit[c.email]) {
-            c.owedProfit = (c.owedProfit || 0) + emailToProfit[c.email];
-          }
-        });
-
-        // Save updated cosigners to the cloud
-        await fetch('https://labelle-co-server.vercel.app/cosigners', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(cosigners)
-        });
-
-        // Update analytics
-        // Fetch current analytics
-        const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
-        let analyticsRes = await res.json();
-        let analytics = {};
-        try { analytics = await analyticsRes.json(); } catch { analytics = { customers: {}, registerAmount: 0, registerOpened: false, months: {} }; }
-        if (!analytics.months) analytics.months = {};
-        if (!analytics.months[monthKey]) {
-          analytics.months[monthKey] = {
-            itemsSold: {}
-          };
-        }
-        for (const item of adminCheckoutCart.items) {
-          if (!analytics.months[monthKey].itemsSold[item.name]) {
-            analytics.months[monthKey].itemsSold[item.name] = {
-              quantity: 0,
-              price: 0.0,
-              date: now,
-              cosignerEmail: item.cosignerEmail || '',
-              profitSplit: item.profitSplit || "50/50",
-              cost: item.cost || 0,
-              taxed: !!item.taxed
-            };
-          }
-          analytics.months[monthKey].itemsSold[item.name].quantity += item.qty;
-          analytics.months[monthKey].itemsSold[item.name].price += Number(item.price) * item.qty;
-          analytics.months[monthKey].itemsSold[item.name].date = now;
-          analytics.months[monthKey].itemsSold[item.name].cosignerEmail = item.cosignerEmail || '';
-          analytics.months[monthKey].itemsSold[item.name].profitSplit = item.profitSplit || "50/50";
-          analytics.months[monthKey].itemsSold[item.name].cost = item.cost || 0;
-          analytics.months[monthKey].itemsSold[item.name].taxed = !!item.taxed;
-        }
-        // Remove profit summary fields
-        if (analytics.months[monthKey].totalProfit !== undefined) delete analytics.months[monthKey].totalProfit;
-        if (analytics.months[monthKey].adminProfit !== undefined) delete analytics.months[monthKey].adminProfit;
-        if (analytics.months[monthKey].cosignerProfits !== undefined) delete analytics.months[monthKey].cosignerProfits;
-        // Remove revenue from main analytics object
-        if (analytics.revenue !== undefined) delete analytics.revenue;
-        // Save analytics
-        await fetch('https://labelle-co-server.vercel.app/analytics', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(analytics)
-        });
-
-        // Clear localStorage
-        localStorage.removeItem("adminCheckoutCart");
-        localStorage.removeItem("adminCheckoutItems");
-      } catch (err) {
-        console.error("Order submission failed:", err);
-      } finally {
-        hideLoading();
-        document.getElementById('message').innerHTML = 'Thank You!';
-        document.getElementById('details').innerHTML = `Your payment was successful.<br>
-        Thank you for shopping with us!`;
-        document.getElementById('exit').style.display = 'block';
-      }
-    }*/
-  }
 }
 
 // --- Duplicated from index.js for standalone use on return.html ---
