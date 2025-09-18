@@ -553,7 +553,12 @@ a:hover {
           </form>
         </div>
         <div class="bottom-card" id="discounts-card">
-          <h3>Discounts</h3>
+          <h3>Discounts/Gifts</h3>
+          <label for="discountType">Type:</label>
+          <select id="discountType">
+            <option value="discount">Discount (store pays tax)</option>
+            <option value="gift">Gift (customer pays tax)</option>
+          </select>
           <label for="discountPercent">Percent Off Each Item (%):</label>
           <input type="number" id="discountPercent" min="0" max="99" value="0">
           <label for="discountFixed">Fixed Amount Off Total ($):</label>
@@ -799,6 +804,7 @@ function triggerScan() {
 
 function getScannedItemSummary() {
   const summary = [];
+  const discountType = document.getElementById('discountType')?.value || "discount";
   const discountPercent = Math.max(0, Math.min(99, Number(document.getElementById('discountPercent').value) || 0));
   const discountFixed = Math.max(0, Number(document.getElementById('discountFixed').value) || 0);
 
@@ -832,16 +838,25 @@ function getScannedItemSummary() {
 
     if (matchedItem) {
       let price = matchedItem.price || 0;
+      let originalTotal = price;
       // Apply percent discount
       price = price * (1 - discountPercent / 100);
       // Apply fixed discount divided by total quantity
       price = price - (discountFixed / totalQty);
       price = Math.max(0, price); // Prevent negative price
 
-      // Apply 6% tax if manual or taxed
       let taxed = isManual || !!matchedItem.taxed;
-      let taxAmount = taxed ? price * 0.06 : 0;
-      let finalPrice = price + taxAmount;
+      let finalPrice = price;
+      if (taxed) {
+        if (discountType === "discount") {
+          // Store pays tax: tax is on discounted total
+          finalPrice = price + (price * 0.06);
+        } else {
+          // Gift: customer pays tax on original price
+          finalPrice = price + (originalTotal * 0.06);
+        }
+      }
+      // else, untaxed, so just finalPrice = price
 
       summary.push({
         name: matchedItem.name,
