@@ -1,6 +1,6 @@
-initialize();
-
 let returntype = "index.html"
+
+initialize();
 
 async function initialize() {
   document.getElementById('exit').style.display = 'none';
