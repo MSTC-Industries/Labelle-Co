@@ -1487,12 +1487,13 @@ function renderAnalytics() {
 
   const customersObj = analyticsData.customers && typeof analyticsData.customers === 'object' ? analyticsData.customers : {};
   let html2 = `<table>
-    <tr><th>Name</th><th>Email</th><th>Phone</th></tr>`;
+    <tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr>`;
   for (const [email, info] of Object.entries(customersObj)) {
     html2 += `<tr>
       <td>${info.name || ''}</td>
       <td>${email}</td>
       <td>${info.phone || ''}</td>
+      <td>${info.address || ''}</td>
     </tr>`;
   }
   html2 += '</table>';
@@ -1579,10 +1580,12 @@ function filterCustomers() {
     const nameCell = rows[i].getElementsByTagName("td")[0];
     const emailCell = rows[i].getElementsByTagName("td")[1];
     const phoneCell = rows[i].getElementsByTagName("td")[2];
+    const addressCell = rows[i].getElementsByTagName("td")[3];
     let match = false;
     if (nameCell && (nameCell.textContent || nameCell.innerText).toLowerCase().includes(filter)) match = true;
     if (emailCell && (emailCell.textContent || emailCell.innerText).toLowerCase().includes(filter)) match = true;
     if (phoneCell && (phoneCell.textContent || phoneCell.innerText).toLowerCase().includes(filter)) match = true;
+    if (addressCell && (addressCell.textContent || addressCell.innerText).toLowerCase().includes(filter)) match = true;
     rows[i].style.display = match ? "" : "none";
   }
 }

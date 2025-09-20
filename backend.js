@@ -394,11 +394,15 @@ async function updateAnalytics(order, allitems) {
   const customerEmail = order.email || '';
   const customerName = order.name || '';
   const customerPhone = order.phone || '';
+  const customerAddress = order.address || order.addressLine || '';
   if (customerEmail) {
-    analytics.customers[customerEmail] = {
-      name: customerName,
-      phone: customerPhone
-    };
+    // Preserve any existing fields and merge new values (including address)
+    const existing = analytics.customers[customerEmail] || {};
+    analytics.customers[customerEmail] = Object.assign({}, existing, {
+      name: customerName || existing.name,
+      phone: customerPhone || existing.phone,
+      address: customerAddress || existing.address || ''
+    });
   }
 
   if (!analytics.orderType === 'hold') {
@@ -471,10 +475,40 @@ app.post('/update-analytics', async (req, res) => {
 
 app.post('/analytics', async (req, res) => {
   try {
+    const body = req.body || {};
+    // If the client posted only a customers object, merge it into existing analytics to avoid clobbering other fields
+    if (body.customers && Object.keys(body).length === 1) {
+      // Fetch current analytics
+      let current = {};
+      try {
+        const r = await fetch(APPS_SCRIPT_URL + '?type=analytics');
+        current = await r.json();
+      } catch (e) {
+        current = { customers: {}, registerAmount: 0, registerOpened: false, months: {} };
+      }
+      if (!current.customers || typeof current.customers !== 'object') current.customers = {};
+      // Merge/overwrite per-email
+      for (const [email, info] of Object.entries(body.customers)) {
+        const existing = current.customers[email] || {};
+        current.customers[email] = Object.assign({}, existing, info);
+      }
+
+      const updateRes = await fetch(APPS_SCRIPT_URL + '?type=analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(current)
+      });
+      const data = await updateRes.text();
+      res.set('Access-Control-Allow-Origin', '*');
+      res.send(data);
+      return;
+    }
+
+    // Otherwise forward the body as-is (keep existing behavior)
     const response = await fetch(APPS_SCRIPT_URL + '?type=analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(body)
     });
     const data = await response.text();
     res.set('Access-Control-Allow-Origin', '*');

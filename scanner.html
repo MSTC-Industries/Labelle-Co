@@ -576,7 +576,31 @@ a:hover {
             placeholder="Search by name, phone, or email..." 
             onkeyup="filterCustomers()"
           >
-          <div id="customersTable"></div>
+            <div style="margin-top:10px;">
+              <button class="btn" id="openAddCustomerBtn" onclick="toggleAddCustomerForm(true)" style="padding:8px 12px;max-width:220px;">+ Add Customer</button>
+            </div>
+
+            <div id="addCustomerForm" style="display:none;margin-top:12px;">
+              <label>Name:
+                <input type="text" id="newCustomerName" placeholder="Full name">
+              </label>
+              <label>Email:
+                <input type="email" id="newCustomerEmail" placeholder="email@example.com">
+              </label>
+              <label>Phone:
+                <input type="text" id="newCustomerPhone" placeholder="(555) 555-5555">
+              </label>
+              <label>Address:
+                <input type="text" id="newCustomerAddress" placeholder="Street, City, State, ZIP">
+              </label>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button class="btn" onclick="addCustomer()" style="flex:1;">Save Customer</button>
+                <button class="btn" onclick="toggleAddCustomerForm(false)" style="flex:1;background:#bbb;color:#222;">Cancel</button>
+              </div>
+              <div id="addCustomerMsg" style="margin-top:8px;color:green;display:none;"></div>
+            </div>
+
+            <div id="customersTable"></div>
         </div>
       </div>
     </div>
@@ -1088,12 +1112,13 @@ async function loadCustomers() {
     const analytics = await res.json();
     const customersObj = analytics.customers && typeof analytics.customers === 'object' ? analytics.customers : {};
     let html = `<table>
-      <tr><th>Name</th><th>Email</th><th>Phone</th></tr>`;
+      <tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th></tr>`;
     for (const [email, info] of Object.entries(customersObj)) {
       html += `<tr>
         <td>${info.name || ''}</td>
         <td>${email}</td>
         <td>${info.phone || ''}</td>
+        <td>${info.address || ''}</td>
       </tr>`;
     }
     html += '</table>';
@@ -1113,10 +1138,12 @@ function filterCustomers() {
     const nameCell = rows[i].getElementsByTagName("td")[0];
     const emailCell = rows[i].getElementsByTagName("td")[1];
     const phoneCell = rows[i].getElementsByTagName("td")[2];
+    const addressCell = rows[i].getElementsByTagName("td")[3];
     let match = false;
     if (nameCell && (nameCell.textContent || nameCell.innerText).toLowerCase().includes(filter)) match = true;
     if (emailCell && (emailCell.textContent || emailCell.innerText).toLowerCase().includes(filter)) match = true;
     if (phoneCell && (phoneCell.textContent || phoneCell.innerText).toLowerCase().includes(filter)) match = true;
+    if (addressCell && (addressCell.textContent || addressCell.innerText).toLowerCase().includes(filter)) match = true;
     rows[i].style.display = match ? "" : "none";
   }
 }
@@ -1178,6 +1205,58 @@ function addManualItemToScannedList(event) {
   document.getElementById('checkoutForm').reset();
   document.getElementById('checkoutMsg').textContent = "";
   return false;
+}
+// New helper functions for adding customers
+function toggleAddCustomerForm(show) {
+  document.getElementById('addCustomerForm').style.display = show ? 'block' : 'none';
+  document.getElementById('addCustomerMsg').style.display = 'none';
+  if (show) document.getElementById('newCustomerName').focus();
+}
+
+async function addCustomer() {
+  const name = document.getElementById('newCustomerName').value.trim();
+  const email = document.getElementById('newCustomerEmail').value.trim().toLowerCase();
+  const phone = document.getElementById('newCustomerPhone').value.trim();
+  const address = document.getElementById('newCustomerAddress').value.trim();
+  const msgDiv = document.getElementById('addCustomerMsg');
+  msgDiv.style.display = 'none';
+  if (!email || !name) {
+    msgDiv.style.color = 'red';
+    msgDiv.textContent = 'Name and email are required.';
+    msgDiv.style.display = 'block';
+    return;
+  }
+
+  try {
+    // Fetch current analytics so we can merge customers safely
+    const res = await fetch('https://labelle-co-server.vercel.app/get-analytics');
+    const analytics = await res.json();
+    const customers = analytics.customers && typeof analytics.customers === 'object' ? analytics.customers : {};
+    customers[email] = { name, phone, address };
+
+    // POST updated analytics object back to server via /analytics
+    const postRes = await fetch('https://labelle-co-server.vercel.app/analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customers })
+    });
+    if (!postRes.ok) throw new Error('Failed to save customer');
+
+    msgDiv.style.color = 'green';
+    msgDiv.textContent = 'Customer saved.';
+    msgDiv.style.display = 'block';
+    // Reset form and reload customers list
+    document.getElementById('newCustomerName').value = '';
+    document.getElementById('newCustomerEmail').value = '';
+    document.getElementById('newCustomerPhone').value = '';
+    document.getElementById('newCustomerAddress').value = '';
+    toggleAddCustomerForm(false);
+    loadCustomers();
+  } catch (err) {
+    msgDiv.style.color = 'red';
+    msgDiv.textContent = err.message;
+    msgDiv.style.display = 'block';
+  }
 }
 // Add these functions to your <script> section
 
